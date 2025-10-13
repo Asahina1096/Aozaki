@@ -7,7 +7,7 @@ echo "🚀 开始构建 Komari AstroNext 主题..."
 # 检查 node_modules 是否存在
 if [ ! -d "node_modules" ]; then
     echo "📦 安装依赖..."
-    npm install
+    bun install
 fi
 
 # 清理旧的构建文件
@@ -17,7 +17,7 @@ rm -f komari-astronext.zip
 
 # 构建项目
 echo "🔨 构建项目..."
-npm run build
+bun run build
 
 if [ $? -ne 0 ]; then
     echo "❌ 构建失败！"

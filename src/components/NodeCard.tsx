@@ -1,4 +1,3 @@
-import React from "react";
 import {
   Card,
   CardContent,
@@ -21,7 +20,6 @@ import {
   formatBytes,
   formatPercent,
   formatSpeed,
-  getStatusColor,
   getCpuColor,
   getMemoryColor,
 } from "@/lib/utils";
@@ -42,7 +40,7 @@ export function NodeCard({ client, status }: NodeCardProps) {
   const diskTotal = status?.disk_total ?? client.disk_total;
 
   const getCpuVariant = (
-    usage: number
+    usage: number,
   ): "default" | "success" | "warning" | "danger" => {
     if (usage >= 80) return "danger";
     if (usage >= 60) return "warning";
@@ -51,7 +49,7 @@ export function NodeCard({ client, status }: NodeCardProps) {
 
   const getMemVariant = (
     usage: number,
-    total: number
+    total: number,
   ): "default" | "success" | "warning" | "danger" => {
     const percent = (usage / total) * 100;
     if (percent >= 90) return "danger";

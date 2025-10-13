@@ -1,4 +1,3 @@
-import React from "react";
 import { TotalNodesCard } from "./overview/TotalNodesCard";
 import { AverageLoadCard } from "./overview/AverageLoadCard";
 import { RealtimeNetworkCard } from "./overview/RealtimeNetworkCard";

@@ -5,7 +5,7 @@ Write-Host "🚀 开始构建 Komari AstroNext 主题..." -ForegroundColor Green
 # 检查 node_modules 是否存在
 if (!(Test-Path "node_modules")) {
     Write-Host "📦 安装依赖..." -ForegroundColor Yellow
-    npm install
+    bun install
 }
 
 # 清理旧的构建文件
@@ -19,7 +19,7 @@ if (Test-Path "komari-astronext.zip") {
 
 # 构建项目
 Write-Host "🔨 构建项目..." -ForegroundColor Yellow
-npm run build
+bun run build
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "❌ 构建失败！" -ForegroundColor Red

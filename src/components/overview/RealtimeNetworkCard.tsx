@@ -1,4 +1,3 @@
-import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Network } from "lucide-react";
 import { formatSpeed } from "@/lib/utils";

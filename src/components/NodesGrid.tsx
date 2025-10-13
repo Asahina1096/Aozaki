@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { NodeCard } from "./NodeCard";
 import { NodesOverview } from "./NodesOverview";
 import { getSharedClient } from "@/lib/rpc2";

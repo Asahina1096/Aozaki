@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Moon, Sun, RefreshCw } from "lucide-react";
 import { getSharedClient } from "@/lib/rpc2";
 import type { PublicInfo } from "@/lib/types/komari";

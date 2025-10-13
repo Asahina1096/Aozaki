@@ -1,9 +1,11 @@
 # build output
 dist/
 .output/
+komari-astronext.zip
 
 # dependencies
 node_modules/
+bun.lockb
 
 # logs
 npm-debug.log*

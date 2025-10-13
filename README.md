@@ -27,13 +27,13 @@
 ### 安装依赖
 
 ```bash
-npm install
+bun install
 ```
 
 ### 开发
 
 ```bash
-npm run dev
+bun run dev
 ```
 
 访问 `http://localhost:4321` 查看主题。
@@ -41,7 +41,7 @@ npm run dev
 ### 构建
 
 ```bash
-npm run build
+bun run build
 ```
 
 构建输出将生成在 `dist/` 目录中。
@@ -49,7 +49,7 @@ npm run build
 ### 预览
 
 ```bash
-npm run preview
+bun run preview
 ```
 
 ## 部署到 Komari
@@ -57,7 +57,7 @@ npm run preview
 ### 1. 构建主题
 
 ```bash
-npm run build
+bun run build
 ```
 
 ### 2. 打包主题

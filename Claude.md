@@ -38,28 +38,28 @@
 ### 环境要求
 
 - Node.js >= 18.0.0
-- npm >= 9.0.0
+- Bun >= 1.3.0
 - Komari 服务器 >= 1.0.7
 
 ### 安装与开发
 
 ```bash
 # 1. 安装依赖
-npm install
+bun install
 
 # 2. 开发模式（热重载）
-npm run dev
+bun run dev
 # 访问 http://localhost:4321
 
 # 3. 构建生产版本
-npm run build
+bun run build
 
 # 4. 预览生产构建
-npm run preview
+bun run preview
 
 # 5. 打包主题
-npm run package          # Linux/macOS
-npm run package:win      # Windows
+bun run package          # Linux/macOS
+bun run package:win      # Windows
 ```
 
 ### 部署到 Komari
@@ -67,11 +67,10 @@ npm run package:win      # Windows
 1. **构建并打包**
 
    ```bash
-   npm run build && npm run package
+   bun run build && bun run package
    ```
 
 2. **上传主题**
-
    - 登录 Komari 管理后台（`/admin`）
    - 进入主题管理页面
    - 上传生成的 `komari-astronext.zip`
@@ -238,11 +237,11 @@ try {
 
 ```bash
 # 开发
-npm run dev              # 启动开发服务器
-npm run build           # 构建生产版本
-npm run preview         # 预览构建结果
-npm run package         # 打包主题（Linux/macOS）
-npm run package:win     # 打包主题（Windows）
+bun run dev              # 启动开发服务器
+bun run build           # 构建生产版本
+bun run preview         # 预览构建结果
+bun run package         # 打包主题（Linux/macOS）
+bun run package:win     # 打包主题（Windows）
 ```
 
 ### 关键文件位置
@@ -426,7 +425,7 @@ import type { Client } from "@/lib/types/komari";
 ### 部署前检查
 
 - ✅ Node.js >= 18.0.0
-- ✅ npm >= 9.0.0
+- ✅ Bun >= 1.3.0
 - ✅ Komari Server >= 1.0.7
 - ✅ 所有源文件已创建
 - ✅ 无编译错误
@@ -437,13 +436,13 @@ import type { Client } from "@/lib/types/komari";
 
 ```bash
 cd /home/mihari/Server/Aoko
-npm install
+bun install
 ```
 
 #### 步骤 2: 构建项目
 
 ```bash
-npm run build
+bun run build
 ```
 
 预期输出:
@@ -461,13 +460,13 @@ npm run build
 **Linux/macOS**:
 
 ```bash
-npm run package
+bun run package
 ```
 
 **Windows**:
 
 ```bash
-npm run package:win
+bun run package:win
 ```
 
 预期输出:
@@ -502,16 +501,13 @@ komari-astronext.zip
 #### 步骤 5: 上传到 Komari
 
 1. **登录 Komari 管理后台**
-
    - 访问: `https://your-komari-server.com/admin`
    - 使用管理员账号登录
 
 2. **进入主题管理**
-
    - 导航: 设置 → 主题管理
 
 3. **上传主题包**
-
    - 点击"上传主题"
    - 选择 `komari-astronext.zip`
    - 等待上传完成
@@ -561,14 +557,14 @@ komari-astronext.zip
 
 ### 构建失败
 
-**症状**: `npm run build` 报错
+**症状**: `bun run build` 报错
 
 **解决方案**:
 
 1. 检查 Node.js 版本: `node --version` (应 >= 18)
 2. 清除缓存: `rm -rf node_modules package-lock.json`
-3. 重新安装: `npm install`
-4. 再次构建: `npm run build`
+3. 重新安装: `bun install`
+4. 再次构建: `bun run build`
 
 ### 数据无法加载
 
@@ -591,7 +587,7 @@ komari-astronext.zip
 1. 检查 ZIP 包结构
 2. 确认 `komari-theme.json` 在包根目录
 3. 确认 `dist/index.html` 存在
-4. 重新打包: `npm run package`
+4. 重新打包: `bun run package`
 
 ### 样式显示异常
 
