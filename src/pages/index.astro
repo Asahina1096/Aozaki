@@ -1,0 +1,28 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { Header } from '@/components/Header';
+import { NodesGrid } from '@/components/NodesGrid';
+import { Footer } from '@/components/Footer';
+---
+
+<BaseLayout>
+  <div class="flex min-h-screen flex-col">
+    <Header client:load />
+
+    <main class="flex-1">
+      <div class="container py-8">
+        <div class="mb-8">
+          <h2 class="text-3xl font-bold tracking-tight mb-2">服务器监控</h2>
+          <p class="text-muted-foreground">
+            实时查看所有服务器的运行状态和性能指标
+          </p>
+        </div>
+
+        <NodesGrid client:load refreshInterval={3000} showOffline={true} />
+      </div>
+    </main>
+
+    <Footer client:load />
+  </div>
+</BaseLayout>
+
