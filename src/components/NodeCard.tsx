@@ -26,6 +26,7 @@ import {
   getMemoryColor,
 } from "@/lib/utils";
 import type { Client, NodeStatus } from "@/lib/types/komari";
+import { OSIcon } from "./OSIcon";
 
 interface NodeCardProps {
   client: Client;
@@ -70,9 +71,10 @@ export function NodeCard({ client, status }: NodeCardProps) {
             {isOnline ? "在线" : "离线"}
           </Badge>
         </div>
-        <CardDescription>
+        <CardDescription className="flex items-center gap-2">
           {client.region && <span>{client.region} • </span>}
-          {client.os} {client.arch}
+          <OSIcon os={client.os} className="h-4 w-4" />
+          <span>{client.arch}</span>
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
