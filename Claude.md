@@ -94,6 +94,12 @@ src/
 │   ├── Header.tsx     # 页头（站点标题、主题切换）
 │   ├── Footer.tsx     # 页脚（版权信息）
 │   ├── NodeCard.tsx   # 节点卡片（展示单个节点）
+│   ├── NodesOverview.tsx # 节点概览（统计总览容器）
+│   ├── overview/      # 节点总览子模块（拆分四大卡片）
+│   │   ├── TotalNodesCard.tsx      # 节点总数 / 在线概览
+│   │   ├── AverageLoadCard.tsx     # 平均负载概览
+│   │   ├── RealtimeNetworkCard.tsx # 实时网络流量概览
+│   │   └── NetworkStatsCard.tsx    # 网络流量统计概览
 │   ├── NodesGrid.tsx  # 节点网格（主容器，数据获取）
 │   └── OSIcon.tsx     # 操作系统图标（支持主流发行版）
 ├── layouts/
@@ -118,6 +124,7 @@ src/
 - 获取节点状态（`common:getNodesLatestStatus`）
 - 自动刷新（默认 3 秒）
 - 节点过滤和排序
+- 汇总统计并渲染四大总览卡片（通过 `NodesOverview` + 子模块）
 
 **状态管理**:
 
@@ -156,7 +163,24 @@ const [error, setError] = useState<string | null>(null);
 - 通用 Linux（simple-icons:linux）
 - 通用 BSD 和未识别系统（mdi:server）
 
-#### 3. Header（页头）
+#### 3. NodesOverview（节点概览）
+
+**职责**:
+
+- 计算并展示四大总览指标
+- 与 `NodesGrid` 共享节点与状态数据
+- 提供统一样式的统计卡片容器，并委派给子模块渲染
+
+**展示内容**:
+
+- 节点总数 / 在线节点 / 离线节点（`TotalNodesCard`）
+- 所有服务器平均负载（1m/5m/15m）（`AverageLoadCard`）
+- 所有服务器实时网络流量（总速率、上下行拆分）（`RealtimeNetworkCard`）
+- 所有服务器网络流量统计（累计上传/下载总量）（`NetworkStatsCard`）
+
+> 📌 若当前无节点状态数据，则总览卡片显示为 0。
+
+#### 4. Header（页头）
 
 **功能**:
 
@@ -164,12 +188,11 @@ const [error, setError] = useState<string | null>(null);
 - 主题切换按钮（明/暗模式）
 - 刷新按钮
 
-#### 4. Footer（页脚）
+#### 5. Footer（页脚）
 
 **内容**:
 
 - Powered by Komari Monitor
-- 主题信息
 
 ### RPC2 客户端
 

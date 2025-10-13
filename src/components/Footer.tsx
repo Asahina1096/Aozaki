@@ -17,10 +17,7 @@ export function Footer() {
             </a>
             .
           </p>
-          <p className="text-sm text-muted-foreground">
-            Theme: <span className="font-medium">AstroNext</span> by Komari Dev
-            Team
-          </p>
+          {/* 主题信息行已按要求移除 */}
         </div>
       </div>
     </footer>

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { NodeCard } from "./NodeCard";
+import { NodesOverview } from "./NodesOverview";
 import { getSharedClient } from "@/lib/rpc2";
 import type { Client, NodeStatus } from "@/lib/types/komari";
 import { Loader2 } from "lucide-react";
@@ -98,10 +99,18 @@ export function NodesGrid({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {clientArray.map((client) => (
-        <NodeCard key={client.uuid} client={client} status={client.status} />
-      ))}
+    <div className="space-y-6">
+      <NodesOverview clients={clients} statuses={statuses} />
+      <div className="flex items-center">
+        <span className="inline-flex items-center rounded-full border border-primary/40 bg-primary/10 px-4 py-1 text-lg font-semibold text-primary">
+          节点列表
+        </span>
+      </div>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {clientArray.map((client) => (
+          <NodeCard key={client.uuid} client={client} status={client.status} />
+        ))}
+      </div>
     </div>
   );
 }

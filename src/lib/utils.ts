@@ -29,6 +29,11 @@ export function formatSpeed(bytesPerSecond: number): string {
   return formatBytes(bytesPerSecond) + "/s";
 }
 
+// 格式化平均负载
+export function formatLoad(value: number): string {
+  return value.toFixed(2);
+}
+
 // 获取状态颜色类
 export function getStatusColor(online: boolean): string {
   return online ? "text-green-500" : "text-red-500";

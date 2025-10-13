@@ -32,11 +32,6 @@ export function Header() {
           <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
             {publicInfo?.sitename || "Komari Monitor"}
           </h1>
-          {publicInfo?.description && (
-            <span className="hidden md:inline text-sm text-muted-foreground">
-              {publicInfo.description}
-            </span>
-          )}
         </div>
 
         <div className="flex items-center gap-2">
