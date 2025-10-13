@@ -16,7 +16,7 @@ export function NetworkStatsCard({
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">网络流量统计</CardTitle>
+        <CardTitle className="text-sm font-medium">流量统计</CardTitle>
         <BarChart3 className="h-5 w-5 text-primary" />
       </CardHeader>
       <CardContent>

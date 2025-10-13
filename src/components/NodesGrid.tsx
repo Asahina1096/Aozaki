@@ -86,8 +86,8 @@ export function NodesGrid({
       // 在线的排在前面
       if (a.status?.online && !b.status?.online) return -1;
       if (!a.status?.online && b.status?.online) return 1;
-      // 按权重排序
-      return (b.weight || 0) - (a.weight || 0);
+      // 按权重排序（权重越小越靠前）
+      return (a.weight ?? 0) - (b.weight ?? 0);
     });
 
   if (clientArray.length === 0) {
