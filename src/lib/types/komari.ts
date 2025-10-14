@@ -113,3 +113,59 @@ export interface JsonRpcResponse<T = any> {
 
 export type NodesResponse = Record<string, Client> | Client;
 export type NodesStatusResponse = Record<string, NodeStatus>;
+
+// 历史记录类型
+export interface StatusRecord {
+  client: string;
+  time: string;
+  cpu: number;
+  gpu: number;
+  ram: number;
+  ram_total: number;
+  swap: number;
+  swap_total: number;
+  load: number;
+  load5?: number;
+  load15?: number;
+  temp: number;
+  disk: number;
+  disk_total: number;
+  net_in: number;
+  net_out: number;
+  net_total_up: number;
+  net_total_down: number;
+  process: number;
+  connections: number;
+  connections_udp: number;
+}
+
+// 历史记录响应类型
+export interface RecordsResponse {
+  count: number;
+  records: StatusRecord[] | Record<string, StatusRecord[]>;
+  from: string;
+  to: string;
+}
+
+// getRecords 参数类型
+export interface GetRecordsParams {
+  type?: "load" | "ping";
+  uuid?: string;
+  hours?: number;
+  start?: string;
+  end?: string;
+  load_type?:
+    | "cpu"
+    | "gpu"
+    | "ram"
+    | "swap"
+    | "load"
+    | "temp"
+    | "disk"
+    | "network"
+    | "process"
+    | "connections"
+    | "all";
+  task_id?: number;
+  maxCount?: number;
+}

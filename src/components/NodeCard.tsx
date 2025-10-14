@@ -62,173 +62,175 @@ export function NodeCard({ client, status }: NodeCardProps) {
   };
 
   return (
-    <Card className="min-h-[420px] overflow-hidden transition-all hover:shadow-lg">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <OSIcon os={client.os} className="h-5 w-5" />
-            <CardTitle className="text-lg">{client.name}</CardTitle>
-          </div>
-          <div
-            className={`h-2.5 w-2.5 rounded-full mr-1 ${
-              isOnline
-                ? "bg-green-500 text-green-500 animate-pulse-glow"
-                : "bg-gray-400"
-            }`}
-          />
-        </div>
-        <CardDescription className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          {status?.uptime !== undefined && status?.uptime > 0 ? (
-            <span className={infoPillClass}>
-              <Clock4 className="h-3.5 w-3.5" />
-              <span className="leading-none">
-                {formatDuration(status.uptime)}
-              </span>
-            </span>
-          ) : (
-            <span className={infoPillClass}>
-              <Clock4 className="h-3.5 w-3.5" />
-              <span className="leading-none">--</span>
-            </span>
-          )}
-          {client.virtualization && (
-            <span className={infoPillClass}>
-              <Box className="h-3.5 w-3.5" />
-              <span className="leading-none">{client.virtualization}</span>
-            </span>
-          )}
-          {client.arch && (
-            <span className={infoPillClass}>
-              <Binary className="h-3.5 w-3.5" />
-              <span className="leading-none">{client.arch}</span>
-            </span>
-          )}
-          {client.region && (
-            <span className={infoPillClass}>
-              <MapPin className="h-3.5 w-3.5" />
-              <span className="leading-none">{client.region}</span>
-            </span>
-          )}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* CPU */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
+    <a href={`/node.html?uuid=${client.uuid}`} className="block">
+      <Card className="min-h-[420px] overflow-hidden transition-all hover:shadow-lg cursor-pointer">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Cpu className="h-4 w-4" />
-              <span>CPU</span>
+              <OSIcon os={client.os} className="h-5 w-5" />
+              <CardTitle className="text-lg">{client.name}</CardTitle>
             </div>
-            <span className="text-black">{cpuUsage.toFixed(1)}%</span>
+            <div
+              className={`h-2.5 w-2.5 rounded-full mr-1 ${
+                isOnline
+                  ? "bg-green-500 text-green-500 animate-pulse-glow"
+                  : "bg-gray-400"
+              }`}
+            />
           </div>
-          <Progress
-            value={cpuUsage}
-            max={100}
-            variant={isOnline ? getCpuVariant(cpuUsage) : "muted"}
-          />
-          <p className="text-xs text-muted-foreground truncate">
-            {client.cpu_name}
-          </p>
-        </div>
-
-        <Separator />
-
-        {/* 内存 */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-2">
-              <MemoryStick className="h-4 w-4" />
-              <span>内存</span>
+          <CardDescription className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            {status?.uptime !== undefined && status?.uptime > 0 ? (
+              <span className={infoPillClass}>
+                <Clock4 className="h-3.5 w-3.5" />
+                <span className="leading-none">
+                  {formatDuration(status.uptime)}
+                </span>
+              </span>
+            ) : (
+              <span className={infoPillClass}>
+                <Clock4 className="h-3.5 w-3.5" />
+                <span className="leading-none">--</span>
+              </span>
+            )}
+            {client.virtualization && (
+              <span className={infoPillClass}>
+                <Box className="h-3.5 w-3.5" />
+                <span className="leading-none">{client.virtualization}</span>
+              </span>
+            )}
+            {client.arch && (
+              <span className={infoPillClass}>
+                <Binary className="h-3.5 w-3.5" />
+                <span className="leading-none">{client.arch}</span>
+              </span>
+            )}
+            {client.region && (
+              <span className={infoPillClass}>
+                <MapPin className="h-3.5 w-3.5" />
+                <span className="leading-none">{client.region}</span>
+              </span>
+            )}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* CPU */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-2">
+                <Cpu className="h-4 w-4" />
+                <span>CPU</span>
+              </div>
+              <span className="text-black">{cpuUsage.toFixed(1)}%</span>
             </div>
-            <span className="text-black">
-              {formatPercent(memUsage, memTotal)}
-            </span>
+            <Progress
+              value={cpuUsage}
+              max={100}
+              variant={isOnline ? getCpuVariant(cpuUsage) : "muted"}
+            />
+            <p className="text-xs text-muted-foreground truncate">
+              {client.cpu_name}
+            </p>
           </div>
-          <Progress
-            value={memUsage}
-            max={memTotal}
-            variant={isOnline ? getMemVariant(memUsage, memTotal) : "muted"}
-          />
-          <p className="text-xs text-muted-foreground">
-            {formatBytes(memUsage)} / {formatBytes(memTotal)}
-          </p>
-        </div>
 
-        <Separator />
+          <Separator />
 
-        {/* 磁盘 */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-2">
-              <HardDrive className="h-4 w-4" />
-              <span>磁盘</span>
-            </div>
-            <span>{formatPercent(diskUsage, diskTotal)}</span>
-          </div>
-          <Progress
-            value={diskUsage}
-            max={diskTotal}
-            variant={isOnline ? getMemVariant(diskUsage, diskTotal) : "muted"}
-          />
-          <p className="text-xs text-muted-foreground">
-            {formatBytes(diskUsage)} / {formatBytes(diskTotal)}
-          </p>
-        </div>
-
-        <Separator />
-
-        {/* 网络 */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm">
-            <Network className="h-4 w-4" />
-            <span>网络</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className={`${infoPillClass} justify-between`}>
-              <span className="text-muted-foreground">↑ 上传</span>
-              <span className="font-medium">
-                {hasStatus ? (
-                  formatSpeed(status?.net_out ?? 0)
-                ) : (
-                  <Skeleton className="h-4 w-16 rounded-full" />
-                )}
+          {/* 内存 */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-2">
+                <MemoryStick className="h-4 w-4" />
+                <span>内存</span>
+              </div>
+              <span className="text-black">
+                {formatPercent(memUsage, memTotal)}
               </span>
             </div>
-            <div className={`${infoPillClass} justify-between`}>
-              <span className="text-muted-foreground">↓ 下载</span>
-              <span className="font-medium">
-                {hasStatus ? (
-                  formatSpeed(status?.net_in ?? 0)
-                ) : (
-                  <Skeleton className="h-4 w-16 rounded-full" />
-                )}
-              </span>
+            <Progress
+              value={memUsage}
+              max={memTotal}
+              variant={isOnline ? getMemVariant(memUsage, memTotal) : "muted"}
+            />
+            <p className="text-xs text-muted-foreground">
+              {formatBytes(memUsage)} / {formatBytes(memTotal)}
+            </p>
+          </div>
+
+          <Separator />
+
+          {/* 磁盘 */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-2">
+                <HardDrive className="h-4 w-4" />
+                <span>磁盘</span>
+              </div>
+              <span>{formatPercent(diskUsage, diskTotal)}</span>
+            </div>
+            <Progress
+              value={diskUsage}
+              max={diskTotal}
+              variant={isOnline ? getMemVariant(diskUsage, diskTotal) : "muted"}
+            />
+            <p className="text-xs text-muted-foreground">
+              {formatBytes(diskUsage)} / {formatBytes(diskTotal)}
+            </p>
+          </div>
+
+          <Separator />
+
+          {/* 网络 */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm">
+              <Network className="h-4 w-4" />
+              <span>网络</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className={`${infoPillClass} justify-between`}>
+                <span className="text-muted-foreground">↑ 上传</span>
+                <span className="font-medium">
+                  {hasStatus ? (
+                    formatSpeed(status?.net_out ?? 0)
+                  ) : (
+                    <Skeleton className="h-4 w-16 rounded-full" />
+                  )}
+                </span>
+              </div>
+              <div className={`${infoPillClass} justify-between`}>
+                <span className="text-muted-foreground">↓ 下载</span>
+                <span className="font-medium">
+                  {hasStatus ? (
+                    formatSpeed(status?.net_in ?? 0)
+                  ) : (
+                    <Skeleton className="h-4 w-16 rounded-full" />
+                  )}
+                </span>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className={`${infoPillClass} justify-between`}>
+                <span className="text-muted-foreground">↑ 总上传</span>
+                <span className="font-medium">
+                  {hasStatus ? (
+                    formatBytes(status?.net_total_up ?? 0)
+                  ) : (
+                    <Skeleton className="h-4 w-20 rounded-full" />
+                  )}
+                </span>
+              </div>
+              <div className={`${infoPillClass} justify-between`}>
+                <span className="text-muted-foreground">↓ 总下载</span>
+                <span className="font-medium">
+                  {hasStatus ? (
+                    formatBytes(status?.net_total_down ?? 0)
+                  ) : (
+                    <Skeleton className="h-4 w-20 rounded-full" />
+                  )}
+                </span>
+              </div>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className={`${infoPillClass} justify-between`}>
-              <span className="text-muted-foreground">↑ 总上传</span>
-              <span className="font-medium">
-                {hasStatus ? (
-                  formatBytes(status?.net_total_up ?? 0)
-                ) : (
-                  <Skeleton className="h-4 w-20 rounded-full" />
-                )}
-              </span>
-            </div>
-            <div className={`${infoPillClass} justify-between`}>
-              <span className="text-muted-foreground">↓ 总下载</span>
-              <span className="font-medium">
-                {hasStatus ? (
-                  formatBytes(status?.net_total_down ?? 0)
-                ) : (
-                  <Skeleton className="h-4 w-20 rounded-full" />
-                )}
-              </span>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </a>
   );
 }

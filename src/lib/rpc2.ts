@@ -6,6 +6,8 @@ import type {
   PublicInfo,
   MeInfo,
   VersionInfo,
+  RecordsResponse,
+  GetRecordsParams,
 } from "./types/komari";
 
 class RPC2Client {
@@ -99,6 +101,10 @@ class RPC2Client {
 
   async getVersion(): Promise<VersionInfo> {
     return this.call("common:getVersion");
+  }
+
+  async getRecords(params?: GetRecordsParams): Promise<RecordsResponse> {
+    return this.call("common:getRecords", params);
   }
 }
 
