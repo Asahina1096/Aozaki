@@ -25,7 +25,7 @@
 | ------------- | ---- | -------------- |
 | Astro         | 4.x  | 静态站点生成器 |
 | React         | 18   | 客户端组件库   |
-| TailwindCSS   | 3.x  | CSS 框架       |
+| TailwindCSS   | 4.x  | CSS 框架       |
 | shadcn/ui     | -    | UI 组件库      |
 | TypeScript    | 5.x  | 类型系统       |
 | Lucide React  | -    | 图标库         |
