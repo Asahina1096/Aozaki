@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { NodeCard } from "./NodeCard";
 import { NodesOverview } from "./NodesOverview";
+import { NodesGridSkeleton } from "./NodesGridSkeleton";
+import { NodeCardSkeleton } from "./NodeCardSkeleton";
 import { getSharedClient } from "@/lib/rpc2";
 import type { Client, NodeStatus } from "@/lib/types/komari";
-import { Loader2 } from "lucide-react";
 
 interface NodesGridProps {
   refreshInterval?: number;
@@ -53,11 +54,7 @@ export function NodesGrid({
   }, [refreshInterval]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <NodesGridSkeleton />;
   }
 
   if (error) {
@@ -90,14 +87,6 @@ export function NodesGrid({
       return (a.weight ?? 0) - (b.weight ?? 0);
     });
 
-  if (clientArray.length === 0) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <p className="text-muted-foreground text-lg">暂无节点数据</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <NodesOverview clients={clients} statuses={statuses} />
@@ -107,9 +96,17 @@ export function NodesGrid({
         </span>
       </div>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {clientArray.map((client) => (
-          <NodeCard key={client.uuid} client={client} status={client.status} />
-        ))}
+        {clientArray.length === 0
+          ? Array.from({ length: 4 }).map((_, index) => (
+              <NodeCardSkeleton key={`node-skeleton-${index}`} />
+            ))
+          : clientArray.map((client) => (
+              <NodeCard
+                key={client.uuid}
+                client={client}
+                status={client.status}
+              />
+            ))}
       </div>
     </div>
   );

@@ -28,6 +28,7 @@ import {
 } from "@/lib/utils";
 import type { Client, NodeStatus } from "@/lib/types/komari";
 import { OSIcon } from "./OSIcon";
+import { Skeleton } from "./ui/skeleton";
 
 interface NodeCardProps {
   client: Client;
@@ -41,6 +42,11 @@ export function NodeCard({ client, status }: NodeCardProps) {
   const memTotal = status?.ram_total ?? client.mem_total;
   const diskUsage = status?.disk ?? 0;
   const diskTotal = status?.disk_total ?? client.disk_total;
+  const hasStatus = Boolean(status);
+  const hasLoadMetrics =
+    status?.load !== undefined ||
+    status?.load5 !== undefined ||
+    status?.load15 !== undefined;
   const infoPillClass =
     "inline-flex items-center gap-1 rounded-full border border-border/40 bg-muted/40 px-1.5 py-0.5 whitespace-nowrap";
 
@@ -62,8 +68,11 @@ export function NodeCard({ client, status }: NodeCardProps) {
     return "success";
   };
 
+  const formatLoadValue = (value?: number) =>
+    value === undefined || Number.isNaN(value) ? "--" : value.toFixed(2);
+
   return (
-    <Card className="overflow-hidden transition-all hover:shadow-lg">
+    <Card className="min-h-[420px] overflow-hidden transition-all hover:shadow-lg">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -78,13 +87,18 @@ export function NodeCard({ client, status }: NodeCardProps) {
             }`}
           />
         </div>
-        <CardDescription className="flex items-center gap-2 text-xs text-muted-foreground">
-          {status?.uptime !== undefined && status?.uptime > 0 && (
+        <CardDescription className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          {status?.uptime !== undefined && status?.uptime > 0 ? (
             <span className={infoPillClass}>
               <Clock4 className="h-3.5 w-3.5" />
               <span className="leading-none">
                 {formatDuration(status.uptime)}
               </span>
+            </span>
+          ) : (
+            <span className={infoPillClass}>
+              <Clock4 className="h-3.5 w-3.5" />
+              <span className="leading-none">--</span>
             </span>
           )}
           {client.virtualization && (
@@ -173,56 +187,74 @@ export function NodeCard({ client, status }: NodeCardProps) {
           </p>
         </div>
 
-        {status && (
-          <>
-            <Separator />
+        <Separator />
 
-            {/* 网络 */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm">
-                <Network className="h-4 w-4" />
-                <span>网络</span>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="space-y-1">
-                  <p className="text-muted-foreground">↑ 上传</p>
-                  <p className="font-medium">{formatSpeed(status.net_out)}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-muted-foreground">↓ 下载</p>
-                  <p className="font-medium">{formatSpeed(status.net_in)}</p>
-                </div>
+        {/* 网络 */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm">
+            <Network className="h-4 w-4" />
+            <span>网络</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="space-y-1">
+              <p className="text-muted-foreground">↑ 上传</p>
+              <div className="font-medium">
+                {hasStatus ? (
+                  formatSpeed(status?.net_out ?? 0)
+                ) : (
+                  <Skeleton className="h-4 w-16" />
+                )}
               </div>
             </div>
+            <div className="space-y-1">
+              <p className="text-muted-foreground">↓ 下载</p>
+              <div className="font-medium">
+                {hasStatus ? (
+                  formatSpeed(status?.net_in ?? 0)
+                ) : (
+                  <Skeleton className="h-4 w-16" />
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
 
-            {/* 负载 */}
-            {status.load !== undefined && (
-              <>
-                <Separator />
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Activity className="h-4 w-4" />
-                    <span>负载</span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div>
-                      <p className="text-muted-foreground">1m</p>
-                      <p className="font-medium">{status.load.toFixed(2)}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">5m</p>
-                      <p className="font-medium">{status.load5.toFixed(2)}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">15m</p>
-                      <p className="font-medium">{status.load15.toFixed(2)}</p>
-                    </div>
+        <Separator />
+
+        {/* 负载 */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm">
+            <Activity className="h-4 w-4" />
+            <span>负载</span>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-xs">
+            {["1m", "5m", "15m"].map((label, index) => {
+              const value =
+                index === 0
+                  ? status?.load
+                  : index === 1
+                    ? status?.load5
+                    : status?.load15;
+              const hasValue = hasLoadMetrics && value !== undefined;
+              return (
+                <div key={label}>
+                  <p className="text-muted-foreground">{label}</p>
+                  <div className="font-medium">
+                    {hasStatus ? (
+                      hasValue ? (
+                        formatLoadValue(value)
+                      ) : (
+                        "--"
+                      )
+                    ) : (
+                      <Skeleton className="h-4 w-12" />
+                    )}
                   </div>
                 </div>
-              </>
-            )}
-          </>
-        )}
+              );
+            })}
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

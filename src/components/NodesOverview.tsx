@@ -2,6 +2,7 @@ import { TotalNodesCard } from "./overview/TotalNodesCard";
 import { AverageLoadCard } from "./overview/AverageLoadCard";
 import { RealtimeNetworkCard } from "./overview/RealtimeNetworkCard";
 import { NetworkStatsCard } from "./overview/NetworkStatsCard";
+import { NodesOverviewSkeleton } from "./overview/NodesOverviewSkeleton";
 import type { Client, NodeStatus } from "@/lib/types/komari";
 
 interface NodesOverviewProps {
@@ -12,6 +13,7 @@ interface NodesOverviewProps {
 export function NodesOverview({ clients, statuses }: NodesOverviewProps) {
   const statusList = Object.values(statuses);
 
+  const hasStatusData = statusList.length > 0;
   const totalNodes = Object.keys(clients).length;
   const onlineNodes = statusList.filter((status) => status?.online).length;
 
@@ -44,6 +46,10 @@ export function NodesOverview({ clients, statuses }: NodesOverviewProps) {
   );
 
   const offlineNodes = Math.max(totalNodes - onlineNodes, 0);
+
+  if (!hasStatusData && totalNodes === 0) {
+    return <NodesOverviewSkeleton />;
+  }
 
   return (
     <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">

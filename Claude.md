@@ -93,13 +93,10 @@ src/
 │   ├── Header.tsx     # 页头（站点标题、主题切换）
 │   ├── Footer.tsx     # 页脚（版权信息）
 │   ├── NodeCard.tsx   # 节点卡片（展示单个节点）
+│   ├── NodeCardSkeleton.tsx # 节点卡片骨架占位
 │   ├── NodesOverview.tsx # 节点概览（统计总览容器）
-│   ├── overview/      # 节点总览子模块（拆分四大卡片）
-│   │   ├── TotalNodesCard.tsx      # 节点总数 / 在线概览
-│   │   ├── AverageLoadCard.tsx     # 平均负载概览
-│   │   ├── RealtimeNetworkCard.tsx # 实时网络流量概览
-│   │   └── NetworkStatsCard.tsx    # 网络流量统计概览
 │   ├── NodesGrid.tsx  # 节点网格（主容器，数据获取）
+│   ├── NodesGridSkeleton.tsx # 节点网格骨架占位
 │   └── OSIcon.tsx     # 操作系统图标（支持主流发行版）
 ├── layouts/
 │   └── BaseLayout.astro   # 基础布局模板
@@ -124,6 +121,7 @@ src/
 - 自动刷新（默认 3 秒）
 - 节点过滤和排序
 - 汇总统计并渲染四大总览卡片（通过 `NodesOverview` + 子模块）
+- **加载骨架**：初次渲染与空数据时使用 `NodesGridSkeleton`，结构与最终布局保持一致，降低 CLS
 
 **状态管理**:
 
@@ -146,6 +144,7 @@ const [error, setError] = useState<string | null>(null);
 - 网络流量（上传/下载速度）
 - 系统负载（1m/5m/15m）
 - 在线/离线状态
+- **占位策略**：在状态缺失时仍渲染网络/负载等区块，使用骨架或 `--` 文案保持卡片高度稳定
 
 **系统图标支持（Iconify）**:
 
@@ -170,6 +169,7 @@ const [error, setError] = useState<string | null>(null);
 - 计算并展示四大总览指标
 - 与 `NodesGrid` 共享节点与状态数据
 - 提供统一样式的统计卡片容器，并委派给子模块渲染
+- **骨架占位**：初始无数据时渲染 `NodesOverviewSkeleton`，确保概览区高度恒定
 
 **展示内容**:
 
@@ -187,6 +187,7 @@ const [error, setError] = useState<string | null>(null);
 - 显示站点名称（从 RPC2 获取）
 - 主题切换按钮（明/暗模式）
 - 刷新按钮
+- **占位策略**：在站点名称加载前使用与最终宽度相等的骨架，避免标题变化导致按钮位移
 
 #### 5. Footer（页脚）
 
@@ -511,106 +512,3 @@ komari-astronext.zip
 3. **上传主题包**
    - 点击"上传主题"
    - 选择 `komari-astronext.zip`
-   - 等待上传完成
-
-4. **激活主题**
-   - 在主题列表中找到 "Komari AstroNext"
-   - 点击"激活"
-   - 访问首页查看效果
-
----
-
-## 配置说明
-
-### 主题配置项
-
-主题支持以下后台配置（在 `komari-theme.json` 中定义）:
-
-| 配置项             | 类型   | 默认值 | 说明                      |
-| ------------------ | ------ | ------ | ------------------------- |
-| `view_mode`        | select | 网格   | 默认视图模式（网格/列表） |
-| `show_offline`     | switch | true   | 是否显示离线节点          |
-| `refresh_interval` | number | 3      | 刷新间隔（秒）            |
-| `auto_refresh`     | switch | true   | 是否自动刷新              |
-| `compact_mode`     | switch | false  | 紧凑模式                  |
-
-### 本地存储
-
-主题使用以下本地存储字段:
-
-- `appearance` - 明暗主题设置 (light/dark/system)
-- `nodeSelectedGroup` - 用户选择的节点分组
-- `nodeViewMode` - 展示模式 (grid/table)
-
-### RPC2 接口
-
-主题调用以下 Komari RPC2 接口:
-
-- `common:getNodes` - 获取所有节点信息
-- `common:getNodesLatestStatus` - 获取节点最新状态
-- `common:getPublicInfo` - 获取公开站点信息
-
-详细的 RPC2 接口文档请查看 `rpc.md`。
-
----
-
-## 故障排查
-
-### 构建失败
-
-**症状**: `bun run build` 报错
-
-**解决方案**:
-
-1. 检查 Node.js 版本: `node --version` (应 >= 18)
-2. 清除缓存: `rm -rf node_modules package-lock.json`
-3. 重新安装: `bun install`
-4. 再次构建: `bun run build`
-
-### 数据无法加载
-
-**症状**: 页面显示"加载失败"
-
-**解决方案**:
-
-1. 检查浏览器控制台错误
-2. 确认 Komari 版本 >= 1.0.7
-3. 确认 RPC2 接口已启用
-4. 检查 CORS 设置
-5. 确认 `/api/rpc2` 可访问
-
-### 主题无法激活
-
-**症状**: 上传成功但激活失败
-
-**解决方案**:
-
-1. 检查 ZIP 包结构
-2. 确认 `komari-theme.json` 在包根目录
-3. 确认 `dist/index.html` 存在
-4. 重新打包: `bun run package`
-
-### 样式显示异常
-
-**症状**: 页面布局混乱
-
-**解决方案**:
-
-1. 清除浏览器缓存 (Ctrl+Shift+R)
-2. 检查浏览器控制台错误
-3. 确认 CSS 文件已正确加载
-4. 尝试其他现代浏览器
-
-### 暗色主题无法切换
-
-**症状**: 点击主题切换按钮无反应
-
-**解决方案**:
-
-1. 清除浏览器 localStorage
-2. 刷新页面 (F5)
-3. 检查浏览器是否支持 classList API
-
----
-
----
