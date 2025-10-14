@@ -29,6 +29,35 @@ export function formatSpeed(bytesPerSecond: number): string {
   return formatBytes(bytesPerSecond) + "/s";
 }
 
+// 将秒格式化为人类可读的时长
+export function formatDuration(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds <= 0) {
+    return "0天";
+  }
+
+  const totalSeconds = Math.floor(seconds);
+  const dayInSeconds = 86400;
+  const hourInSeconds = 3600;
+  const minuteInSeconds = 60;
+
+  if (totalSeconds >= dayInSeconds) {
+    const days = Math.floor(totalSeconds / dayInSeconds);
+    return `${days}天`;
+  }
+
+  if (totalSeconds >= hourInSeconds) {
+    const hours = Math.floor(totalSeconds / hourInSeconds);
+    return `${hours}小时`;
+  }
+
+  if (totalSeconds >= minuteInSeconds) {
+    const minutes = Math.floor(totalSeconds / minuteInSeconds);
+    return `${minutes}分钟`;
+  }
+
+  return "0天";
+}
+
 // 格式化平均负载
 export function formatLoad(value: number): string {
   return value.toFixed(2);

@@ -102,7 +102,7 @@ export function NodesGrid({
     <div className="space-y-6">
       <NodesOverview clients={clients} statuses={statuses} />
       <div className="flex items-center">
-        <span className="inline-flex items-center rounded-full border border-primary/40 bg-primary/10 px-4 py-1 text-lg font-semibold text-primary">
+        <span className="inline-flex items-center rounded-full border border-primary/40 bg-primary/10 px-4 py-1 text-lg font-bold text-primary">
           节点列表
         </span>
       </div>

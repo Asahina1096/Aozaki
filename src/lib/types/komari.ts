@@ -58,6 +58,7 @@ export interface NodeStatus {
   connections: number;
   connections_udp: number;
   online: boolean;
+  uptime: number;
 }
 
 export interface PublicInfo {

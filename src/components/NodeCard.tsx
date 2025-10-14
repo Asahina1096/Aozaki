@@ -5,19 +5,22 @@ import {
   CardHeader,
   CardTitle,
 } from "./ui/card";
-import { Badge } from "./ui/badge";
 import { Progress } from "./ui/progress";
 import { Separator } from "./ui/separator";
 import {
-  Server,
+  Box,
+  Binary,
   Cpu,
   HardDrive,
   Activity,
+  Clock4,
   Network,
   MemoryStick,
+  MapPin,
 } from "lucide-react";
 import {
   formatBytes,
+  formatDuration,
   formatPercent,
   formatSpeed,
   getCpuColor,
@@ -38,6 +41,8 @@ export function NodeCard({ client, status }: NodeCardProps) {
   const memTotal = status?.ram_total ?? client.mem_total;
   const diskUsage = status?.disk ?? 0;
   const diskTotal = status?.disk_total ?? client.disk_total;
+  const infoPillClass =
+    "inline-flex items-center gap-1 rounded-full border border-border/40 bg-muted/40 px-1.5 py-0.5 whitespace-nowrap";
 
   const getCpuVariant = (
     usage: number,
@@ -60,19 +65,46 @@ export function NodeCard({ client, status }: NodeCardProps) {
   return (
     <Card className="overflow-hidden transition-all hover:shadow-lg">
       <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Server className="h-5 w-5 text-primary" />
+            <OSIcon os={client.os} className="h-5 w-5" />
             <CardTitle className="text-lg">{client.name}</CardTitle>
           </div>
-          <Badge variant={isOnline ? "success" : "destructive"}>
-            {isOnline ? "在线" : "离线"}
-          </Badge>
+          <div
+            className={`h-2.5 w-2.5 rounded-full mr-1 ${
+              isOnline
+                ? "bg-green-500 text-green-500 animate-pulse-glow"
+                : "bg-gray-400"
+            }`}
+          />
         </div>
-        <CardDescription className="flex items-center gap-2">
-          {client.region && <span>{client.region} • </span>}
-          <OSIcon os={client.os} className="h-4 w-4" />
-          <span>{client.arch}</span>
+        <CardDescription className="flex items-center gap-2 text-xs text-muted-foreground">
+          {status?.uptime !== undefined && status?.uptime > 0 && (
+            <span className={infoPillClass}>
+              <Clock4 className="h-3.5 w-3.5" />
+              <span className="leading-none">
+                {formatDuration(status.uptime)}
+              </span>
+            </span>
+          )}
+          {client.virtualization && (
+            <span className={infoPillClass}>
+              <Box className="h-3.5 w-3.5" />
+              <span className="leading-none">{client.virtualization}</span>
+            </span>
+          )}
+          {client.arch && (
+            <span className={infoPillClass}>
+              <Binary className="h-3.5 w-3.5" />
+              <span className="leading-none">{client.arch}</span>
+            </span>
+          )}
+          {client.region && (
+            <span className={infoPillClass}>
+              <MapPin className="h-3.5 w-3.5" />
+              <span className="leading-none">{client.region}</span>
+            </span>
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
