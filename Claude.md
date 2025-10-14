@@ -1,4 +1,4 @@
-# Komari AstroNext 主题 - 完整文档
+# Komari Aozaki 主题 - 完整文档
 
 > **项目版本**: 1.0.0
 > **创建日期**: 2025-10-13
@@ -73,7 +73,7 @@ bun run package:win      # Windows
 2. **上传主题**
    - 登录 Komari 管理后台（`/admin`）
    - 进入主题管理页面
-   - 上传生成的 `komari-astronext.zip`
+- 上传生成的 `komari-aozaki.zip`
    - 激活主题
 
 3. **配置主题**
@@ -474,11 +474,11 @@ bun run package:win
 预期输出:
 
 ```
-🚀 开始构建 Komari AstroNext 主题...
+🚀 开始构建 Komari Aozaki 主题...
 🔨 构建项目...
 📦 创建主题包...
 ✅ 打包完成！
-📦 主题包: komari-astronext.zip
+📦 主题包: komari-aozaki.zip
 ```
 
 #### 步骤 4: 验证主题包
@@ -490,7 +490,7 @@ unzip -l komari-astronext.zip
 应包含:
 
 ```
-komari-astronext.zip
+komari-aozaki.zip
 ├── komari-theme.json
 └── dist/
     ├── index.html

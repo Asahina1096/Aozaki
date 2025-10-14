@@ -6,7 +6,7 @@ export function NodesGridSkeleton() {
     <div className="space-y-6">
       <NodesOverviewSkeleton />
       <div className="flex items-center">
-        <span className="inline-flex items-center rounded-full border border-primary/40 bg-primary/10 px-4 py-1 text-lg font-bold text-primary">
+        <span className="text-xl md:text-2xl font-bold text-primary">
           节点列表
         </span>
       </div>

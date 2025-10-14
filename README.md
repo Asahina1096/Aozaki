@@ -1,4 +1,4 @@
-# Komari AstroNext 主题
+# Komari Aozaki 主题
 
 一个现代化的 Komari 监控系统主题，基于 Astro、React、TailwindCSS 和 shadcn/ui 构建。
 
@@ -65,7 +65,7 @@ bun run build
 将以下文件打包成 ZIP 文件：
 
 ```
-komari-astronext.zip
+komari-aozaki.zip
 ├── komari-theme.json
 ├── dist/
 │   ├── index.html
@@ -76,14 +76,14 @@ komari-astronext.zip
 使用以下命令打包：
 
 ```bash
-zip -r komari-astronext.zip komari-theme.json dist/
+zip -r komari-aozaki.zip komari-theme.json dist/
 ```
 
 ### 3. 上传主题
 
 1. 登录 Komari 管理后台
 2. 进入主题管理页面
-3. 上传 `komari-astronext.zip`
+3. 上传 `komari-aozaki.zip`
 4. 激活主题
 
 ## 主题配置

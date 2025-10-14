@@ -1,15 +1,15 @@
 {
-  "name": "Komari AstroNext",
-  "short": "AstroNext",
+  "name": "Aozaki",
+  "short": "Aozaki",
   "description": "A modern Komari theme built with Astro, React, TailwindCSS and shadcn/ui",
   "version": "1.0.0",
-  "author": "Komari Dev Team",
+  "author": "Asahina1096",
   "url": "https://github.com/komari-monitor/komari",
   "preview": "preview.png",
   "configuration": {
     "type": "managed",
-    "icon": "/themes/AstroNext/dist/favicon.svg",
-    "name": "AstroNext 主题设置",
+    "icon": "/themes/Aozaki/dist/favicon.svg",
+    "name": "Aozaki 主题设置",
     "data": [
       {
         "name": "显示设置",

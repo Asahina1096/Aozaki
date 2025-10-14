@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { Moon, Sun, RefreshCw } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import { getSharedClient } from "@/lib/rpc2";
 import type { PublicInfo } from "@/lib/types/komari";
 import { Skeleton } from "./ui/skeleton";
@@ -20,10 +20,6 @@ export function Header() {
   const toggleTheme = () => {
     document.documentElement.classList.toggle("dark");
     setIsDark(!isDark);
-  };
-
-  const handleRefresh = () => {
-    window.location.reload();
   };
 
   const titlePlaceholder = useMemo(() => {
@@ -57,13 +53,6 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            onClick={handleRefresh}
-            className="inline-flex items-center justify-center rounded-md p-2 hover:bg-accent hover:text-accent-foreground transition-colors"
-            aria-label="刷新"
-          >
-            <RefreshCw className="h-5 w-5" />
-          </button>
           <button
             onClick={toggleTheme}
             className="inline-flex items-center justify-center rounded-md p-2 hover:bg-accent hover:text-accent-foreground transition-colors"

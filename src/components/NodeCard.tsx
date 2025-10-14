@@ -12,7 +12,6 @@ import {
   Binary,
   Cpu,
   HardDrive,
-  Activity,
   Clock4,
   Network,
   MemoryStick,
@@ -23,8 +22,6 @@ import {
   formatDuration,
   formatPercent,
   formatSpeed,
-  getCpuColor,
-  getMemoryColor,
 } from "@/lib/utils";
 import type { Client, NodeStatus } from "@/lib/types/komari";
 import { OSIcon } from "./OSIcon";
@@ -43,15 +40,11 @@ export function NodeCard({ client, status }: NodeCardProps) {
   const diskUsage = status?.disk ?? 0;
   const diskTotal = status?.disk_total ?? client.disk_total;
   const hasStatus = Boolean(status);
-  const hasLoadMetrics =
-    status?.load !== undefined ||
-    status?.load5 !== undefined ||
-    status?.load15 !== undefined;
   const infoPillClass =
     "inline-flex items-center gap-1 rounded-full border border-border/40 bg-muted/40 px-1.5 py-0.5 whitespace-nowrap";
 
   const getCpuVariant = (
-    usage: number,
+    usage: number
   ): "default" | "success" | "warning" | "danger" => {
     if (usage >= 80) return "danger";
     if (usage >= 60) return "warning";
@@ -60,16 +53,13 @@ export function NodeCard({ client, status }: NodeCardProps) {
 
   const getMemVariant = (
     usage: number,
-    total: number,
+    total: number
   ): "default" | "success" | "warning" | "danger" => {
     const percent = (usage / total) * 100;
     if (percent >= 90) return "danger";
     if (percent >= 75) return "warning";
     return "success";
   };
-
-  const formatLoadValue = (value?: number) =>
-    value === undefined || Number.isNaN(value) ? "--" : value.toFixed(2);
 
   return (
     <Card className="min-h-[420px] overflow-hidden transition-all hover:shadow-lg">
@@ -129,9 +119,7 @@ export function NodeCard({ client, status }: NodeCardProps) {
               <Cpu className="h-4 w-4" />
               <span>CPU</span>
             </div>
-            <span className={getCpuColor(cpuUsage)}>
-              {cpuUsage.toFixed(1)}%
-            </span>
+            <span className="text-black">{cpuUsage.toFixed(1)}%</span>
           </div>
           <Progress
             value={cpuUsage}
@@ -152,7 +140,7 @@ export function NodeCard({ client, status }: NodeCardProps) {
               <MemoryStick className="h-4 w-4" />
               <span>内存</span>
             </div>
-            <span className={getMemoryColor(memUsage, memTotal)}>
+            <span className="text-black">
               {formatPercent(memUsage, memTotal)}
             </span>
           </div>
@@ -196,63 +184,48 @@ export function NodeCard({ client, status }: NodeCardProps) {
             <span>网络</span>
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="space-y-1">
-              <p className="text-muted-foreground">↑ 上传</p>
-              <div className="font-medium">
+            <div className={`${infoPillClass} justify-between`}>
+              <span className="text-muted-foreground">↑ 上传</span>
+              <span className="font-medium">
                 {hasStatus ? (
                   formatSpeed(status?.net_out ?? 0)
                 ) : (
-                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-4 w-16 rounded-full" />
                 )}
-              </div>
+              </span>
             </div>
-            <div className="space-y-1">
-              <p className="text-muted-foreground">↓ 下载</p>
-              <div className="font-medium">
+            <div className={`${infoPillClass} justify-between`}>
+              <span className="text-muted-foreground">↓ 下载</span>
+              <span className="font-medium">
                 {hasStatus ? (
                   formatSpeed(status?.net_in ?? 0)
                 ) : (
-                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-4 w-16 rounded-full" />
                 )}
-              </div>
+              </span>
             </div>
           </div>
-        </div>
-
-        <Separator />
-
-        {/* 负载 */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm">
-            <Activity className="h-4 w-4" />
-            <span>负载</span>
-          </div>
-          <div className="grid grid-cols-3 gap-2 text-xs">
-            {["1m", "5m", "15m"].map((label, index) => {
-              const value =
-                index === 0
-                  ? status?.load
-                  : index === 1
-                    ? status?.load5
-                    : status?.load15;
-              const hasValue = hasLoadMetrics && value !== undefined;
-              return (
-                <div key={label}>
-                  <p className="text-muted-foreground">{label}</p>
-                  <div className="font-medium">
-                    {hasStatus ? (
-                      hasValue ? (
-                        formatLoadValue(value)
-                      ) : (
-                        "--"
-                      )
-                    ) : (
-                      <Skeleton className="h-4 w-12" />
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className={`${infoPillClass} justify-between`}>
+              <span className="text-muted-foreground">↑ 总上传</span>
+              <span className="font-medium">
+                {hasStatus ? (
+                  formatBytes(status?.net_total_up ?? 0)
+                ) : (
+                  <Skeleton className="h-4 w-20 rounded-full" />
+                )}
+              </span>
+            </div>
+            <div className={`${infoPillClass} justify-between`}>
+              <span className="text-muted-foreground">↓ 总下载</span>
+              <span className="font-medium">
+                {hasStatus ? (
+                  formatBytes(status?.net_total_down ?? 0)
+                ) : (
+                  <Skeleton className="h-4 w-20 rounded-full" />
+                )}
+              </span>
+            </div>
           </div>
         </div>
       </CardContent>
