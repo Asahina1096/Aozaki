@@ -22,7 +22,7 @@ interface ConnectionsChartProps {
 
 export function ConnectionsChart({
   data,
-  loading,
+  loading: _loading,
   timeRange,
   onTimeRangeChange,
 }: ConnectionsChartProps) {

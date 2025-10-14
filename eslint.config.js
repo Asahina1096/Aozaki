@@ -18,6 +18,8 @@ export default [
         ecmaFeatures: {
           jsx: true,
         },
+        // 性能优化：使用项目引用加速类型检查
+        project: false,
       },
       globals: {
         console: "readonly",
@@ -61,6 +63,13 @@ export default [
       "bun.lock",
       "*.config.mjs",
       "*.config.js",
+      // 性能优化：忽略额外的文件和目录
+      "*.min.js",
+      "*.d.ts",
+      "coverage/",
+      ".vscode/",
+      ".idea/",
+      "public/",
     ],
   },
 ];

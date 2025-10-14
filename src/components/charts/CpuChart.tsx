@@ -21,7 +21,7 @@ interface CpuChartProps {
 
 export function CpuChart({
   data,
-  loading,
+  loading: _loading,
   timeRange,
   onTimeRangeChange,
 }: CpuChartProps) {

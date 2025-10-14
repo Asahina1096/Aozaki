@@ -22,7 +22,7 @@ interface NetworkChartProps {
 
 export function NetworkChart({
   data,
-  loading,
+  loading: _loading,
   timeRange,
   onTimeRangeChange,
 }: NetworkChartProps) {
@@ -70,7 +70,7 @@ export function NetworkChart({
                 borderRadius: "6px",
               }}
               labelStyle={{ color: "hsl(var(--foreground))" }}
-              formatter={(value: any) => formatSpeed(Number(value))}
+              formatter={(value: number) => formatSpeed(Number(value))}
             />
             <Legend />
             <Line

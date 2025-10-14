@@ -20,7 +20,7 @@ class RPC2Client {
 
   private async call<T>(
     method: string,
-    params?: any[] | Record<string, any>
+    params?: unknown[] | Record<string, unknown>
   ): Promise<T> {
     const id = ++this.requestId;
     const request: JsonRpcRequest = {
@@ -82,7 +82,7 @@ class RPC2Client {
     uuid?: string,
     uuids?: string[]
   ): Promise<NodesStatusResponse> {
-    const params: any = {};
+    const params: Record<string, unknown> = {};
     if (uuid) params.uuid = uuid;
     if (uuids) params.uuids = uuids;
     return this.call(
@@ -104,7 +104,7 @@ class RPC2Client {
   }
 
   async getRecords(params?: GetRecordsParams): Promise<RecordsResponse> {
-    return this.call("common:getRecords", params);
+    return this.call("common:getRecords", params as Record<string, unknown>);
   }
 }
 

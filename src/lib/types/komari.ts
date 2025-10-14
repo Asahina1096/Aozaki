@@ -75,7 +75,7 @@ export interface PublicInfo {
   record_preserve_time: number;
   sitename: string;
   theme: string;
-  theme_settings: Record<string, any>;
+  theme_settings: Record<string, unknown>;
 }
 
 export interface MeInfo {
@@ -96,17 +96,17 @@ export interface VersionInfo {
 export interface JsonRpcRequest {
   jsonrpc: "2.0";
   method: string;
-  params?: any[] | Record<string, any>;
+  params?: unknown[] | Record<string, unknown>;
   id?: string | number;
 }
 
-export interface JsonRpcResponse<T = any> {
+export interface JsonRpcResponse<T = unknown> {
   jsonrpc: "2.0";
   result?: T;
   error?: {
     code: number;
     message: string;
-    data?: any;
+    data?: unknown;
   };
   id: string | number | null;
 }

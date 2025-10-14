@@ -21,7 +21,7 @@ interface DiskChartProps {
 
 export function DiskChart({
   data,
-  loading,
+  loading: _loading,
   timeRange,
   onTimeRangeChange,
 }: DiskChartProps) {
@@ -77,10 +77,19 @@ export function DiskChart({
                 borderRadius: "6px",
               }}
               labelStyle={{ color: "hsl(var(--foreground))" }}
-              formatter={(value: any, name: string, props: any) => {
-                if (name === "磁盘") {
+              formatter={(value, name, props) => {
+                if (
+                  name === "磁盘" &&
+                  props &&
+                  typeof props === "object" &&
+                  "payload" in props
+                ) {
+                  const payload = props.payload as {
+                    used: number;
+                    total: number;
+                  };
                   return [
-                    `${value}% (${formatBytes(props.payload.used)} / ${formatBytes(props.payload.total)})`,
+                    `${value}% (${formatBytes(payload.used)} / ${formatBytes(payload.total)})`,
                     name,
                   ];
                 }

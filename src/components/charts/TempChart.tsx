@@ -72,7 +72,7 @@ export function TempChart({
                 borderRadius: "6px",
               }}
               labelStyle={{ color: "hsl(var(--foreground))" }}
-              formatter={(value: any) => `${value}°C`}
+              formatter={(value: number) => `${value}°C`}
             />
             <Line
               type="monotone"

@@ -42,7 +42,7 @@ export function NodesOverview({ clients, statuses }: NodesOverviewProps) {
           acc.netTotalDown + Math.max(status.net_total_down ?? 0, 0),
       };
     },
-    { netIn: 0, netOut: 0, netTotalUp: 0, netTotalDown: 0 },
+    { netIn: 0, netOut: 0, netTotalUp: 0, netTotalDown: 0 }
   );
 
   const offlineNodes = Math.max(totalNodes - onlineNodes, 0);

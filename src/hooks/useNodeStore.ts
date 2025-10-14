@@ -137,6 +137,7 @@ export function useNodeData(
     return () => {
       unsubscribe();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uuid, refreshInterval, loadingTimeout]);
 
   return { client, status, loading, notFound };

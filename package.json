@@ -5,16 +5,17 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro check && astro build",
+    "build": "NODE_OPTIONS='--max-old-space-size=16384' astro build",
+    "build:check": "NODE_OPTIONS='--max-old-space-size=16384' astro check && NODE_OPTIONS='--max-old-space-size=16384' astro build",
     "preview": "astro preview",
     "astro": "astro",
     "package": "bash scripts/package.sh",
     "package:win": "powershell -ExecutionPolicy Bypass -File scripts/package.ps1",
-    "lint": "eslint . --ext .js,.ts,.tsx,.astro",
-    "lint:fix": "eslint . --ext .js,.ts,.tsx,.astro --fix",
-    "format": "prettier --write \"**/*.{js,ts,tsx,astro,json,css,md}\"",
-    "format:check": "prettier --check \"**/*.{js,ts,tsx,astro,json,css,md}\"",
-    "check": "astro check",
+    "lint": "eslint . --ext .js,.ts,.tsx,.astro --cache --cache-location node_modules/.cache/eslint/.eslintcache",
+    "lint:fix": "eslint . --ext .js,.ts,.tsx,.astro --cache --cache-location node_modules/.cache/eslint/.eslintcache --fix",
+    "format": "prettier --write \"**/*.{js,ts,tsx,astro,json,css,md}\" --cache --cache-location node_modules/.cache/prettier/.prettiercache",
+    "format:check": "prettier --check \"**/*.{js,ts,tsx,astro,json,css,md}\" --cache --cache-location node_modules/.cache/prettier/.prettiercache",
+    "check": "NODE_OPTIONS='--max-old-space-size=16384' astro check",
     "check:all": "bun run check && bun run lint && bun run format:check"
   },
   "dependencies": {

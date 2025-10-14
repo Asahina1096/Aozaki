@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { getSharedClient } from "@/lib/rpc2";
-import type { StatusRecord } from "@/lib/types/komari";
+import type { StatusRecord, GetRecordsParams } from "@/lib/types/komari";
 
 // 图表时间范围配置
 export interface ChartTimeRanges {
@@ -93,7 +93,7 @@ export function useAllChartsData(
             type: "load",
             uuid,
             hours,
-            load_type: type as any,
+            load_type: type as GetRecordsParams["load_type"],
             maxCount: 4000,
           });
 

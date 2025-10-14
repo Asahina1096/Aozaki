@@ -21,7 +21,7 @@ interface ProcessChartProps {
 
 export function ProcessChart({
   data,
-  loading,
+  loading: _loading,
   timeRange,
   onTimeRangeChange,
 }: ProcessChartProps) {

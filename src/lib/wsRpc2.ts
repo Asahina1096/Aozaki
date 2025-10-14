@@ -1,6 +1,6 @@
 import type { JsonRpcRequest, JsonRpcResponse } from "./types/komari";
 
-type MessageHandler = (data: any) => void;
+type MessageHandler = (data: JsonRpcResponse) => void;
 type ErrorHandler = (error: Error) => void;
 
 class WebSocketRPC2Client {
@@ -9,7 +9,8 @@ class WebSocketRPC2Client {
   private requestId: number = 0;
   private pendingRequests: Map<
     number,
-    { resolve: (value: any) => void; reject: (error: any) => void }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    { resolve: (value: any) => void; reject: (error: Error) => void }
   > = new Map();
   private messageHandlers: Set<MessageHandler> = new Set();
   private errorHandlers: Set<ErrorHandler> = new Set();
@@ -72,7 +73,7 @@ class WebSocketRPC2Client {
           try {
             const data = JSON.parse(event.data);
             this.handleMessage(data);
-          } catch (error) {
+          } catch {
             // 消息解析失败，静默处理
           }
         };
@@ -143,7 +144,7 @@ class WebSocketRPC2Client {
     this.messageHandlers.forEach((handler) => {
       try {
         handler(data);
-      } catch (error) {
+      } catch {
         // 消息处理器错误，静默处理
       }
     });
@@ -154,7 +155,7 @@ class WebSocketRPC2Client {
     this.errorHandlers.forEach((handler) => {
       try {
         handler(error);
-      } catch (err) {
+      } catch {
         // 错误处理器错误，静默处理
       }
     });
@@ -163,7 +164,7 @@ class WebSocketRPC2Client {
   // 调用 RPC 方法
   async call<T>(
     method: string,
-    params?: any[] | Record<string, any>
+    params?: unknown[] | Record<string, unknown>
   ): Promise<T> {
     // 确保已连接
     if (this.ws?.readyState !== WebSocket.OPEN) {

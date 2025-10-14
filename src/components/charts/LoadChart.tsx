@@ -21,7 +21,7 @@ interface LoadChartProps {
 
 export function LoadChart({
   data,
-  loading,
+  loading: _loading,
   timeRange,
   onTimeRangeChange,
 }: LoadChartProps) {
@@ -67,7 +67,7 @@ export function LoadChart({
                 borderRadius: "6px",
               }}
               labelStyle={{ color: "hsl(var(--foreground))" }}
-              formatter={(value: any) => [`${value}`, "负载"]}
+              formatter={(value: number) => [`${value}`, "负载"]}
             />
             <Line
               type="monotone"
