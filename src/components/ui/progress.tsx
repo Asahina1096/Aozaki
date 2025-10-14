@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 interface ProgressProps extends React.HTMLAttributes<HTMLDivElement> {
   value?: number;
   max?: number;
-  variant?: "default" | "success" | "warning" | "danger";
+  variant?: "default" | "success" | "warning" | "danger" | "muted";
 }
 
 const Progress = React.forwardRef<HTMLDivElement, ProgressProps>(
@@ -16,6 +16,7 @@ const Progress = React.forwardRef<HTMLDivElement, ProgressProps>(
       success: "bg-green-500",
       warning: "bg-yellow-500",
       danger: "bg-red-500",
+      muted: "bg-gray-400",
     };
 
     return (

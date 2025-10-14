@@ -124,7 +124,7 @@ export function NodeCard({ client, status }: NodeCardProps) {
           <Progress
             value={cpuUsage}
             max={100}
-            variant={getCpuVariant(cpuUsage)}
+            variant={isOnline ? getCpuVariant(cpuUsage) : "muted"}
           />
           <p className="text-xs text-muted-foreground truncate">
             {client.cpu_name}
@@ -147,7 +147,7 @@ export function NodeCard({ client, status }: NodeCardProps) {
           <Progress
             value={memUsage}
             max={memTotal}
-            variant={getMemVariant(memUsage, memTotal)}
+            variant={isOnline ? getMemVariant(memUsage, memTotal) : "muted"}
           />
           <p className="text-xs text-muted-foreground">
             {formatBytes(memUsage)} / {formatBytes(memTotal)}
@@ -168,7 +168,7 @@ export function NodeCard({ client, status }: NodeCardProps) {
           <Progress
             value={diskUsage}
             max={diskTotal}
-            variant={getMemVariant(diskUsage, diskTotal)}
+            variant={isOnline ? getMemVariant(diskUsage, diskTotal) : "muted"}
           />
           <p className="text-xs text-muted-foreground">
             {formatBytes(diskUsage)} / {formatBytes(diskTotal)}

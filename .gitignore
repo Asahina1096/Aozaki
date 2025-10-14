@@ -2,6 +2,7 @@
 dist/
 .output/
 *.zip
+.astro/
 
 # dependencies
 node_modules/
