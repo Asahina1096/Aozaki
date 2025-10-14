@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { Breadcrumb } from "./Breadcrumb";
 import { NodeRealtimeCard } from "./NodeRealtimeCard";
+import { NodeRealtimeCardSkeleton } from "./NodeRealtimeCardSkeleton";
 import { ChartGroups } from "./charts/ChartGroups";
+import { ChartGroupsSkeleton } from "./charts/ChartGroupsSkeleton";
 import { useNodeData } from "@/hooks/useNodeStore";
 
 interface NodeDetailProps {
@@ -27,21 +29,27 @@ export function NodeDetail({ uuid: propUuid }: NodeDetailProps) {
     }
   }, [propUuid]);
 
-  // 使用全局数据管理器获取实时数据
-  const { client, status, loading: dataLoading } = useNodeData(uuid);
+  // 使用全局数据管理器获取实时数据（3秒超时）
+  const {
+    client,
+    status,
+    loading: dataLoading,
+    notFound,
+  } = useNodeData(uuid, 1000, 3000);
 
+  // 加载中状态
   if (dataLoading || !uuid) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent motion-reduce:animate-[spin_1.5s_linear_infinite]" />
-          <p className="mt-4 text-muted-foreground">加载中...</p>
-        </div>
+        <Breadcrumb nodeName="加载中..." />
+        <NodeRealtimeCardSkeleton />
+        <ChartGroupsSkeleton />
       </div>
     );
   }
 
-  if (!client) {
+  // 节点不存在（超时后仍未找到）
+  if (notFound || !client) {
     return (
       <div className="container mx-auto px-4 py-8">
         <Breadcrumb />

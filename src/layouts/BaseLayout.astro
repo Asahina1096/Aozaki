@@ -1,5 +1,5 @@
 ---
-import '@/styles/globals.css';
+import "@/styles/globals.css";
 
 interface Props {
   title?: string;
@@ -7,8 +7,8 @@ interface Props {
 }
 
 const {
-  title = 'Komari Monitor',
-  description = 'A simple server monitor tool.'
+  title = "Komari Monitor",
+  description = "A simple server monitor tool.",
 } = Astro.props;
 ---
 
@@ -18,29 +18,36 @@ const {
     <meta charset="UTF-8" />
     <meta name="description" content={description} />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- 防止字体加载导致的 CLS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <title>{title}</title>
     <script is:inline>
       // 主题切换脚本
       const getThemePreference = () => {
-        const stored = localStorage.getItem('appearance');
+        const stored = localStorage.getItem("appearance");
         if (stored) return stored;
-        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        return window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light";
       };
 
       const theme = getThemePreference();
-      if (theme === 'dark') {
-        document.documentElement.classList.add('dark');
+      if (theme === "dark") {
+        document.documentElement.classList.add("dark");
       } else {
-        document.documentElement.classList.remove('dark');
+        document.documentElement.classList.remove("dark");
       }
 
-      window.addEventListener('DOMContentLoaded', () => {
+      window.addEventListener("DOMContentLoaded", () => {
         const observer = new MutationObserver(() => {
-          const isDark = document.documentElement.classList.contains('dark');
-          localStorage.setItem('appearance', isDark ? 'dark' : 'light');
+          const isDark = document.documentElement.classList.contains("dark");
+          localStorage.setItem("appearance", isDark ? "dark" : "light");
         });
-        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+        observer.observe(document.documentElement, {
+          attributes: true,
+          attributeFilter: ["class"],
+        });
       });
     </script>
   </head>
@@ -48,4 +55,3 @@ const {
     <slot />
   </body>
 </html>
-

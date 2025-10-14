@@ -41,7 +41,10 @@ export function ChartContainer({
           )}
         </div>
       </CardHeader>
-      <CardContent className="pt-0">{children}</CardContent>
+      <CardContent className="pt-0">
+        {/* 确保内容区域有固定的最小高度，防止 CLS */}
+        <div className="min-h-[300px]">{children}</div>
+      </CardContent>
     </Card>
   );
 }

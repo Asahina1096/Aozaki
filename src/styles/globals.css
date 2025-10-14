@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 @plugin 'tailwindcss-animate';
 
@@ -143,6 +143,26 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* 字体渲染优化，减少 CLS */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* 防止字体大小调整导致的布局偏移 */
+    text-size-adjust: 100%;
+  }
+
+  /* 防止图片和媒体导致的 CLS */
+  img,
+  video,
+  iframe {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* 为 SVG 图标设置固定尺寸，防止闪烁 */
+  svg {
+    display: block;
+    max-width: 100%;
+    height: auto;
   }
 }
 

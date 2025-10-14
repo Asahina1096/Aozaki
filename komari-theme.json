@@ -1,64 +1,9 @@
 {
   "name": "Aozaki",
   "short": "Aozaki",
-  "description": "A modern Komari theme built with Astro, React, TailwindCSS and shadcn/ui",
+  "description": "现代化监控主题，支持实时数据和历史数据可视化",
   "version": "1.0.0",
   "author": "Asahina1096",
   "url": "https://github.com/komari-monitor/komari",
-  "preview": "preview.png",
-  "configuration": {
-    "type": "managed",
-    "icon": "/themes/Aozaki/dist/favicon.svg",
-    "name": "Aozaki 主题设置",
-    "data": [
-      {
-        "name": "显示设置",
-        "type": "title"
-      },
-      {
-        "key": "view_mode",
-        "name": "默认视图模式",
-        "type": "select",
-        "options": "网格,列表",
-        "default": "网格",
-        "help": "节点的默认展示模式"
-      },
-      {
-        "key": "show_offline",
-        "name": "显示离线节点",
-        "type": "switch",
-        "default": true,
-        "help": "是否显示离线的节点"
-      },
-      {
-        "name": "刷新设置",
-        "type": "title"
-      },
-      {
-        "key": "refresh_interval",
-        "name": "刷新间隔（秒）",
-        "type": "number",
-        "default": 3,
-        "help": "自动刷新节点状态的时间间隔"
-      },
-      {
-        "key": "auto_refresh",
-        "name": "自动刷新",
-        "type": "switch",
-        "default": true,
-        "help": "是否自动刷新节点数据"
-      },
-      {
-        "name": "高级设置",
-        "type": "title"
-      },
-      {
-        "key": "compact_mode",
-        "name": "紧凑模式",
-        "type": "switch",
-        "default": false,
-        "help": "启用紧凑模式以在有限空间内显示更多节点"
-      }
-    ]
-  }
+  "preview": "preview.png"
 }

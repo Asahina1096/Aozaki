@@ -8,6 +8,7 @@ import { GpuChart } from "./GpuChart";
 import { TempChart } from "./TempChart";
 import { ProcessChart } from "./ProcessChart";
 import { ConnectionsChart } from "./ConnectionsChart";
+import { ChartGroupsSkeleton } from "./ChartGroupsSkeleton";
 import { useAllChartsData } from "@/hooks/useAllChartsData";
 
 interface ChartGroupsProps {
@@ -17,6 +18,11 @@ interface ChartGroupsProps {
 export function ChartGroups({ uuid }: ChartGroupsProps) {
   const { chartsData, loading, timeRanges, setChartTimeRange } =
     useAllChartsData(uuid);
+
+  // 初始加载时显示骨架屏
+  if (loading) {
+    return <ChartGroupsSkeleton />;
+  }
 
   return (
     <div className="space-y-8">

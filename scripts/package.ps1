@@ -40,6 +40,11 @@ New-Item -ItemType Directory -Force -Path ".package-temp" | Out-Null
 Copy-Item -Recurse "dist" ".package-temp/"
 Copy-Item "komari-theme.json" ".package-temp/"
 
+# 复制预览图到根目录
+if (Test-Path "public/preview.png") {
+    Copy-Item "public/preview.png" ".package-temp/"
+}
+
 # 创建 ZIP 包
 Write-Host "📦 创建主题包..." -ForegroundColor Yellow
 Compress-Archive -Path ".package-temp/*" -DestinationPath "komari-aozaki.zip" -Force

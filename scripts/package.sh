@@ -38,6 +38,11 @@ mkdir -p .package-temp
 cp -r dist .package-temp/
 cp komari-theme.json .package-temp/
 
+# 复制预览图到根目录
+if [ -f "public/preview.png" ]; then
+    cp public/preview.png .package-temp/
+fi
+
 # 创建 ZIP 包
 echo "📦 创建主题包..."
 cd .package-temp

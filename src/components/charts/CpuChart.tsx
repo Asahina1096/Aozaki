@@ -34,9 +34,7 @@ export function CpuChart({
     [data, timeRange]
   );
 
-  if (!data || data.length === 0) {
-    return null;
-  }
+  const hasData = data && data.length > 0;
 
   return (
     <ChartContainer
@@ -45,9 +43,9 @@ export function CpuChart({
       timeRange={timeRange}
       onTimeRangeChange={onTimeRangeChange}
     >
-      {loading ? (
-        <div className="flex items-center justify-center h-[300px]">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent" />
+      {!hasData ? (
+        <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+          暂无数据
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={300}>
