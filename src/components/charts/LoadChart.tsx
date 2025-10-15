@@ -1,20 +1,17 @@
-import { useMemo } from "react";
 import {
   LineChart,
   Line,
+  CartesianGrid,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
 } from "recharts";
 import { formatChartTimeByRange } from "@/lib/utils";
-import { ChartContainer } from "./ChartContainer";
+import { BaseChart } from "./shared/BaseChart";
 import type { StatusRecord } from "@/lib/types/komari";
 
 interface LoadChartProps {
   data: StatusRecord[];
-  loading: boolean;
   timeRange: number;
   onTimeRangeChange: (_value: number) => void;
 }
@@ -22,64 +19,39 @@ interface LoadChartProps {
 export function LoadChart({
   data,
   timeRange,
-  onTimeRangeChange,
+  onTimeRangeChange: _onTimeRangeChange,
 }: LoadChartProps) {
-  const chartData = useMemo(
-    () =>
-      data.map((record) => ({
-        time: formatChartTimeByRange(record.time, timeRange),
-        load1: Number(record.load.toFixed(2)),
-      })),
-    [data, timeRange]
-  );
-
-  const hasData = data && data.length > 0;
-
   return (
-    <ChartContainer
-      title="系统负载"
-      description="1分钟平均负载"
+    <BaseChart
+      data={data}
       timeRange={timeRange}
-      onTimeRangeChange={onTimeRangeChange}
-    >
-      {!hasData ? (
-        <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-          暂无数据
-        </div>
-      ) : (
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-            <XAxis
-              dataKey="time"
-              className="text-xs"
-              tick={{ fill: "hsl(var(--muted-foreground))" }}
-            />
-            <YAxis
-              className="text-xs"
-              tick={{ fill: "hsl(var(--muted-foreground))" }}
-            />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "hsl(var(--background))",
-                border: "1px solid hsl(var(--border))",
-                borderRadius: "6px",
-              }}
-              labelStyle={{ color: "hsl(var(--foreground))" }}
-              formatter={(value: number) => [`${value}`, "负载"]}
-            />
-            <Line
-              type="monotone"
-              dataKey="load1"
-              stroke="#ef4444"
-              strokeWidth={2}
-              name="负载"
-              dot={false}
-              isAnimationActive={false}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+      title="系统负载"
+      description="实时系统负载变化"
+      onTimeRangeChange={_onTimeRangeChange}
+      transformData={(data, _timeRange) =>
+        data.map((record) => ({
+          time: formatChartTimeByRange(record.time, _timeRange),
+          load1: Number(record.load.toFixed(2)),
+        }))
+      }
+      tooltipFormatter={(value: unknown) => [`${Number(value)}`, "负载"]}
+      renderChart={(chartData, { xAxis, yAxis, cartesianGrid, tooltip }) => (
+        <LineChart data={chartData}>
+          <CartesianGrid {...cartesianGrid} />
+          <XAxis {...xAxis} />
+          <YAxis {...yAxis} />
+          <Tooltip {...tooltip} />
+          <Line
+            type="monotone"
+            dataKey="load1"
+            stroke="#ef4444"
+            strokeWidth={2}
+            name="负载"
+            dot={false}
+            isAnimationActive={false}
+          />
+        </LineChart>
       )}
-    </ChartContainer>
+    />
   );
 }

@@ -3,15 +3,14 @@ import { cn } from "@/lib/utils";
 import {
   LineChart,
   Line,
+  Legend,
+  CartesianGrid,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
-  Legend,
-  ResponsiveContainer,
 } from "recharts";
 import { formatChartTimeByRange } from "@/lib/utils";
-import { ChartContainer } from "./ChartContainer";
+import { BaseChart } from "./shared/BaseChart";
 import type {
   PingRecord,
   PingBasicInfo,
@@ -24,17 +23,16 @@ interface PingChartProps {
     basicInfo: PingBasicInfo[];
     taskInfo: PingTaskInfo[];
   };
-  loading: boolean;
   timeRange: number;
-  onTimeRangeChange: (value: number) => void;
+  onTimeRangeChange: (_value: number) => void;
 }
 
 export function PingChart({
   data,
   timeRange,
-  onTimeRangeChange,
+  onTimeRangeChange: _onTimeRangeChange,
 }: PingChartProps) {
-  const { records, basicInfo, taskInfo } = data;
+  const { records, taskInfo } = data;
 
   // 管理可见线条的状态
   const [visibleLines, setVisibleLines] = useState<Set<number>>(new Set());
@@ -60,11 +58,15 @@ export function PingChart({
   };
 
   // 自定义 Legend 组件
-  const CustomLegend = ({ payload }: any) => {
+  const CustomLegend = () => {
     return (
       <div className="flex flex-wrap gap-4 justify-center mt-4">
-        {payload.map((entry: any, index: number) => {
-          const taskId = taskIds[index];
+        {taskIds.map((taskId: number, index: number) => {
+          const taskInfoForTask = taskInfo.find((task) => task.id === taskId);
+          const displayName = taskInfoForTask
+            ? `${taskInfoForTask.name} (丢包率 ${taskInfoForTask.loss}%)`
+            : `任务 ${taskId}`;
+          const color = colors[index % colors.length];
           const isVisible = visibleLines.has(taskId);
 
           return (
@@ -78,7 +80,7 @@ export function PingChart({
             >
               <span
                 style={{
-                  color: entry.color,
+                  color: color,
                   opacity: isVisible ? 1 : 0.4,
                 }}
               >
@@ -87,7 +89,7 @@ export function PingChart({
               <span
                 className={cn("text-sm", !isVisible && "text-muted-foreground")}
               >
-                {entry.value}
+                {displayName}
               </span>
             </button>
           );
@@ -95,25 +97,6 @@ export function PingChart({
       </div>
     );
   };
-  const chartData = useMemo(() => {
-    // 按 task_id 分组数据
-    const groupedData: Record<string, Record<string, number | string>> = {};
-
-    records.forEach((record) => {
-      const timeKey = formatChartTimeByRange(record.time, timeRange);
-      if (!groupedData[timeKey]) {
-        groupedData[timeKey] = { time: timeKey };
-      }
-      groupedData[timeKey][`task_${record.task_id}`] = record.value;
-    });
-
-    // 转换为数组并按时间排序
-    return Object.values(groupedData).sort((a, b) => {
-      const timeA = a.time as string;
-      const timeB = b.time as string;
-      return timeA.localeCompare(timeB);
-    });
-  }, [records, timeRange]);
 
   // 获取所有唯一的 task_id 用于生成线条
   const taskIds = useMemo(() => {
@@ -134,40 +117,40 @@ export function PingChart({
     "#f97316", // orange
   ];
 
-  const hasData = records && records.length > 0;
-
-  if (!hasData) {
-    return null;
-  }
-
   return (
-    <ChartContainer
+    <BaseChart
+      data={records}
+      timeRange={timeRange}
       title="Ping 历史检测"
       description="网络延迟历史数据（毫秒）"
-      timeRange={timeRange}
-      onTimeRangeChange={onTimeRangeChange}
-    >
-      <ResponsiveContainer width="100%" height={300}>
+      onTimeRangeChange={_onTimeRangeChange}
+      shouldShow={(data) => data.length > 0}
+      transformData={(records, timeRange) => {
+        // 按 task_id 分组数据
+        const groupedData: Record<string, Record<string, number | string>> = {};
+
+        records.forEach((record) => {
+          const timeKey = formatChartTimeByRange(record.time, timeRange);
+          if (!groupedData[timeKey]) {
+            groupedData[timeKey] = { time: timeKey };
+          }
+          groupedData[timeKey][`task_${record.task_id}`] = record.value;
+        });
+
+        // 转换为数组并按时间排序
+        return Object.values(groupedData).sort((a, b) => {
+          const timeA = a.time as string;
+          const timeB = b.time as string;
+          return timeA.localeCompare(timeB);
+        });
+      }}
+      tooltipFormatter={(value: unknown) => [`${Number(value)}ms`, "延迟"]}
+      renderChart={(chartData, { xAxis, yAxis, cartesianGrid, tooltip }) => (
         <LineChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-          <XAxis
-            dataKey="time"
-            className="text-xs"
-            tick={{ fill: "hsl(var(--muted-foreground))" }}
-          />
-          <YAxis
-            className="text-xs"
-            tick={{ fill: "hsl(var(--muted-foreground))" }}
-          />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: "hsl(var(--background))",
-              border: "1px solid hsl(var(--border))",
-              borderRadius: "6px",
-            }}
-            labelStyle={{ color: "hsl(var(--foreground))" }}
-            formatter={(value: number) => [`${value}ms`, "延迟"]}
-          />
+          <CartesianGrid {...cartesianGrid} />
+          <XAxis {...xAxis} />
+          <YAxis {...yAxis} />
+          <Tooltip {...tooltip} />
           <Legend content={<CustomLegend />} />
           {taskIds.map((taskId, index) => {
             // 根据 taskInfo 获取任务信息
@@ -191,7 +174,7 @@ export function PingChart({
             );
           })}
         </LineChart>
-      </ResponsiveContainer>
-    </ChartContainer>
+      )}
+    />
   );
 }

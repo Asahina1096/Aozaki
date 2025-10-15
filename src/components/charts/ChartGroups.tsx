@@ -38,37 +38,31 @@ export function ChartGroups({ uuid }: ChartGroupsProps) {
         <div className="grid grid-cols-1 gap-6">
           <CpuChart
             data={chartsData.cpu}
-            loading={loading}
             timeRange={timeRanges.cpu}
             onTimeRangeChange={(hours) => setChartTimeRange("cpu", hours)}
           />
           <MemoryChart
             data={chartsData.ram}
-            loading={loading}
             timeRange={timeRanges.ram}
             onTimeRangeChange={(hours) => setChartTimeRange("ram", hours)}
           />
           <SwapChart
             data={chartsData.swap}
-            loading={loading}
             timeRange={timeRanges.swap}
             onTimeRangeChange={(hours) => setChartTimeRange("swap", hours)}
           />
           <DiskChart
             data={chartsData.disk}
-            loading={loading}
             timeRange={timeRanges.disk}
             onTimeRangeChange={(hours) => setChartTimeRange("disk", hours)}
           />
           <GpuChart
             data={chartsData.gpu}
-            loading={loading}
             timeRange={timeRanges.gpu}
             onTimeRangeChange={(hours) => setChartTimeRange("gpu", hours)}
           />
           <TempChart
             data={chartsData.temp}
-            loading={loading}
             timeRange={timeRanges.temp}
             onTimeRangeChange={(hours) => setChartTimeRange("temp", hours)}
           />
@@ -86,13 +80,11 @@ export function ChartGroups({ uuid }: ChartGroupsProps) {
         <div className="grid grid-cols-1 gap-6">
           <NetworkChart
             data={chartsData.network}
-            loading={loading}
             timeRange={timeRanges.network}
             onTimeRangeChange={(hours) => setChartTimeRange("network", hours)}
           />
           <ConnectionsChart
             data={chartsData.connections}
-            loading={loading}
             timeRange={timeRanges.connections}
             onTimeRangeChange={(hours) =>
               setChartTimeRange("connections", hours)
@@ -100,7 +92,6 @@ export function ChartGroups({ uuid }: ChartGroupsProps) {
           />
           <PingChart
             data={chartsData.ping}
-            loading={loading}
             timeRange={timeRanges.ping}
             onTimeRangeChange={(hours) => setChartTimeRange("ping", hours)}
           />
@@ -116,13 +107,11 @@ export function ChartGroups({ uuid }: ChartGroupsProps) {
         <div className="grid grid-cols-1 gap-6">
           <LoadChart
             data={chartsData.load}
-            loading={loading}
             timeRange={timeRanges.load}
             onTimeRangeChange={(hours) => setChartTimeRange("load", hours)}
           />
           <ProcessChart
             data={chartsData.process}
-            loading={loading}
             timeRange={timeRanges.process}
             onTimeRangeChange={(hours) => setChartTimeRange("process", hours)}
           />

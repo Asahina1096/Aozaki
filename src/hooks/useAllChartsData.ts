@@ -6,8 +6,6 @@ import type {
   PingBasicInfo,
   PingTaskInfo,
   GetRecordsParams,
-  PingRecordsResponse,
-  PingRecordsWithNamesResponse,
 } from "@/lib/types/komari";
 
 // 图表时间范围配置
