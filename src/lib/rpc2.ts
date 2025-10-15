@@ -7,6 +7,8 @@ import type {
   MeInfo,
   VersionInfo,
   RecordsResponse,
+  PingRecordsResponse,
+  PingRecordsWithNamesResponse,
   GetRecordsParams,
 } from "./types/komari";
 
@@ -105,6 +107,45 @@ class RPC2Client {
 
   async getRecords(params?: GetRecordsParams): Promise<RecordsResponse> {
     return this.call("common:getRecords", params as Record<string, unknown>);
+  }
+
+  async getPingRecords(
+    params?: GetRecordsParams
+  ): Promise<PingRecordsResponse> {
+    return this.call("common:getRecords", { ...params, type: "ping" } as Record<
+      string,
+      unknown
+    >);
+  }
+
+  // 调用传统 REST API 获取包含任务名称的 Ping 数据
+  async getPingRecordsWithNames(
+    uuid: string,
+    hours?: number
+  ): Promise<PingRecordsWithNamesResponse> {
+    const params = new URLSearchParams();
+    params.append("uuid", uuid);
+    if (hours) {
+      params.append("hours", hours.toString());
+    }
+
+    const response = await fetch(`/api/records/ping?${params.toString()}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (data.status !== "success") {
+      throw new Error(`API Error: ${data.message}`);
+    }
+
+    return data.data;
   }
 }
 

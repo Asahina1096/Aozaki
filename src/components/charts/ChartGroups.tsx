@@ -8,6 +8,7 @@ import { GpuChart } from "./GpuChart";
 import { TempChart } from "./TempChart";
 import { ProcessChart } from "./ProcessChart";
 import { ConnectionsChart } from "./ConnectionsChart";
+import { PingChart } from "./PingChart";
 import { ChartGroupsSkeleton } from "./ChartGroupsSkeleton";
 import { useAllChartsData } from "@/hooks/useAllChartsData";
 
@@ -78,7 +79,9 @@ export function ChartGroups({ uuid }: ChartGroupsProps) {
       <div className="space-y-4">
         <div className="mb-6">
           <h2 className="text-xl font-bold">网络状态</h2>
-          <p className="text-sm text-muted-foreground">网络速度和连接数变化</p>
+          <p className="text-sm text-muted-foreground">
+            网络速度、连接数变化和 Ping 历史检测
+          </p>
         </div>
         <div className="grid grid-cols-1 gap-6">
           <NetworkChart
@@ -94,6 +97,12 @@ export function ChartGroups({ uuid }: ChartGroupsProps) {
             onTimeRangeChange={(hours) =>
               setChartTimeRange("connections", hours)
             }
+          />
+          <PingChart
+            data={chartsData.ping}
+            loading={loading}
+            timeRange={timeRanges.ping}
+            onTimeRangeChange={(hours) => setChartTimeRange("ping", hours)}
           />
         </div>
       </div>

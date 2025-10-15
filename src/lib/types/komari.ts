@@ -147,6 +147,48 @@ export interface RecordsResponse {
   to: string;
 }
 
+// Ping 记录类型
+export interface PingRecord {
+  task_id: number;
+  time: string;
+  value: number;
+  client: string;
+}
+
+// Ping 基本信息类型
+export interface PingBasicInfo {
+  client: string;
+  loss: number;
+  min: number;
+  max: number;
+}
+
+// Ping 任务信息类型
+export interface PingTaskInfo {
+  id: number;
+  interval: number;
+  name: string;
+  loss: number;
+}
+
+// Ping 记录响应类型（包含任务名称）
+export interface PingRecordsWithNamesResponse {
+  count: number;
+  records: PingRecord[];
+  tasks: PingTaskInfo[];
+  from: string;
+  to: string;
+}
+
+// Ping 记录响应类型
+export interface PingRecordsResponse {
+  count: number;
+  basic_info: PingBasicInfo[];
+  records: PingRecord[];
+  from: string;
+  to: string;
+}
+
 // getRecords 参数类型
 export interface GetRecordsParams {
   type?: "load" | "ping";
