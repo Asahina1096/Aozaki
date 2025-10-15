@@ -1,4 +1,5 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
 import {
   LineChart,
   Line,
@@ -34,6 +35,66 @@ export function PingChart({
   onTimeRangeChange,
 }: PingChartProps) {
   const { records, basicInfo, taskInfo } = data;
+
+  // 管理可见线条的状态
+  const [visibleLines, setVisibleLines] = useState<Set<number>>(new Set());
+
+  // 初始化可见线条状态
+  useEffect(() => {
+    const ids = new Set<number>();
+    records.forEach((record) => ids.add(record.task_id));
+    setVisibleLines(ids);
+  }, [records]);
+
+  // 切换线条显示/隐藏
+  const toggleLine = (taskId: number) => {
+    setVisibleLines((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(taskId)) {
+        newSet.delete(taskId);
+      } else {
+        newSet.add(taskId);
+      }
+      return newSet;
+    });
+  };
+
+  // 自定义 Legend 组件
+  const CustomLegend = ({ payload }: any) => {
+    return (
+      <div className="flex flex-wrap gap-4 justify-center mt-4">
+        {payload.map((entry: any, index: number) => {
+          const taskId = taskIds[index];
+          const isVisible = visibleLines.has(taskId);
+
+          return (
+            <button
+              key={`legend-${taskId}`}
+              onClick={() => toggleLine(taskId)}
+              className={cn(
+                "flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity",
+                !isVisible && "opacity-40"
+              )}
+            >
+              <span
+                style={{
+                  color: entry.color,
+                  opacity: isVisible ? 1 : 0.4,
+                }}
+              >
+                ●
+              </span>
+              <span
+                className={cn("text-sm", !isVisible && "text-muted-foreground")}
+              >
+                {entry.value}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
   const chartData = useMemo(() => {
     // 按 task_id 分组数据
     const groupedData: Record<string, Record<string, number | string>> = {};
@@ -107,7 +168,7 @@ export function PingChart({
             labelStyle={{ color: "hsl(var(--foreground))" }}
             formatter={(value: number) => [`${value}ms`, "延迟"]}
           />
-          <Legend />
+          <Legend content={<CustomLegend />} />
           {taskIds.map((taskId, index) => {
             // 根据 taskInfo 获取任务信息
             const taskInfoForTask = taskInfo.find((task) => task.id === taskId);
@@ -122,6 +183,7 @@ export function PingChart({
                 dataKey={`task_${taskId}`}
                 stroke={colors[index % colors.length]}
                 strokeWidth={2}
+                strokeOpacity={visibleLines.has(taskId) ? 1 : 0.2}
                 name={displayName}
                 dot={false}
                 isAnimationActive={false}

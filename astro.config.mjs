@@ -3,6 +3,10 @@ import react from "@astrojs/react";
 import tailwindcss from "@tailwindcss/vite";
 import fs from "fs";
 import path from "path";
+import { loadEnv } from "vite";
+
+// 加载环境变量
+const env = loadEnv("development", process.cwd(), "");
 
 // https://astro.build/config
 export default defineConfig({
@@ -27,6 +31,72 @@ export default defineConfig({
         },
       },
     ],
+    // 开发环境代理配置
+    server: {
+      proxy: {
+        // 将 /api 请求代理到远程后端
+        "/api": {
+          target: env.VITE_API_BASE_URL || "https://lovejk.cc",
+          changeOrigin: true,
+          secure: true,
+          // 支持 WebSocket 代理
+          ws: true,
+          // 处理重写路径（如果需要）
+          rewrite: (path) => path,
+          // 错误处理和调试
+          configure: (proxy, _options) => {
+            proxy.on("error", (err, _req, _res) => {
+              console.log("🔴 代理错误:", err.message);
+            });
+            proxy.on("proxyReq", (proxyReq, req, _res) => {
+              console.log(
+                "📤 代理请求:",
+                req.method,
+                req.url,
+                "→",
+                proxyReq.getHeader("host")
+              );
+            });
+            proxy.on("proxyRes", (proxyRes, req, _res) => {
+              console.log(
+                "📥 代理响应:",
+                req.method,
+                req.url,
+                "→",
+                proxyRes.statusCode
+              );
+            });
+            // WebSocket 特定事件
+            proxy.on("proxyReqWs", (proxyReq, req, socket, options, head) => {
+              console.log(
+                "🔌 WebSocket 代理请求:",
+                req.url,
+                "→",
+                options.target
+              );
+            });
+            proxy.on("proxyResWs", (proxyRes, req, socket) => {
+              console.log(
+                "🔌 WebSocket 代理响应:",
+                req.url,
+                "→",
+                proxyRes.statusCode
+              );
+            });
+            proxy.on("error", (err, req, res) => {
+              if (req.url?.includes("/api/rpc2")) {
+                console.log("🔴 WebSocket/代理错误详情:", {
+                  url: req.url,
+                  method: req.method,
+                  headers: req.headers,
+                  error: err.message,
+                });
+              }
+            });
+          },
+        },
+      },
+    },
     // 性能优化配置
     optimizeDeps: {
       include: ["react", "react-dom", "recharts"],

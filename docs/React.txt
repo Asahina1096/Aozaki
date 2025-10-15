@@ -1,0 +1,1323 @@
+================
+CODE SNIPPETS
+================
+
+### React Application Setup and Styling for Strict Mode Example
+
+Source: https://github.com/reactjs/react.dev/blob/main/src/content/reference/react/StrictMode.md
+
+This snippet provides the foundational setup for a React application, including the main entry point, a root App component managing initial data with `useState`, and basic CSS styling. This boilerplate demonstrates how a typical React application is structured to run the `StoryTray` component examples.
+
+```javascript
+import { createRoot } from "react-dom/client";
+import "./styles.css";
+
+import App from "./App";
+
+const root = createRoot(document.getElementById("root"));
+root.render(<App />);
+```
+
+```javascript
+import { useState } from "react";
+import StoryTray from "./StoryTray.js";
+
+let initialStories = [
+  { id: 0, label: "Ankit's Story" },
+  { id: 1, label: "Taylor's Story" },
+];
+
+export default function App() {
+  let [stories, setStories] = useState(initialStories);
+  return (
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        textAlign: "center",
+      }}
+    >
+      <StoryTray stories={stories} />
+    </div>
+  );
+}
+```
+
+```css
+ul {
+  margin: 0;
+  list-style-type: none;
+  height: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  padding: 10px;
+}
+
+li {
+  border: 1px solid #aaa;
+  border-radius: 6px;
+  float: left;
+  margin: 5px;
+  padding: 5px;
+  width: 70px;
+  height: 100px;
+}
+```
+
+---
+
+### Full example of nested React components
+
+Source: https://github.com/reactjs/react.dev/blob/main/src/content/learn/index.md
+
+This complete example demonstrates how a `MyButton` component is defined and then nested within a `MyApp` component, showcasing basic component composition.
+
+```js
+function MyButton() {
+  return <button>I'm a button</button>;
+}
+
+export default function MyApp() {
+  return (
+    <div>
+      <h1>Welcome to my app</h1>
+      <MyButton />
+    </div>
+  );
+}
+```
+
+---
+
+### Create a basic React component function
+
+Source: https://github.com/reactjs/react.dev/blob/main/src/content/learn/index.md
+
+React components are JavaScript functions that return markup. This example defines a simple button component.
+
+```js
+function MyButton() {
+  return <button>I'm a button</button>;
+}
+```
+
+---
+
+### Install React 19 and React DOM packages
+
+Source: https://github.com/reactjs/react.dev/blob/main/src/content/blog/2024/04/25/react-19-upgrade-guide.md
+
+Commands to install the latest React 19 and React DOM packages with exact version matching using either npm or Yarn.
+
+```bash
+npm install --save-exact react@^19.0.0 react-dom@^19.0.0
+```
+
+```bash
+yarn add --exact react@^19.0.0 react-dom@^19.0.0
+```
+
+---
+
+### Complete example of lifting state up in React
+
+Source: https://github.com/reactjs/react.dev/blob/main/src/content/learn/index.md
+
+This comprehensive example combines all the steps of lifting state up: the `MyApp` component manages the shared `count` state and `handleClick` function, passing them down as props. The `MyButton` component receives and uses these props, demonstrating how both buttons update together when clicked. Basic CSS is included for styling.
+
+```javascript
+import { useState } from "react";
+
+export default function MyApp() {
+  const [count, setCount] = useState(0);
+
+  function handleClick() {
+    setCount(count + 1);
+  }
+
+  return (
+    <div>
+      <h1>Counters that update together</h1>
+      <MyButton count={count} onClick={handleClick} />
+      <MyButton count={count} onClick={handleClick} />
+    </div>
+  );
+}
+
+function MyButton({ count, onClick }) {
+  return <button onClick={onClick}>Clicked {count} times</button>;
+}
+```
+
+```css
+button {
+  display: block;
+  margin-bottom: 5px;
+}
+```
+
+---
+
+### Migrate `react-test-renderer/shallow` to `react-shallow-renderer`
+
+Source: https://github.com/reactjs/react.dev/blob/main/src/content/blog/2024/04/25/react-19-upgrade-guide.md
+
+Details the migration path for `react-test-renderer/shallow`, which is removed in React 19. Users should directly install and import `react-shallow-renderer` instead. An `npm install` command and a `diff` example are provided for a clear transition.
+
+```Bash
+npm install react-shallow-renderer --save-dev
+```
+
+```Diff
+- import ShallowRenderer from 'react-test-renderer/shallow';
++ import ShallowRenderer from 'react-shallow-renderer';
+```
+
+---
+
+### Complete Example: Streaming Data with React Suspense and `use` API
+
+Source: https://github.com/reactjs/react.dev/blob/main/src/content/reference/react/use.md
+
+This comprehensive example demonstrates the full flow of streaming data from a simulated server to a client using React. It includes a `Message` component that uses the `use` API, a `MessageContainer` with `Suspense` for loading states, and an `App` component that triggers the data download and passes the Promise. This setup provides a non-blocking user experience while data is being fetched.
+
+```js
+"use client";
+
+import { use, Suspense } from "react";
+
+function Message({ messagePromise }) {
+  const messageContent = use(messagePromise);
+  return <p>Here is the message: {messageContent}</p>;
+}
+
+export function MessageContainer({ messagePromise }) {
+  return (
+    <Suspense fallback={<p>⌛Downloading message...</p>}>
+      <Message messagePromise={messagePromise} />
+    </Suspense>
+  );
+}
+```
+
+```js
+import { useState } from "react";
+import { MessageContainer } from "./message.js";
+
+function fetchMessage() {
+  return new Promise((resolve) => setTimeout(resolve, 1000, "⚛️"));
+}
+
+export default function App() {
+  const [messagePromise, setMessagePromise] = useState(null);
+  const [show, setShow] = useState(false);
+  function download() {
+    setMessagePromise(fetchMessage());
+    setShow(true);
+  }
+
+  if (show) {
+    return <MessageContainer messagePromise={messagePromise} />;
+  } else {
+    return <button onClick={download}>Download message</button>;
+  }
+}
+```
+
+```js
+import React, { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import "./styles.css";
+
+// TODO: update this example to use
+// the Codesandbox Server Component
+// demo environment once it is created
+import App from "./App";
+
+const root = createRoot(document.getElementById("root"));
+root.render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);
+```
+
+---
+
+### Display a Greeting in React Sandbox
+
+Source: https://github.com/reactjs/react.dev/blob/main/src/content/learn/installation.md
+
+This snippet demonstrates a basic React component (`Greeting`) and its usage within an `App` component, suitable for quick experimentation in an online sandbox. It shows how to render a simple 'Hello, world' message without requiring any local installation.
+
+```JavaScript
+function Greeting({ name }) {
+  return <h1>Hello, {name}</h1>;
+}
+
+export default function App() {
+  return <Greeting name="world" />
+}
+```
+
+---
+
+### Build a React 'Get Inspired' App with Component Composition
+
+Source: https://github.com/reactjs/react.dev/blob/main/src/content/learn/understanding-your-ui-as-a-tree.md
+
+This comprehensive example demonstrates a React application that generates inspirational quotes, showcasing component composition, state management, and styling. It includes the main App component, reusable FancyText, InspirationGenerator, and Copyright components, a data module for quotes, and associated CSS styles to illustrate how a render tree is formed.
+
+```JavaScript
+import FancyText from './FancyText';
+import InspirationGenerator from './InspirationGenerator';
+import Copyright from './Copyright';
+
+export default function App() {
+  return (
+    <>
+      <FancyText title text="Get Inspired App" />
+      <InspirationGenerator>
+        <Copyright year={2004} />
+      </InspirationGenerator>
+    </>
+  );
+}
+```
+
+```JavaScript
+export default function FancyText({title, text}) {
+  return title
+    ? <h1 className='fancy title'>{text}</h1>
+    : <h3 className='fancy cursive'>{text}</h3>
+}
+```
+
+```JavaScript
+import * as React from 'react';
+import quotes from './quotes';
+import FancyText from './FancyText';
+
+export default function InspirationGenerator({children}) {
+  const [index, setIndex] = React.useState(0);
+  const quote = quotes[index];
+  const next = () => setIndex((index + 1) % quotes.length);
+
+  return (
+    <>
+      <p>Your inspirational quote is:</p>
+      <FancyText text={quote} />
+      <button onClick={next}>Inspire me again</button>
+      {children}
+    </>
+  );
+}
+```
+
+```JavaScript
+export default function Copyright({year}) {
+  return <p className='small'>©️ {year}</p>;
+}
+```
+
+```JavaScript
+export default [
+  "Don’t let yesterday take up too much of today.” — Will Rogers",
+  "Ambition is putting a ladder against the sky.",
+  "A joy that's shared is a joy made double.",
+  ];
+```
+
+```CSS
+.fancy {
+  font-family: 'Georgia';
+}
+.title {
+  color: #007AA3;
+  text-decoration: underline;
+}
+.cursive {
+  font-style: italic;
+}
+.small {
+  font-size: 10px;
+}
+```
+
+---
+
+### Install React 19 TypeScript type definitions
+
+Source: https://github.com/reactjs/react.dev/blob/main/src/content/blog/2024/04/25/react-19-upgrade-guide.md
+
+Commands to install the TypeScript type definitions for React 19 and React DOM with exact version matching using either npm or Yarn.
+
+```bash
+npm install --save-exact @types/react@^19.0.0 @types/react-dom@^19.0.0
+```
+
+```bash
+yarn add --exact @types/react@^19.0.0 @types/react-dom@^19.0.0
+```
+
+---
+
+### Install React Compiler as a Development Dependency
+
+Source: https://github.com/reactjs/react.dev/blob/main/src/content/learn/react-compiler/installation.md
+
+Install the React Compiler package as a development dependency using your preferred package manager (npm, Yarn, or pnpm). The `@rc` tag ensures you get the latest release candidate version.
+
+```bash
+npm install -D babel-plugin-react-compiler@rc
+```
+
+```bash
+yarn add -D babel-plugin-react-compiler@rc
+```
+
+```bash
+pnpm install -D babel-plugin-react-compiler@rc
+```
+
+---
+
+### Complete Example: Creating Elements with createElement
+
+Source: https://github.com/reactjs/react.dev/blob/main/src/content/reference/react/createElement.md
+
+A full, runnable example demonstrating the use of `createElement` to define a `Greeting` component and render it within an `App` component, including associated CSS styling.
+
+```js
+import { createElement } from "react";
+
+function Greeting({ name }) {
+  return createElement(
+    "h1",
+    { className: "greeting" },
+    "Hello ",
+    createElement("i", null, name),
+    ". Welcome!"
+  );
+}
+
+export default function App() {
+  return createElement(Greeting, { name: "Taylor" });
+}
+```
+
+```css
+.greeting {
+  color: darkgreen;
+  font-family: Georgia;
+}
+```
+
+---
+
+### Complete React Application for Data Filtering and Display
+
+Source: https://github.com/reactjs/react.dev/blob/main/src/content/learn/rendering-lists.md
+
+This comprehensive example provides a full React application demonstrating data filtering, mapping, and display. It includes the main `App.js` component, a separate `data.js` file for structured data, a `utils.js` file for helper functions, and `style.css` for styling. This setup illustrates best practices for organizing a React project that processes and renders dynamic content.
+
+```JavaScript
+import { people } from './data.js';
+import { getImageUrl } from './utils.js';
+
+export default function List() {
+  const chemists = people.filter(person =>
+    person.profession === 'chemist'
+  );
+  const listItems = chemists.map(person =>
+    <li>
+      <img
+        src={getImageUrl(person)}
+        alt={person.name}
+      />
+      <p>
+        <b>{person.name}:</b>
+        {' ' + person.profession + ' '}
+        known for {person.accomplishment}
+      </p>
+    </li>
+  );
+  return <ul>{listItems}</ul>;
+}
+```
+
+```JavaScript
+export const people = [{
+  id: 0,
+  name: 'Creola Katherine Johnson',
+  profession: 'mathematician',
+  accomplishment: 'spaceflight calculations',
+  imageId: 'MK3eW3A'
+}, {
+  id: 1,
+  name: 'Mario José Molina-Pasquel Henríquez',
+  profession: 'chemist',
+  accomplishment: 'discovery of Arctic ozone hole',
+  imageId: 'mynHUSa'
+}, {
+  id: 2,
+  name: 'Mohammad Abdus Salam',
+  profession: 'physicist',
+  accomplishment: 'electromagnetism theory',
+  imageId: 'bE7W1ji'
+}, {
+  id: 3,
+  name: 'Percy Lavon Julian',
+  profession: 'chemist',
+  accomplishment: 'pioneering cortisone drugs, steroids and birth control pills',
+  imageId: 'IOjWm71'
+}, {
+  id: 4,
+  name: 'Subrahmanyan Chandrasekhar',
+  profession: 'astrophysicist',
+  accomplishment: 'white dwarf star mass calculations',
+  imageId: 'lrWQx8l'
+}];
+```
+
+```JavaScript
+export function getImageUrl(person) {
+  return (
+    'https://i.imgur.com/' +
+    person.imageId +
+    's.jpg'
+  );
+}
+```
+
+```CSS
+ul { list-style-type: none; padding: 0px 10px; }
+li {
+  margin-bottom: 10px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 20px;
+  align-items: center;
+}
+img { width: 100px; height: 100px; border-radius: 50%; }
+```
+
+---
+
+### Complete Example: Creating Elements with JSX
+
+Source: https://github.com/reactjs/react.dev/blob/main/src/content/reference/react/createElement.md
+
+A full, runnable example demonstrating the use of JSX to define a `Greeting` component and render it within an `App` component, including associated CSS styling, for direct comparison with the `createElement` approach.
+
+```js
+function Greeting({ name }) {
+  return (
+    <h1 className="greeting">
+      Hello <i>{name}</i>. Welcome!
+    </h1>
+  );
+}
+
+export default function App() {
+  return <Greeting name="Taylor" />;
+}
+```
+
+```css
+.greeting {
+  color: darkgreen;
+  font-family: Georgia;
+}
+```
+
+---
+
+### Install React.dev Website Dependencies
+
+Source: https://github.com/reactjs/react.dev/blob/main/README.md
+
+Navigate into the project's root directory and install all required npm dependencies for the website using Yarn. This step is essential before running the development server or making any changes.
+
+```shell
+cd react.dev
+```
+
+```shell
+yarn
+```
+
+---
+
+### Implement Symmetrical Setup and Cleanup in React useEffect
+
+Source: https://github.com/reactjs/react.dev/blob/main/src/content/reference/react/useEffect.md
+
+This React `useEffect` example demonstrates the recommended practice for effect cleanup. The setup logic establishes a connection, and the cleanup function symmetrically disconnects it, ensuring resources are properly managed. The effect correctly re-runs when `serverUrl` or `roomId` dependencies change.
+
+```js
+useEffect(() => {
+  const connection = createConnection(serverUrl, roomId);
+  connection.connect();
+  return () => {
+    connection.disconnect();
+  };
+}, [serverUrl, roomId]);
+```
+
+---
+
+### Install eslint-plugin-react-hooks for React Compiler linting
+
+Source: https://github.com/reactjs/react.dev/blob/main/src/content/blog/2025/04/21/react-compiler-rc.md
+
+This snippet provides commands to install `eslint-plugin-react-hooks` version `^6.1.1` as a development dependency. This plugin is now the recommended tool for linting React hooks and incorporates features previously found in `eslint-plugin-react-compiler`, streamlining your ESLint setup.
+
+```bash
+npm install --save-dev eslint-plugin-react-hooks@^6.1.1
+```
+
+```bash
+pnpm add --save-dev eslint-plugin-react-hooks@^6.1.1
+```
+
+```bash
+yarn add --dev eslint-plugin-react-hooks@^6.1.1
+```
+
+---
+
+### Run React.dev Development Server Locally
+
+Source: https://github.com/reactjs/react.dev/blob/main/README.md
+
+Start the development server, powered by Next.js, to view the website locally. After the server starts, open the provided URL in your browser to access the site. Changes to source files will typically hot-reload.
+
+```shell
+yarn dev
+```
+
+```shell
+open http://localhost:3000
+```
+
+---
+
+### Install React Compiler Beta for React Applications
+
+Source: https://github.com/reactjs/react.dev/blob/main/src/content/blog/2024/10/21/react-compiler-beta-release.md
+
+Instructions for installing the beta version of `babel-plugin-react-compiler` and `eslint-plugin-react-compiler`. This build-time tool optimizes React apps through automatic memoization and is intended for early adopters and library maintainers.
+
+```bash
+npm install -D babel-plugin-react-compiler@beta eslint-plugin-react-compiler@beta
+```
+
+```bash
+yarn add -D babel-plugin-react-compiler@beta eslint-plugin-react-compiler@beta
+```
+
+---
+
+### Install React and React DOM with npm
+
+Source: https://github.com/reactjs/react.dev/blob/main/src/content/learn/add-react-to-an-existing-project.md
+
+This command installs the `react` and `react-dom` packages from the npm registry into your project. These are essential dependencies for building React applications and enable you to use React's core functionalities.
+
+```Shell
+npm install react react-dom
+```
+
+---
+
+### Display complex data and dynamic styles in React
+
+Source: https://github.com/reactjs/react.dev/blob/main/src/content/learn/index.md
+
+This example demonstrates how to display complex data, including images and dynamic text, and apply inline styles based on JavaScript variables within a React component. It also shows how to define corresponding CSS rules.
+
+```js
+const user = {
+  name: "Hedy Lamarr",
+  imageUrl: "https://i.imgur.com/yXOvdOSs.jpg",
+  imageSize: 90,
+};
+
+export default function Profile() {
+  return (
+    <>
+      <h1>{user.name}</h1>
+      <img
+        className="avatar"
+        src={user.imageUrl}
+        alt={"Photo of " + user.name}
+        style={{
+          width: user.imageSize,
+          height: user.imageSize,
+        }}
+      />
+    </>
+  );
+}
+```
+
+```css
+.avatar {
+  border-radius: 50%;
+}
+
+.large {
+  border: 4px solid gold;
+}
+```
+
+---
+
+### Project Dependencies and Scripts (package.json)
+
+Source: https://github.com/reactjs/react.dev/blob/main/src/content/blog/2025/04/23/react-labs-view-transitions-activity-and-more.md
+
+Lists the project's dependencies including `react`, `react-dom` (experimental versions), and `react-scripts`. It also defines a basic `start` script for running the application.
+
+```json
+{
+  "dependencies": {
+    "react": "experimental",
+    "react-dom": "experimental",
+    "react-scripts": "latest"
+  },
+  "scripts": {
+
+```
+
+---
+
+### Preiniting an External Script During React Rendering
+
+Source: https://github.com/reactjs/react.dev/blob/main/src/content/reference/react-dom/preinit.md
+
+This example demonstrates how to use `preinit` to eagerly fetch and evaluate an external JavaScript file when a React component renders. This provides a hint to the browser to start downloading and executing the script early, optimizing the application's initial load performance.
+
+```js
+import { preinit } from 'react-dom';
+
+function AppRoot() {
+  preinit("https://example.com/script.js", {as: "script"});
+  return ...;
+}
+```
+
+---
+
+### Define project dependencies and scripts (JSON)
+
+Source: https://github.com/reactjs/react.dev/blob/main/src/content/reference/react-dom/createPortal.md
+
+This `package.json` file outlines the project's dependencies, including React, React DOM, Leaflet, and React Scripts. It also defines standard npm scripts for starting, building, testing, and ejecting the project, setting up the development environment for the React-Leaflet integration example.
+
+```json
+{
+  "dependencies": {
+    "leaflet": "1.9.1",
+    "react": "latest",
+    "react-dom": "latest",
+    "react-scripts": "latest",
+    "remarkable": "2.0.1"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  }
+}
+```
+
+---
+
+### Load React 19 and ReactDOM via ESM CDN
+
+Source: https://github.com/reactjs/react.dev/blob/main/src/content/blog/2024/04/25/react-19-upgrade-guide.md
+
+This example demonstrates how to import React 19 and ReactDOMClient directly into an HTML page using an ESM-based CDN like esm.sh. This approach replaces the previously used UMD builds, which have been removed in React 19, providing a modern way to load React without a build step.
+
+```html
+<script type="module">
+  import React from "https://esm.sh/react@19/?dev"
+  import ReactDOMClient from "https://esm.sh/react-dom@19/client?dev"
+  ...
+</script>
+```
+
+---
+
+### Control React Component Animation with `useEffect` and `useRef`
+
+Source: https://github.com/reactjs/react.dev/blob/main/src/content/reference/react/useEffect.md
+
+This example demonstrates how to use `useEffect` and `useRef` in React to integrate with an external animation library. The `Welcome` component uses a ref to get its DOM node, and an `useEffect` hook to start and stop a `FadeInAnimation` instance, ensuring the animation is properly managed when the component mounts and unmounts. The `App` component toggles the visibility of the `Welcome` component.
+
+```jsx
+import { useState, useEffect, useRef } from "react";
+import { FadeInAnimation } from "./animation.js";
+
+function Welcome() {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const animation = new FadeInAnimation(ref.current);
+    animation.start(1000);
+    return () => {
+      animation.stop();
+    };
+  }, []);
+
+  return (
+    <h1
+      ref={ref}
+      style={{
+        opacity: 0,
+        color: "white",
+        padding: 50,
+        textAlign: "center",
+        fontSize: 50,
+        backgroundImage:
+          "radial-gradient(circle, rgba(63,94,251,1) 0%, rgba(252,70,107,1) 100%)",
+      }}
+    >
+      Welcome
+    </h1>
+  );
+}
+
+export default function App() {
+  const [show, setShow] = useState(false);
+  return (
+    <>
+      <button onClick={() => setShow(!show)}>{show ? "Remove" : "Show"}</button>
+      <hr />
+      {show && <Welcome />}
+    </>
+  );
+}
+```
+
+```js
+export class FadeInAnimation {
+  constructor(node) {
+    this.node = node;
+  }
+  start(duration) {
+    this.duration = duration;
+    if (this.duration === 0) {
+      // Jump to end immediately
+      this.onProgress(1);
+    } else {
+      this.onProgress(0);
+      // Start animating
+      this.startTime = performance.now();
+      this.frameId = requestAnimationFrame(() => this.onFrame());
+    }
+  }
+  onFrame() {
+    const timePassed = performance.now() - this.startTime;
+    const progress = Math.min(timePassed / this.duration, 1);
+    this.onProgress(progress);
+    if (progress < 1) {
+      // We still have more frames to paint
+      this.frameId = requestAnimationFrame(() => this.onFrame());
+    }
+  }
+  onProgress(progress) {
+    this.node.style.opacity = progress;
+  }
+  stop() {
+    cancelAnimationFrame(this.frameId);
+    this.startTime = null;
+    this.frameId = null;
+    this.duration = 0;
+  }
+}
+```
+
+```css
+label,
+button {
+  display: block;
+  margin-bottom: 20px;
+}
+html,
+body {
+  min-height: 300px;
+}
+```
+
+---
+
+### Initial React Root Setup (Clears HTML)
+
+Source: https://github.com/reactjs/react.dev/blob/main/src/content/learn/add-react-to-an-existing-project.md
+
+This JavaScript code demonstrates an initial, basic way to set up a React root and render a component. It clears the entire `document.body` before rendering, which is generally not suitable for integrating React into existing HTML pages incrementally.
+
+```js
+import { createRoot } from "react-dom/client";
+
+// Clear the existing HTML content
+document.body.innerHTML = '<div id="app"></div>';
+
+// Render your React component instead
+const root = createRoot(document.getElementById("app"));
+root.render(<h1>Hello, world</h1>);
+```
+
+---
+
+### Comprehensive React Pre-rendering Example with Activity, ViewTransition, and Suspense
+
+Source: https://github.com/reactjs/react.dev/blob/main/src/content/blog/2025/04/23/react-labs-view-transitions-activity-and-more.md
+
+This example demonstrates an advanced pre-rendering strategy in React using `unstable_Activity` and `unstable_ViewTransition`. `App.js` renders all video detail pages in hidden activities, proactively fetching data and preparing the UI. `Details.js` utilizes `Suspense` and `ViewTransition` for seamless content display and animation if pre-rendering is successful. `Home.js` manages the initial video list display.
+
+```javascript
+import {
+  unstable_ViewTransition as ViewTransition,
+  unstable_Activity as Activity,
+  use,
+} from "react";
+import Details from "./Details";
+import Home from "./Home";
+import { useRouter } from "./router";
+import { fetchVideos } from "./data";
+
+export default function App() {
+  const { url } = useRouter();
+  const videoId = url.split("/").pop();
+  const videos = use(fetchVideos());
+
+  return (
+    <ViewTransition>
+      {/* Render videos in Activity to pre-render them */}
+      {videos.map(({ id }) => (
+        <Activity key={id} mode={videoId === id ? "visible" : "hidden"}>
+          <Details id={id} />
+        </Activity>
+      ))}
+      <Activity mode={url === "/" ? "visible" : "hidden"}>
+        <Home />
+      </Activity>
+    </ViewTransition>
+  );
+}
+```
+
+```javascript
+import {
+  use,
+  Suspense,
+  unstable_ViewTransition as ViewTransition,
+} from "react";
+import { fetchVideo, fetchVideoDetails } from "./data";
+import { Thumbnail, VideoControls } from "./Videos";
+import { useRouter } from "./router";
+import Layout from "./Layout";
+import { ChevronLeft } from "./Icons";
+
+function VideoDetails({ id }) {
+  // Animate from Suspense fallback to content.
+  // If this is pre-rendered then the fallback
+  // won't need to show.
+  return (
+    <Suspense
+      fallback={
+        // Animate the fallback down.
+        <ViewTransition exit="slide-down">
+          <VideoInfoFallback />
+        </ViewTransition>
+      }
+    >
+      {/* Animate the content up */}
+      <ViewTransition enter="slide-up">
+        <VideoInfo id={id} />
+      </ViewTransition>
+    </Suspense>
+  );
+}
+
+function VideoInfoFallback() {
+  return (
+    <>
+      <div className="fallback title"></div>
+      <div className="fallback description"></div>
+    </>
+  );
+}
+
+export default function Details({ id }) {
+  const { url, navigateBack } = useRouter();
+  const video = use(fetchVideo(id));
+
+  return (
+    <Layout
+      heading={
+        <div
+          className="fit back"
+          onClick={() => {
+            navigateBack("/");
+          }}
+        >
+          <ChevronLeft /> Back
+        </div>
+      }
+    >
+      <div className="details">
+        <Thumbnail video={video} large>
+          <VideoControls />
+        </Thumbnail>
+        <VideoDetails id={video.id} />
+      </div>
+    </Layout>
+  );
+}
+
+function VideoInfo({ id }) {
+  const details = use(fetchVideoDetails(id));
+  return (
+    <>
+      <p className="info-title">{details.title}</p>
+      <p className="info-description">{details.description}</p>
+    </>
+  );
+}
+```
+
+```javascript
+import {
+  useId,
+  useState,
+  use,
+  useDeferredValue,
+  unstable_ViewTransition as ViewTransition,
+} from "react";
+import { Video } from "./Videos";
+import Layout from "./Layout";
+import { fetchVideos } from "./data";
+import { IconSearch } from "./Icons";
+
+function SearchList({ searchText, videos }) {
+  // Activate with useDeferredValue ("when")
+  const deferredSearchText = useDeferredValue(searchText);
+  const filteredVideos = filterVideos(videos, deferredSearchText);
+  return (
+    <div className="video-list">
+      {filteredVideos.length === 0 && (
+        <div className="no-results">No results</div>
+      )}
+      <div className="videos">
+        {filteredVideos.map((video) => (
+          // Animate each item in list ("what")
+          <ViewTransition key={video.id}>
+            <Video video={video} />
+          </ViewTransition>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function Home() {
+  const videos = use(fetchVideos());
+  const count = videos.length;
+  const [searchText, setSearchText] = useState("");
+
+  return (
+    <Layout heading={<div className="fit">{count} Videos</div>}>
+      <SearchInput value={searchText} onChange={setSearchText} />
+      <SearchList videos={videos} searchText={searchText} />
+    </Layout>
+  );
+}
+```
+
+---
+
+### Install React Hooks ESLint Plugin for Compiler Support
+
+Source: https://github.com/reactjs/react.dev/blob/main/src/content/learn/react-compiler/installation.md
+
+Installs the `eslint-plugin-react-hooks` package as a development dependency using npm. This plugin is essential for enabling the React Compiler's ESLint rules to identify optimization violations. It's a prerequisite for integrating the compiler's linting capabilities into your project.
+
+```bash
+npm install -D eslint-plugin-react-hooks@^6.1.1
+```
+
+---
+
+### Full React List Rendering with Keyed Fragments Example
+
+Source: https://github.com/reactjs/react.dev/blob/main/src/content/reference/react/Fragment.md
+
+This complete example demonstrates rendering a dynamic list of blog posts, where each post is encapsulated within a `Fragment` that includes a `key` prop. This approach ensures optimal performance and correct behavior when updating lists in React, while also preventing extra DOM nodes.
+
+```js
+import { Fragment } from "react";
+
+const posts = [
+  { id: 1, title: "An update", body: "It's been a while since I posted..." },
+  { id: 2, title: "My new blog", body: "I am starting a new blog!" },
+];
+
+export default function Blog() {
+  return posts.map((post) => (
+    <Fragment key={post.id}>
+      <PostTitle title={post.title} />
+      <PostBody body={post.body} />
+    </Fragment>
+  ));
+}
+
+function PostTitle({ title }) {
+  return <h1>{title}</h1>;
+}
+
+function PostBody({ body }) {
+  return (
+    <article>
+      <p>{body}</p>
+    </article>
+  );
+}
+```
+
+---
+
+### Migrate `ReactDOM.render` to `ReactDOM.createRoot` in React 19
+
+Source: https://github.com/reactjs/react.dev/blob/main/src/content/blog/2024/04/25/react-19-upgrade-guide.md
+
+`ReactDOM.render` is removed in React 19. This example shows how to refactor your application's entry point to use `ReactDOM.createRoot` for initial rendering, which is the modern approach for React 18+ applications. A codemod is provided for automated migration.
+
+```javascript
+// Before
+import { render } from "react-dom";
+render(<App />, document.getElementById("root"));
+
+// After
+import { createRoot } from "react-dom/client";
+const root = createRoot(document.getElementById("root"));
+root.render(<App />);
+```
+
+```bash
+npx codemod@latest react/19/replace-reactdom-render
+```
+
+---
+
+### Complete React Application with Custom Error Overlay
+
+Source: https://github.com/reactjs/react.dev/blob/main/src/content/reference/react/captureOwnerStack.md
+
+This comprehensive example provides a full React application demonstrating a custom error overlay. It includes CSS for styling, HTML for the dialog structure, and multiple JavaScript files for patching `console.error` (similar to the standalone example), handling error display, and a simple component to trigger an error. This setup allows developers to see the `captureOwnerStack` functionality in action within a complete, runnable environment.
+
+```css
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  margin: 20px;
+  padding: 0;
+}
+
+h1 {
+  margin-top: 0;
+  font-size: 22px;
+}
+
+h2 {
+  margin-top: 0;
+  font-size: 20px;
+}
+
+code {
+  font-size: 1.2em;
+}
+
+ul {
+  padding-inline-start: 20px;
+}
+
+label,
+button {
+  display: block;
+  margin-bottom: 20px;
+}
+html,
+body {
+  min-height: 300px;
+}
+
+#error-dialog {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background-color: white;
+  padding: 15px;
+  opacity: 0.9;
+  text-wrap: wrap;
+  overflow: scroll;
+}
+
+.text-red {
+  color: red;
+}
+
+.-mb-20 {
+  margin-bottom: -20px;
+}
+
+.mb-0 {
+  margin-bottom: 0;
+}
+
+.mb-10 {
+  margin-bottom: 10px;
+}
+
+pre {
+  text-wrap: wrap;
+}
+
+pre.nowrap {
+  text-wrap: nowrap;
+}
+
+.hidden {
+  display: none;
+}
+```
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My app</title>
+</head>
+<body>
+<!--
+  Error dialog in raw HTML
+  since an error in the React app may crash.
+-->
+<div id="error-dialog" class="hidden">
+  <h1 id="error-title" class="text-red">Error</h1>
+  <p>
+    <pre id="error-body"></pre>
+  </p>
+  <h2 class="-mb-20">Owner Stack:</h4>
+  <pre id="error-owner-stack" class="nowrap"></pre>
+  <button
+    id="error-close"
+    class="mb-10"
+    onclick="document.getElementById('error-dialog').classList.add('hidden')"
+  >
+    Close
+  </button>
+</div>
+<!-- This is the DOM node -->
+<div id="root"></div>
+</body>
+</html>
+
+```
+
+```javascript
+export function onConsoleError({ consoleMessage, ownerStack }) {
+  const errorDialog = document.getElementById("error-dialog");
+  const errorBody = document.getElementById("error-body");
+  const errorOwnerStack = document.getElementById("error-owner-stack");
+
+  // Display console.error() message
+  errorBody.innerText = consoleMessage;
+
+  // Display owner stack
+  errorOwnerStack.innerText = ownerStack;
+
+  // Show the dialog
+  errorDialog.classList.remove("hidden");
+}
+```
+
+```javascript
+import { captureOwnerStack } from "react";
+import { createRoot } from "react-dom/client";
+import App from "./App";
+import { onConsoleError } from "./errorOverlay";
+import "./styles.css";
+
+const originalConsoleError = console.error;
+console.error = function patchedConsoleError(...args) {
+  originalConsoleError.apply(console, args);
+  const ownerStack = captureOwnerStack();
+  onConsoleError({
+    // Keep in mind that in a real application, console.error can be
+    // called with multiple arguments which you should account for.
+    consoleMessage: args[0],
+    ownerStack,
+  });
+};
+
+const container = document.getElementById("root");
+createRoot(container).render(<App />);
+```
+
+```javascript
+function Component() {
+  return (
+    <button onClick={() => console.error("Some console error")}>
+      Trigger console.error()
+    </button>
+  );
+}
+
+export default function App() {
+  return <Component />;
+}
+```
+
+---
+
+### Representing Static Data as an HTML List
+
+Source: https://github.com/reactjs/react.dev/blob/main/src/content/learn/rendering-lists.md
+
+This example illustrates a basic static HTML unordered list, serving as a conceptual starting point for understanding how data might be structured before being dynamically rendered by React components. It highlights the raw data format that will later be processed.
+
+```HTML
+<ul>
+  <li>Creola Katherine Johnson: mathematician</li>
+  <li>Mario José Molina-Pasquel Henríquez: chemist</li>
+  <li>Mohammad Abdus Salam: physicist</li>
+  <li>Percy Lavon Julian: chemist</li>
+  <li>Subrahmanyan Chandrasekhar: astrophysicist</li>
+</ul>
+```
+
+---
+
+### Initialize a React application with createRoot
+
+Source: https://github.com/reactjs/react.dev/blob/main/src/content/reference/react-dom/client/createRoot.md
+
+This JavaScript code demonstrates how to create a React root using `createRoot` from `react-dom/client`. It finds a specific DOM element by its ID ('root') and renders the main `<App />` component into it, effectively bootstrapping the entire React application. This setup is typically executed once at application startup.
+
+```javascript
+import { createRoot } from "react-dom/client";
+
+const root = createRoot(document.getElementById("root"));
+root.render(<App />);
+```

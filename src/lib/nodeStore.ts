@@ -1,4 +1,5 @@
 import { getSharedWsClient } from "./wsRpc2";
+import { getSharedClient } from "./rpc2";
 import type { Client, NodeStatus } from "./types/komari";
 
 type Listener = () => void;
@@ -16,10 +17,16 @@ class NodeStore {
     if (this.isRunning) return;
 
     this.isRunning = true;
+    const isDev = import.meta.env.DEV;
 
     try {
-      // 连接 WebSocket
-      await this.wsClient.connect();
+      if (isDev) {
+        // 开发环境：跳过 WebSocket 连接，直接使用 HTTP 轮询
+        console.log("🚀 开发环境：启动 HTTP 轮询模式");
+      } else {
+        // 生产环境：连接 WebSocket
+        await this.wsClient.connect();
+      }
 
       // 首次获取数据
       await this.fetchData();
@@ -46,10 +53,27 @@ class NodeStore {
   // 获取数据
   private async fetchData() {
     try {
-      const [nodesData, statusData] = await Promise.all([
-        this.wsClient.call("common:getNodes"),
-        this.wsClient.call("common:getNodesLatestStatus"),
-      ]);
+      // 检查是否为开发环境
+      const isDev = import.meta.env.DEV;
+
+      let nodesData, statusData;
+
+      if (isDev) {
+        // 开发环境：使用 HTTP RPC2 客户端
+        console.log("🔄 开发环境：使用 HTTP 轮询获取数据");
+        const httpClient = getSharedClient();
+
+        [nodesData, statusData] = await Promise.all([
+          httpClient.getNodes(),
+          httpClient.getNodesLatestStatus(),
+        ]);
+      } else {
+        // 生产环境：使用 WebSocket 客户端
+        [nodesData, statusData] = await Promise.all([
+          this.wsClient.call("common:getNodes"),
+          this.wsClient.call("common:getNodesLatestStatus"),
+        ]);
+      }
 
       // 处理节点数据
       if (

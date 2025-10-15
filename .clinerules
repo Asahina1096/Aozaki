@@ -1,0 +1,211 @@
+# Komari Aozaki 开发规范
+
+## 项目概述
+Astro + React + TypeScript 监控主题，用于 Komari 服务器监控系统。
+
+## 技术栈
+- **前端框架**: Astro 4.x
+- **组件库**: React 18 + TypeScript 5.x
+- **样式**: TailwindCSS 4.x + shadcn/ui
+- **图表**: Recharts 3.x
+- **图标**: Lucide React + Iconify React
+- **包管理器**: Bun
+- **构建工具**: Astro
+
+## 代码规范
+
+### 命名约定
+- **组件文件**: `PascalCase.tsx`
+- **函数/变量**: `camelCase`
+- **常量**: `UPPER_SNAKE_CASE`
+- **Hook**: `use` 前缀
+- **类型定义**: `PascalCase`
+
+### 导入顺序
+```typescript
+// 1. React 和核心库
+import { useState, useEffect, useMemo } from "react";
+
+// 2. 第三方库
+import { Card } from "./ui/card";
+import { LineChart } from "recharts";
+
+// 3. 内部工具和组件
+import { formatBytes } from "lib/utils";
+import { getSharedClient } from "lib/rpc2";
+
+// 4. 类型定义
+import type { Client, NodeStatus } from "lib/types/komari";
+```
+
+### 文件结构
+```
+src/
+├── components/          # React 组件
+│   ├── ui/             # shadcn/ui 基础组件
+│   ├── charts/         # 图表组件
+│   └── overview/       # 概览卡片组件
+├── hooks/              # React Hooks
+├── lib/                # 工具库和客户端
+│   ├── types/          # TypeScript 类型定义
+│   └── transformers/   # 数据转换器
+├── layouts/            # Astro 布局模板
+├── pages/              # Astro 页面
+└── styles/             # 样式文件
+```
+
+## 开发环境配置
+
+### 环境变量
+项目使用 `.env` 文件管理环境变量：
+
+```bash
+# .env
+# 后端服务器地址
+VITE_API_BASE_URL=https://lovejk.cc
+
+# 可选配置
+# VITE_WS_URL=ws://localhost:8080
+```
+
+### 本地开发
+```bash
+bun run dev             # 开发服务器 (localhost:4322)
+```
+
+#### Vite 代理配置
+开发环境使用 Vite 代理将 `/api/*` 请求转发到远程后端：
+
+- **HTTP 请求**: `localhost:4322/api/*` → `VITE_API_BASE_URL/api/*`
+- **WebSocket**: 自动代理 WebSocket 连接
+- **调试日志**: 控制台显示详细的代理请求/响应信息
+
+#### 开发与生产环境差异
+
+**开发环境**:
+- 使用 HTTP 轮询获取实时数据（避免 WebSocket 连接问题）
+- 通过 Vite 代理访问远程 API
+- 支持热重载和开发调试
+
+**生产环境**:
+- 使用 WebSocket 实时连接
+- 直接访问同域名的 API 端点
+- 优化的构建输出
+
+### NodeStore 数据管理
+```typescript
+// 开发环境：自动使用 HTTP 轮询
+import { nodeStore } from "lib/nodeStore";
+await nodeStore.start(1000);
+// 1秒刷新间隔
+
+// 生产环境：自动使用 WebSocket 连接
+// 代码相同，行为自动适配环境
+```
+
+## 核心开发模式
+
+### RPC2 客户端
+```typescript
+// HTTP 客户端（历史数据）
+import { getSharedClient } from "lib/rpc2";
+const rpc = getSharedClient();
+const records = await rpc.getRecords(params);
+
+// WebSocket 客户端（实时数据）
+import { getSharedWsClient } from "lib/wsRpc2";
+const wsClient = getSharedWsClient();
+await wsClient.connect();
+const result = await wsClient.call("common:getNodes");
+```
+
+### 数据 Hook
+```typescript
+// 获取所有节点（主页）
+import { useNodesData } from "hooks/useNodeStore";
+const { clients, statuses, loading } = useNodesData(1000);
+
+// 获取单个节点（详情页）
+import { useNodeData } from "hooks/useNodeStore";
+const { client, status } = useNodeData(uuid, 1000);
+
+// 获取图表数据
+import { useAllChartsData } from "hooks/useAllChartsData";
+const { chartsData, timeRanges, setChartTimeRange } = useAllChartsData(uuid);
+```
+
+### 工具函数
+```typescript
+import { formatBytes, formatPercent, formatSpeed, formatTimestamp } from "lib/utils";
+formatBytes(1024);           // "1 KB"
+formatPercent(512, 1024);    // "50.0%"
+formatSpeed(1048576);        // "1 MB/s"
+formatTimestamp(date);       // "2小时前"
+```
+
+## 关键开发要求
+
+### 组件开发
+- **必须使用 TypeScript**
+- **优先使用 shadcn/ui 组件库**
+- **图表必须禁用动画**: `isAnimationActive={false}`
+- **使用 `useMemo` 优化数据处理**
+- **响应式设计，移动端优先**
+
+### 数据管理
+- 使用全局单例 `NodeStore` 管理节点数据
+- WebSocket 实时通信，默认 1 秒刷新间隔
+- 历史数据使用 HTTP RPC2 客户端
+- 图表数据使用 `useAllChartsData` 统一管理
+
+### 性能优化
+- **图表数据必须使用 `useMemo` 缓存**
+- **避免在渲染过程中创建新对象**
+- **使用骨架屏提升加载体验**
+- **并发请求优化数据获取**
+
+## 重要注意事项
+
+### 图表优化（关键）
+- 必须设置 `isAnimationActive={false}` 避免闪烁
+- 使用 `useMemo` 缓存图表数据
+- 响应式容器，支持移动端
+- 时间范围 >24h 显示 "月-日 时:分"，≤24h 显示 "时:分"
+
+### WebSocket 连接
+- 自动重连机制，最多 10 次
+- 指数退避重连策略
+- 正常情况不输出日志到控制台
+- 连接失败显示离线状态
+
+### 错误处理
+- 网络错误显示重试提示
+- 数据为空显示空状态
+- 加载时显示骨架屏
+- 异常情况不影响其他功能
+
+## 文档参考
+
+### docs 目录
+项目根目录的 `docs/` 包含各框架和库的参考文档：
+
+- **Astro.txt** - Astro 框架 API 和模式
+- **React.txt** - React 核心概念和代码示例
+- **Nextjs.txt** - Next.js 完整 API 参考
+- **Tailwind.txt** - Tailwind CSS 配置和组件
+- **shadcn.txt** - shadcn/ui CLI 和组件系统
+- **komari/** - Komari 服务器 API 文档
+
+这些文档提供开发过程中需要的技术参考，包括 API 用法、配置示例和最佳实践。
+
+## 开发命令
+```bash
+bun install              # 安装依赖
+bun run dev             # 开发服务器 (localhost:4322)
+bun run build           # 构建生产版本
+bun run preview         # 预览构建结果
+```
+
+---
+
+**核心原则**: 代码质量、性能优化、用户体验。始终遵循项目架构设计和代码规范。

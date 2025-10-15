@@ -1,0 +1,454 @@
+# Astro Documentation Site
+
+This is the official documentation website for Astro, built using Astro itself with the Starlight documentation theme. The project serves as both the primary documentation resource for Astro users and a showcase of Astro's capabilities for building content-focused websites. It provides comprehensive guides, tutorials, API references, and integration documentation across multiple languages.
+
+The documentation site is a multilingual platform supporting 14 languages including English, Spanish, French, Japanese, Chinese (Simplified and Traditional), German, Portuguese (Brazilian), Korean, Polish, Russian, Italian, Hindi, and Arabic. It features an interactive tutorial system with progress tracking, dynamic content navigation, automated documentation generation from the Astro core repository, and integration with various third-party services including CMSs, deployment platforms, and backend services.
+
+## Content Collections Configuration
+
+Define content schemas with Zod validation for documentation entries
+
+```typescript
+import { defineCollection, z } from 'astro:content';
+import { docsLoader, docsSchema } from '@astrojs/starlight/loaders';
+
+// Define a recipe entry with required description
+const recipeSchema = z.object({
+  type: z.literal('recipe'),
+  description: z.string(),
+  altTitle: z.string().optional(),
+  i18nReady: z.boolean().default(false),
+});
+
+// Define collections
+export const collections = {
+  docs: defineCollection({
+    loader: docsLoader(),
+    schema: docsSchema({ extend: recipeSchema }),
+  }),
+};
+
+// Type-safe entry access
+import type { CollectionEntry } from 'astro:content';
+const recipes: CollectionEntry<'docs'>[] = await getCollection('docs', (entry) => {
+  return entry.data.type === 'recipe';
+});
+```
+
+## Astro Configuration with Starlight
+
+Configure the Astro site with Starlight theme and custom components
+
+```typescript
+import starlight from '@astrojs/starlight';
+import { defineConfig } from 'astro/config';
+import { sidebar } from './astro.sidebar';
+
+export default defineConfig({
+  site: 'https://docs.astro.build/',
+  integrations: [
+    starlight({
+      title: 'Docs',
+      defaultLocale: 'en',
+      locales: {
+        en: { label: 'English', lang: 'en' },
+        es: { label: 'Español', lang: 'es' },
+        fr: { label: 'Français', lang: 'fr' },
+      },
+      sidebar,
+      components: {
+        Hero: './src/components/starlight/Hero.astro',
+        Footer: './src/components/starlight/Footer.astro',
+      },
+      editLink: {
+        baseUrl: 'https://github.com/withastro/docs/edit/main',
+      },
+    }),
+  ],
+  trailingSlash: 'always',
+  markdown: {
+    smartypants: false,
+  },
+});
+```
+
+## Sidebar Navigation Structure
+
+Build hierarchical navigation with auto-generated and manual entries
+
+```typescript
+import type { StarlightUserConfig } from '@astrojs/starlight/types';
+import { group } from './config/sidebar';
+
+export const sidebar = [
+  group('start', {
+    items: [
+      'getting-started',
+      group('start.welcome', {
+        items: [
+          'concepts/why-astro',
+          'concepts/islands',
+          'tutorial/0-introduction',
+        ],
+      }),
+      group('start.migrate', {
+        collapsed: true,
+        autogenerate: { directory: 'guides/migrate-to-astro' },
+      }),
+    ],
+  }),
+  group('guides', {
+    items: [
+      group('guides.routing', {
+        items: ['basics/astro-pages', 'guides/routing', 'guides/middleware'],
+      }),
+      group('guides.recipes', {
+        collapsed: true,
+        autogenerate: { directory: 'recipes' },
+      }),
+    ],
+  }),
+];
+```
+
+## Tutorial Page Utilities
+
+Retrieve and organize tutorial pages with language fallback
+
+```typescript
+import { getTutorialPages, getTutorialUnits } from '~/util/getTutorialPages';
+import { getCollection } from 'astro:content';
+
+// Get all tutorial entries
+const allTutorialEntries = await getCollection('docs', (entry) => {
+  return entry.data.type === 'tutorial';
+});
+
+// Get pages with fallback to English for incomplete translations
+const tutorialPages = getTutorialPages(allTutorialEntries, 'es');
+
+// Organize into units and lessons
+const units = getTutorialUnits(tutorialPages);
+// Result: [
+//   { title: 'Build your first Astro site', lessons: [...] },
+//   { title: 'Dynamic content', lessons: [...] },
+// ]
+
+// Render in component
+---
+{units.map((unit) => (
+  <section>
+    <h2>{unit.title}</h2>
+    <ul>
+      {unit.lessons.map((lesson) => (
+        <li>
+          <a href={`/${lesson.id}/`}>{lesson.data.title}</a>
+          {lesson.isFallback && <Badge>English</Badge>}
+        </li>
+      ))}
+    </ul>
+  </section>
+))}
+---
+```
+
+## GitHub Contributors Integration
+
+Fetch and display repository contributors with caching
+
+```typescript
+import { getAllContributors, getTranslationContributors } from '~/util/getContributors';
+
+// Get all contributors to the docs repository
+const allContributors = await getAllContributors('withastro/docs');
+// Result: [
+//   { login: 'username', id: 123456, contributions: 150, avatar_url: '...' },
+//   ...
+// ]
+
+// Get contributors for specific translation files
+const translationPaths = [
+  'src/content/docs/es/getting-started.mdx',
+  'src/content/docs/es/guides/routing.mdx',
+];
+const translators = await getTranslationContributors(translationPaths, 'withastro/docs');
+
+// Render in Astro component
+---
+<div class="contributors">
+  {allContributors.slice(0, 10).map((contributor) => (
+    <a href={`https://github.com/${contributor.login}`}>
+      <img
+        src={contributor.avatar_url}
+        alt={contributor.login}
+        title={`${contributor.contributions} contributions`}
+      />
+    </a>
+  ))}
+</div>
+---
+```
+
+## Automated Documentation Generation
+
+Generate configuration reference from Astro source code
+
+```bash
+# Generate configuration reference from Astro repository
+npm run docgen
+
+# Generate error reference documentation
+npm run docgen:errors
+
+# Both scripts fetch from withastro/astro main branch by default
+# Override with environment variables:
+SOURCE_REPO=myorg/astro SOURCE_BRANCH=custom npm run docgen
+```
+
+```javascript
+// docgen.mjs implementation
+import jsdoc from 'jsdoc-api';
+import fs from 'fs';
+
+const configSource = await fetch(
+  'https://raw.githubusercontent.com/withastro/astro/main/packages/astro/src/types/public/config.ts'
+).then(r => r.text());
+
+// Extract JSDoc comments with @docs tag
+const comments = [...configSource.matchAll(/\/\*\*\s*\n([^*]|\*[^/])*@docs([^*]|\*[^/])*\*\//g)];
+const parsed = await jsdoc.explain({
+  source: comments.map(m => m[0]).join('\n\n')
+});
+
+// Generate MDX with type info, defaults, and descriptions
+const output = parsed.map(comment => `
+### ${comment.name}
+
+**Type:** \`${comment.type?.names.join(' | ')}\`<br />
+**Default:** ${comment.defaultvalue}
+
+${comment.description}
+`).join('\n');
+
+fs.writeFileSync('src/content/docs/en/reference/configuration-reference.mdx', output);
+```
+
+## Internationalization Setup
+
+Configure multilingual support with RTL handling
+
+```typescript
+import languages, { rtlLanguages } from './src/languages';
+import { normalizeLangTag } from './src/util/normalizeLangTag';
+
+// Language definitions
+const languages = {
+  en: 'English',
+  ar: 'العربية',
+  es: 'Español',
+  'zh-cn': '简体中文',
+};
+
+const rtlLanguages = new Set(['ar']);
+
+// Generate Starlight locales config
+const locales = Object.fromEntries(
+  Object.entries(languages).map(([locale, label]) => [
+    locale,
+    {
+      label,
+      lang: normalizeLangTag(locale), // 'zh-cn' → 'zh-CN'
+      dir: rtlLanguages.has(locale) ? 'rtl' : 'ltr'
+    },
+  ])
+);
+
+// Access in components
+import { getCollection } from 'astro:content';
+
+const currentLang = Astro.currentLocale || 'en';
+const pages = await getCollection('docs', (entry) => {
+  return entry.id.startsWith(`${currentLang}/`);
+});
+```
+
+## Content Loaders and Schema Extension
+
+Extend Starlight schemas with custom frontmatter fields
+
+```typescript
+import { docsLoader, i18nLoader } from '@astrojs/starlight/loaders';
+import { docsSchema, i18nSchema } from '@astrojs/starlight/schema';
+import { defineCollection, z } from 'astro:content';
+
+// Custom schema extensions
+const tutorialSchema = z.object({
+  type: z.literal('tutorial'),
+  unitTitle: z.string().optional(),
+});
+
+const integrationSchema = z.object({
+  type: z.literal('integration'),
+  title: z.string().refine(
+    (title) => title.startsWith('@astrojs/'),
+    '"title" must start with "@astrojs/"'
+  ),
+  category: z.enum(['renderer', 'adapter', 'other']),
+  githubIntegrationURL: z.string().url(),
+});
+
+// Union of all doc types
+const docsCollectionSchema = z.union([
+  tutorialSchema,
+  integrationSchema,
+  // ... other schemas
+]);
+
+export const collections = {
+  docs: defineCollection({
+    loader: docsLoader(),
+    schema: docsSchema({ extend: docsCollectionSchema }),
+  }),
+};
+
+// Type guards for filtering
+export function createIsDocsEntry<T extends DocsEntryType>(type: T) {
+  return (entry: CollectionEntry<'docs'>): entry is DocsEntry<T> =>
+    entry.data.type === type;
+}
+
+const isIntegration = createIsDocsEntry('integration');
+const integrations = (await getCollection('docs')).filter(isIntegration);
+```
+
+## Link Checking and Validation
+
+Validate internal links and references across documentation
+
+```bash
+# Build and check all internal links
+npm run lint:linkcheck
+
+# Check links without rebuilding
+npm run lint:linkcheck:nobuild
+
+# Check slug uniqueness
+npm run lint:slugcheck
+```
+
+```typescript
+// lint-linkcheck.ts usage
+import { build } from 'astro';
+import { checkLinks } from './lib/link-checker';
+
+// Build outputs to dist/
+await build();
+
+// Scan HTML files for broken internal links
+const results = await checkLinks('dist/', {
+  ignorePatterns: [
+    /^https?:\/\//, // External links
+    /^\/#/, // Hash-only links
+  ],
+});
+
+// Report errors
+if (results.errors.length > 0) {
+  console.error('Broken links found:');
+  results.errors.forEach(({ source, target, anchor }) => {
+    console.error(`  ${source} → ${target}${anchor ? '#' + anchor : ''}`);
+  });
+  process.exit(1);
+}
+```
+
+## Custom Starlight Plugins
+
+Extend Starlight with custom plugins for LLM-friendly documentation
+
+```typescript
+import starlightLlmsTxt from 'starlight-llms-txt';
+
+export const starlightPluginLlmsTxt = () =>
+  starlightLlmsTxt({
+    projectName: 'Astro',
+    description: 'Astro is an all-in-one web framework for building websites.',
+
+    // Create documentation subsets
+    customSets: [
+      {
+        label: 'API Reference',
+        description: 'terse, structured descriptions of Astro APIs',
+        paths: ['en/reference/**', 'en/guides/imports'],
+      },
+      {
+        label: 'How-to Recipes',
+        description: 'guided examples of adding features',
+        paths: ['en/recipes/**'],
+      },
+    ],
+
+    // Prioritize important pages
+    promote: [
+      'en/concepts/why-astro',
+      'en/concepts/islands',
+      'en/basics/project-structure',
+    ],
+
+    // Exclude from abridged version
+    exclude: [
+      'en/tutorial/**',
+      'en/reference/legacy-flags',
+    ],
+  });
+
+// Use in astro.config.ts
+import { starlightPluginLlmsTxt } from './config/plugins/llms-txt';
+
+export default defineConfig({
+  integrations: [
+    starlight({
+      plugins: [starlightPluginLlmsTxt()],
+    }),
+  ],
+});
+```
+
+## Development Commands
+
+Build, develop, and maintain the documentation site
+
+```bash
+# Start development server with hot reload
+npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+
+# Type checking without emit
+npm run check
+
+# Format code with Prettier
+npm run format
+
+# Lint JavaScript and Astro files
+npm run lint:eslint
+
+# Lint Japanese translations with textlint
+npm run lint:ja
+
+# Generate Lunaria i18n tracking data
+npm run lunaria:build
+
+# Build for Netlify (uses NETLIFY_BUILD_SCRIPT env var)
+npm run netlify:build
+```
+
+## Summary
+
+The Astro documentation site demonstrates best practices for building large-scale, multilingual documentation platforms using Astro and Starlight. It showcases content collections with complex schema validation, automated documentation generation from external repositories, GitHub API integration for contributor tracking, and sophisticated internationalization with language fallbacks. The project includes custom Starlight components for navigation, tutorials, and ads, as well as utility functions for grouping pages, fetching remote data with caching, and validating internal links.
+
+Key integration patterns include using content loaders to fetch documentation from markdown files, extending Starlight's base schemas with custom frontmatter fields using Zod, implementing type-safe content queries with discriminated unions, and creating reusable utility functions for common operations like language detection and path manipulation. The build system supports automated reference documentation generation via JSDoc parsing, link validation across the entire site, and deployment to Netlify with environment-specific configurations. The codebase serves as an excellent reference for teams building documentation sites that require multiple languages, automated content generation, and integration with external APIs.
