@@ -2,7 +2,7 @@
 
 # Komari Aozaki 主题打包脚本（性能优化版）
 
-set -e # 遇到错误立即退出
+set -euo pipefail # 遇到错误立即退出
 
 echo "🚀 开始构建 Komari Aozaki 主题..."
 

@@ -1,7 +1,7 @@
 import type { JsonRpcRequest, JsonRpcResponse } from "./types/komari";
 
-type MessageHandler = (data: JsonRpcResponse) => void;
-type ErrorHandler = (error: Error) => void;
+type MessageHandler = (_data: JsonRpcResponse) => void;
+type ErrorHandler = (_error: Error) => void;
 
 class WebSocketRPC2Client {
   private ws: WebSocket | null = null;
@@ -10,7 +10,7 @@ class WebSocketRPC2Client {
   private pendingRequests: Map<
     number,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    { resolve: (value: any) => void; reject: (error: Error) => void }
+    { resolve: (_value: any) => void; reject: (_error: Error) => void }
   > = new Map();
   private messageHandlers: Set<MessageHandler> = new Set();
   private errorHandlers: Set<ErrorHandler> = new Set();
@@ -71,8 +71,8 @@ class WebSocketRPC2Client {
 
         this.ws.onmessage = (event) => {
           try {
-            const data = JSON.parse(event.data);
-            this.handleMessage(data);
+            const parsedData = JSON.parse(event.data);
+            this.handleMessage(parsedData);
           } catch {
             // 消息解析失败，静默处理
           }
@@ -192,9 +192,9 @@ class WebSocketRPC2Client {
             reject(new Error(`Request timeout for method ${method}`));
           }
         }, 30000); // 30秒超时
-      } catch (error) {
+      } catch (err) {
         this.pendingRequests.delete(id);
-        reject(error);
+        reject(err);
       }
     });
   }

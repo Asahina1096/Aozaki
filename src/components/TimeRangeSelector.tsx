@@ -8,7 +8,7 @@ import {
 
 interface TimeRangeSelectorProps {
   value: number;
-  onChange: (hours: number) => void;
+  onChange: (_value: number) => void;
 }
 
 const timeRanges = [

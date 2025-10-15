@@ -133,7 +133,6 @@ src/
 │   └── OSIcon.tsx              # 操作系统图标
 ├── hooks/                   # React Hooks
 │   ├── useNodeStore.ts     # 节点数据管理 Hook
-│   ├── useChartData.ts     # 单图表数据 Hook（已废弃）
 │   └── useAllChartsData.ts # 统一图表数据管理 Hook
 ├── layouts/
 │   └── BaseLayout.astro    # 基础布局模板

@@ -1,12 +1,32 @@
 import { defineConfig } from "astro/config";
 import react from "@astrojs/react";
 import tailwindcss from "@tailwindcss/vite";
+import fs from "fs";
+import path from "path";
 
 // https://astro.build/config
 export default defineConfig({
   integrations: [react()],
+  publicDir: "./public",
   vite: {
-    plugins: [tailwindcss()],
+    plugins: [
+      tailwindcss(),
+      {
+        name: "exclude-preview-png",
+        writeBundle() {
+          // 在构建完成后删除 preview.png
+          const previewPath = path.join("./dist", "preview.png");
+          try {
+            if (fs.existsSync(previewPath)) {
+              fs.unlinkSync(previewPath);
+              console.log("✅ 已排除 preview.png 文件");
+            }
+          } catch (error) {
+            console.warn("⚠️ 无法删除 preview.png:", error.message);
+          }
+        },
+      },
+    ],
     // 性能优化配置
     optimizeDeps: {
       include: ["react", "react-dom", "recharts"],
@@ -47,6 +67,8 @@ export default defineConfig({
     format: "file",
     // 性能优化：内联样式以减少请求
     inlineStylesheets: "auto",
+    // 控制 public 目录文件复制
+    copyPublicDir: true,
   },
   outDir: "./dist",
 });

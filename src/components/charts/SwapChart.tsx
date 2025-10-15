@@ -16,7 +16,7 @@ interface SwapChartProps {
   data: StatusRecord[];
   loading: boolean;
   timeRange: number;
-  onTimeRangeChange: (hours: number) => void;
+  onTimeRangeChange: (_value: number) => void;
 }
 
 export function SwapChart({

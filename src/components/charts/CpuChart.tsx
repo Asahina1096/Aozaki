@@ -16,12 +16,11 @@ interface CpuChartProps {
   data: StatusRecord[];
   loading: boolean;
   timeRange: number;
-  onTimeRangeChange: (hours: number) => void;
+  onTimeRangeChange: (_value: number) => void;
 }
 
 export function CpuChart({
   data,
-  loading: _loading,
   timeRange,
   onTimeRangeChange,
 }: CpuChartProps) {

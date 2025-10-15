@@ -16,12 +16,11 @@ interface ProcessChartProps {
   data: StatusRecord[];
   loading: boolean;
   timeRange: number;
-  onTimeRangeChange: (hours: number) => void;
+  onTimeRangeChange: (_value: number) => void;
 }
 
 export function ProcessChart({
   data,
-  loading: _loading,
   timeRange,
   onTimeRangeChange,
 }: ProcessChartProps) {

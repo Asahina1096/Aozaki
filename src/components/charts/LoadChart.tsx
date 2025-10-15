@@ -16,12 +16,11 @@ interface LoadChartProps {
   data: StatusRecord[];
   loading: boolean;
   timeRange: number;
-  onTimeRangeChange: (hours: number) => void;
+  onTimeRangeChange: (_value: number) => void;
 }
 
 export function LoadChart({
   data,
-  loading: _loading,
   timeRange,
   onTimeRangeChange,
 }: LoadChartProps) {

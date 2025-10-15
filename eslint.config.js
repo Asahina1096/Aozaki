@@ -47,6 +47,13 @@ export default [
       ],
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/explicit-module-boundary-types": "off",
+      "no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+        },
+      ],
     },
     settings: {
       react: {
@@ -70,6 +77,8 @@ export default [
       ".vscode/",
       ".idea/",
       "public/",
+      "env.d.ts",
+      "src/env.d.ts",
     ],
   },
 ];

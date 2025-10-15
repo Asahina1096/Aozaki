@@ -13,7 +13,7 @@ interface ChartContainerProps {
   description?: string;
   children: ReactNode;
   timeRange?: number;
-  onTimeRangeChange?: (hours: number) => void;
+  onTimeRangeChange?: (_value: number) => void;
 }
 
 export function ChartContainer({

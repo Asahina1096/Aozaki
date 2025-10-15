@@ -17,12 +17,11 @@ interface ConnectionsChartProps {
   data: StatusRecord[];
   loading: boolean;
   timeRange: number;
-  onTimeRangeChange: (hours: number) => void;
+  onTimeRangeChange: (_value: number) => void;
 }
 
 export function ConnectionsChart({
   data,
-  loading: _loading,
   timeRange,
   onTimeRangeChange,
 }: ConnectionsChartProps) {
