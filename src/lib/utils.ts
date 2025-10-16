@@ -1,135 +1,169 @@
-import { type ClassValue, clsx } from "clsx";
+import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// 格式化字节大小
+/**
+ * 格式化字节大小
+ * @param bytes - 字节数
+ * @param decimals - 小数位数，默认 2
+ * @returns 格式化后的字符串，如 "1.23 MB"
+ */
 export function formatBytes(bytes: number, decimals: number = 2): string {
   if (bytes === 0) return "0 B";
+  if (bytes < 0) return "0 B";
 
   const k = 1024;
   const dm = decimals < 0 ? 0 : decimals;
   const sizes = ["B", "KB", "MB", "GB", "TB", "PB"];
 
   const i = Math.floor(Math.log(bytes) / Math.log(k));
+  const size = parseFloat((bytes / Math.pow(k, i)).toFixed(dm));
 
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
+  return `${size} ${sizes[i]}`;
 }
 
-// 格式化百分比
-export function formatPercent(value: number, total: number): string {
-  if (total === 0) return "0%";
-  return ((value / total) * 100).toFixed(1) + "%";
-}
-
-// 格式化网络速度
-export function formatSpeed(bytesPerSecond: number): string {
-  return formatBytes(bytesPerSecond) + "/s";
-}
-
-// 将秒格式化为人类可读的时长
+/**
+ * 格式化时长
+ * @param seconds - 秒数
+ * @returns 格式化后的字符串，如 "1天2小时" 或 "3小时30分钟"
+ */
 export function formatDuration(seconds: number): string {
-  if (!Number.isFinite(seconds) || seconds <= 0) {
-    return "0天";
-  }
+  if (seconds < 0) return "0秒";
+  if (seconds === 0) return "0秒";
 
-  const totalSeconds = Math.floor(seconds);
-  const dayInSeconds = 86400;
-  const hourInSeconds = 3600;
-  const minuteInSeconds = 60;
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
 
-  if (totalSeconds >= dayInSeconds) {
-    const days = Math.floor(totalSeconds / dayInSeconds);
-    return `${days}天`;
-  }
-
-  if (totalSeconds >= hourInSeconds) {
-    const hours = Math.floor(totalSeconds / hourInSeconds);
-    return `${hours}小时`;
-  }
-
-  if (totalSeconds >= minuteInSeconds) {
-    const minutes = Math.floor(totalSeconds / minuteInSeconds);
-    return `${minutes}分钟`;
-  }
-
-  return "0天";
-}
-
-// 格式化平均负载
-export function formatLoad(value: number): string {
-  return value.toFixed(2);
-}
-
-// 获取状态颜色类
-export function getStatusColor(online: boolean): string {
-  return online ? "text-green-500" : "text-red-500";
-}
-
-// 获取 CPU 使用率颜色类
-export function getCpuColor(usage: number): string {
-  if (usage >= 80) return "text-red-500";
-  if (usage >= 60) return "text-yellow-500";
-  return "text-green-500";
-}
-
-// 获取内存使用率颜色类
-export function getMemoryColor(usage: number, total: number): string {
-  const percent = (usage / total) * 100;
-  if (percent >= 90) return "text-red-500";
-  if (percent >= 75) return "text-yellow-500";
-  return "text-green-500";
-}
-
-// 格式化时间戳为可读格式
-export function formatTimestamp(timestamp: string): string {
-  const date = new Date(timestamp);
-  const now = new Date();
-  const diff = now.getTime() - date.getTime();
-  const seconds = Math.floor(diff / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
+  const parts: string[] = [];
 
   if (days > 0) {
-    return `${days}天前`;
-  } else if (hours > 0) {
-    return `${hours}小时前`;
-  } else if (minutes > 0) {
-    return `${minutes}分钟前`;
-  } else {
-    return `${seconds}秒前`;
+    parts.push(`${days}天`);
   }
+  if (hours > 0) {
+    parts.push(`${hours}小时`);
+  }
+  if (minutes > 0 && days === 0) {
+    // 如果有天数，不显示分钟
+    parts.push(`${minutes}分钟`);
+  }
+  if (secs > 0 && days === 0 && hours === 0) {
+    // 如果有天数或小时，不显示秒
+    parts.push(`${secs}秒`);
+  }
+
+  return parts.length > 0 ? parts.slice(0, 2).join("") : "0秒";
 }
 
-// 格式化图表时间轴（保留向后兼容）
-export function formatChartTime(timestamp: string): string {
-  const date = new Date(timestamp);
-  const hours = date.getHours().toString().padStart(2, "0");
-  const minutes = date.getMinutes().toString().padStart(2, "0");
-  return `${hours}:${minutes}`;
-}
-
-// 根据时间范围格式化图表时间轴
-export function formatChartTimeByRange(
-  timestamp: string,
-  hours: number
+/**
+ * 格式化百分比
+ * @param value - 当前值
+ * @param total - 总值
+ * @param decimals - 小数位数，默认 1
+ * @returns 格式化后的百分比字符串，如 "50.0%"
+ */
+export function formatPercent(
+  value: number,
+  total: number,
+  decimals: number = 1
 ): string {
-  const date = new Date(timestamp);
+  if (total === 0) return "0%";
+  const percent = (value / total) * 100;
+  return `${percent.toFixed(decimals)}%`;
+}
 
-  // 超过 24 小时，显示月-日 时:分
-  if (hours > 24) {
+/**
+ * 格式化网络速度
+ * @param bytesPerSecond - 每秒字节数
+ * @param decimals - 小数位数，默认 2
+ * @returns 格式化后的速度字符串，如 "1.23 MB/s"
+ */
+export function formatSpeed(
+  bytesPerSecond: number,
+  decimals: number = 2
+): string {
+  if (bytesPerSecond === 0) return "0 B/s";
+  if (bytesPerSecond < 0) return "0 B/s";
+
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ["B/s", "KB/s", "MB/s", "GB/s", "TB/s"];
+
+  const i = Math.floor(Math.log(bytesPerSecond) / Math.log(k));
+  const speed = parseFloat((bytesPerSecond / Math.pow(k, i)).toFixed(dm));
+
+  return `${speed} ${sizes[i]}`;
+}
+
+/**
+ * 格式化系统负载
+ * @param load - 负载值
+ * @param decimals - 小数位数，默认 2
+ * @returns 格式化后的负载字符串，如 "1.23"
+ */
+export function formatLoad(load: number, decimals: number = 2): string {
+  return load.toFixed(decimals);
+}
+
+/**
+ * 根据时间范围格式化图表时间轴
+ * @param timestamp - Unix 时间戳（秒）或 ISO 日期字符串
+ * @param rangeHours - 时间范围（小时）
+ * @returns 格式化后的时间字符串
+ */
+export function formatChartTimeByRange(
+  timestamp: string | number,
+  rangeHours: number
+): string {
+  const date =
+    typeof timestamp === "string"
+      ? new Date(timestamp)
+      : new Date(timestamp * 1000);
+
+  // 1小时内：显示分:秒
+  if (rangeHours <= 1) {
+    const minutes = date.getMinutes().toString().padStart(2, "0");
+    const seconds = date.getSeconds().toString().padStart(2, "0");
+    return `${minutes}:${seconds}`;
+  }
+
+  // 6小时内：显示时:分
+  if (rangeHours <= 6) {
+    const hours = date.getHours().toString().padStart(2, "0");
+    const minutes = date.getMinutes().toString().padStart(2, "0");
+    return `${hours}:${minutes}`;
+  }
+
+  // 24小时内：显示时:分
+  if (rangeHours <= 24) {
+    const hours = date.getHours().toString().padStart(2, "0");
+    const minutes = date.getMinutes().toString().padStart(2, "0");
+    return `${hours}:${minutes}`;
+  }
+
+  // 7天内：显示月/日 时:分
+  if (rangeHours <= 24 * 7) {
     const month = (date.getMonth() + 1).toString().padStart(2, "0");
     const day = date.getDate().toString().padStart(2, "0");
-    const hour = date.getHours().toString().padStart(2, "0");
-    const minute = date.getMinutes().toString().padStart(2, "0");
-    return `${month}-${day} ${hour}:${minute}`;
+    const hours = date.getHours().toString().padStart(2, "0");
+    const minutes = date.getMinutes().toString().padStart(2, "0");
+    return `${month}/${day} ${hours}:${minutes}`;
   }
 
-  // 24 小时内，只显示 时:分
-  const hour = date.getHours().toString().padStart(2, "0");
-  const minute = date.getMinutes().toString().padStart(2, "0");
-  return `${hour}:${minute}`;
+  // 30天内：显示月/日
+  if (rangeHours <= 24 * 30) {
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const day = date.getDate().toString().padStart(2, "0");
+    return `${month}/${day}`;
+  }
+
+  // 更长时间：显示年/月/日
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const day = date.getDate().toString().padStart(2, "0");
+  return `${year}/${month}/${day}`;
 }

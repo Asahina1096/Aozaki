@@ -3,6 +3,7 @@ import { Moon, Sun } from "lucide-react";
 import { getSharedClient } from "@/lib/rpc2";
 import type { PublicInfo } from "@/lib/types/komari";
 import { Skeleton } from "./ui/skeleton";
+import { Button } from "./ui/button";
 
 export function Header() {
   const [mounted, setMounted] = useState(false);
@@ -56,9 +57,10 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-2">
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={toggleTheme}
-            className="inline-flex items-center justify-center rounded-md p-2 w-10 h-10 hover:bg-accent hover:text-accent-foreground transition-colors"
             aria-label="切换主题"
           >
             {mounted ? (
@@ -70,7 +72,7 @@ export function Header() {
             ) : (
               <div className="h-5 w-5" />
             )}
-          </button>
+          </Button>
         </div>
       </div>
     </header>
