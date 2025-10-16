@@ -11,7 +11,11 @@
     "typescriptreact",
     "astro"
   ],
+  "css.lint.unknownAtRules": "ignore",
   "[astro]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[css]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   }
 }

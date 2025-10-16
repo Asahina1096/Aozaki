@@ -136,7 +136,7 @@ export default defineConfig({
   build: {
     format: "file",
     // 性能优化：内联样式以减少请求
-    inlineStylesheets: "auto",
+    inlineStylesheets: "always",
     // 控制 public 目录文件复制
     copyPublicDir: true,
   },
