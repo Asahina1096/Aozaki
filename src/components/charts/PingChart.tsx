@@ -1,5 +1,4 @@
 import { useMemo, useState, useEffect } from "react";
-import { cn } from "@/lib/utils";
 import {
   LineChart,
   Line,
@@ -9,8 +8,11 @@ import {
   YAxis,
   Tooltip,
 } from "recharts";
-import { formatChartTimeByRange } from "@/lib/utils";
-import { BaseChart } from "./shared/BaseChart";
+
+import { cn, formatChartTimeByRange } from "@/lib/utils";
+
+import { BaseChart } from "@/components/charts/shared/BaseChart";
+
 import type {
   PingRecord,
   PingBasicInfo,

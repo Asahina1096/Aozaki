@@ -173,7 +173,7 @@ export function useAllChartsData(
                   type: "ping",
                   uuid,
                   hours,
-                  maxCount: 4000,
+                  maxCount: 2000,
                 }),
                 httpClient
                   .getPingRecordsWithNames(uuid, hours)
@@ -201,7 +201,7 @@ export function useAllChartsData(
               uuid,
               hours,
               load_type: type as GetRecordsParams["load_type"],
-              maxCount: 4000,
+              maxCount: 2000,
             };
 
             let result: RecordsResponse | null = null;

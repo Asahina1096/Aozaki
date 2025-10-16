@@ -1,3 +1,5 @@
+import { useCallback } from "react";
+
 import {
   Select,
   SelectContent,
@@ -21,13 +23,17 @@ const timeRanges = [
 ];
 
 export function TimeRangeSelector({ value, onChange }: TimeRangeSelectorProps) {
+  const handleValueChange = useCallback(
+    (val: string) => {
+      onChange(Number(val));
+    },
+    [onChange]
+  );
+
   return (
     <div className="flex items-center gap-2">
       <label className="text-sm font-medium">时间范围：</label>
-      <Select
-        value={value.toString()}
-        onValueChange={(val) => onChange(Number(val))}
-      >
+      <Select value={value.toString()} onValueChange={handleValueChange}>
         <SelectTrigger className="w-[140px]">
           <SelectValue />
         </SelectTrigger>

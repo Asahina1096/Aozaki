@@ -1,8 +1,10 @@
-import { useMemo } from "react";
-import { NodeCard } from "./NodeCard";
-import { NodesOverview } from "./NodesOverview";
-import { NodesGridSkeleton } from "./NodesGridSkeleton";
-import { NodeCardSkeleton } from "./NodeCardSkeleton";
+import { useMemo, useCallback } from "react";
+
+import { NodeCard } from "@/components/NodeCard";
+import { NodesOverview } from "@/components/NodesOverview";
+import { NodesGridSkeleton } from "@/components/NodesGridSkeleton";
+import { NodeCardSkeleton } from "@/components/NodeCardSkeleton";
+
 import { useNodesData } from "@/hooks/useNodeStore";
 
 interface NodesGridProps {
@@ -16,6 +18,10 @@ export function NodesGrid({
 }: NodesGridProps) {
   const { clients, statuses, loading, error, refresh } =
     useNodesData(refreshInterval);
+
+  const handleRefresh = useCallback(() => {
+    void refresh();
+  }, [refresh]);
 
   const clientArray = useMemo(() => {
     return Object.entries(clients)
@@ -49,9 +55,7 @@ export function NodesGrid({
         </p>
         <button
           type="button"
-          onClick={() => {
-            void refresh();
-          }}
+          onClick={handleRefresh}
           className="mt-4 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
         >
           重试

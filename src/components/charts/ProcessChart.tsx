@@ -6,8 +6,11 @@ import {
   YAxis,
   Tooltip,
 } from "recharts";
+
 import { formatChartTimeByRange } from "@/lib/utils";
-import { BaseChart } from "./shared/BaseChart";
+
+import { BaseChart } from "@/components/charts/shared/BaseChart";
+
 import type { StatusRecord } from "@/lib/types/komari";
 
 interface ProcessChartProps {

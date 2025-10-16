@@ -1,7 +1,13 @@
 import { useMemo } from "react";
 import { ResponsiveContainer } from "recharts";
-import { ChartContainer } from "../ChartContainer";
-import { EmptyChart, CHART_CONFIG, type BaseChartProps } from "./chartConfig";
+
+import { ChartContainer } from "@/components/charts/ChartContainer";
+
+import {
+  EmptyChart,
+  CHART_CONFIG,
+} from "@/components/charts/shared/chartConfig";
+import type { BaseChartProps } from "@/components/charts/shared/chartConfig";
 
 export function BaseChart<T>({
   data,

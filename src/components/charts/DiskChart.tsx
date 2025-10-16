@@ -6,9 +6,12 @@ import {
   YAxis,
   Tooltip,
 } from "recharts";
+
 import { formatChartTimeByRange } from "@/lib/utils";
-import { BaseChart } from "./shared/BaseChart";
-import { DiskGradient } from "./shared/ChartGradients";
+
+import { BaseChart } from "@/components/charts/shared/BaseChart";
+import { DiskGradient } from "@/components/charts/shared/ChartGradients";
+
 import type { StatusRecord } from "@/lib/types/komari";
 
 interface DiskChartProps {

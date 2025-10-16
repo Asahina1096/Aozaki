@@ -7,8 +7,11 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
+
 import { formatChartTimeByRange, formatSpeed } from "@/lib/utils";
-import { BaseChart } from "./shared/BaseChart";
+
+import { BaseChart } from "@/components/charts/shared/BaseChart";
+
 import type { StatusRecord } from "@/lib/types/komari";
 
 interface NetworkChartProps {

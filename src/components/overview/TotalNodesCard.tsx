@@ -1,6 +1,7 @@
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Badge } from "../ui/badge";
 import { Server } from "lucide-react";
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 interface TotalNodesCardProps {
   total: number;

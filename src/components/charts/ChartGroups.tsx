@@ -1,3 +1,5 @@
+import { useCallback } from "react";
+
 import { CpuChart } from "./CpuChart";
 import { MemoryChart } from "./MemoryChart";
 import { SwapChart } from "./SwapChart";
@@ -10,6 +12,7 @@ import { ProcessChart } from "./ProcessChart";
 import { ConnectionsChart } from "./ConnectionsChart";
 import { PingChart } from "./PingChart";
 import { ChartGroupsSkeleton } from "./ChartGroupsSkeleton";
+import { LazyChart } from "./LazyChart";
 import { useAllChartsData } from "@/hooks/useAllChartsData";
 
 interface ChartGroupsProps {
@@ -19,6 +22,87 @@ interface ChartGroupsProps {
 export function ChartGroups({ uuid }: ChartGroupsProps) {
   const { chartsData, loading, timeRanges, setChartTimeRange, error, refresh } =
     useAllChartsData(uuid);
+
+  const handleRefresh = useCallback(() => {
+    void refresh();
+  }, [refresh]);
+
+  const handleCpuTimeRangeChange = useCallback(
+    (hours: number) => {
+      setChartTimeRange("cpu", hours);
+    },
+    [setChartTimeRange]
+  );
+
+  const handleMemoryTimeRangeChange = useCallback(
+    (hours: number) => {
+      setChartTimeRange("ram", hours);
+    },
+    [setChartTimeRange]
+  );
+
+  const handleSwapTimeRangeChange = useCallback(
+    (hours: number) => {
+      setChartTimeRange("swap", hours);
+    },
+    [setChartTimeRange]
+  );
+
+  const handleDiskTimeRangeChange = useCallback(
+    (hours: number) => {
+      setChartTimeRange("disk", hours);
+    },
+    [setChartTimeRange]
+  );
+
+  const handleGpuTimeRangeChange = useCallback(
+    (hours: number) => {
+      setChartTimeRange("gpu", hours);
+    },
+    [setChartTimeRange]
+  );
+
+  const handleTempTimeRangeChange = useCallback(
+    (hours: number) => {
+      setChartTimeRange("temp", hours);
+    },
+    [setChartTimeRange]
+  );
+
+  const handleNetworkTimeRangeChange = useCallback(
+    (hours: number) => {
+      setChartTimeRange("network", hours);
+    },
+    [setChartTimeRange]
+  );
+
+  const handleConnectionsTimeRangeChange = useCallback(
+    (hours: number) => {
+      setChartTimeRange("connections", hours);
+    },
+    [setChartTimeRange]
+  );
+
+  const handlePingTimeRangeChange = useCallback(
+    (hours: number) => {
+      setChartTimeRange("ping", hours);
+    },
+    [setChartTimeRange]
+  );
+
+  const handleLoadTimeRangeChange = useCallback(
+    (hours: number) => {
+      setChartTimeRange("load", hours);
+    },
+    [setChartTimeRange]
+  );
+
+  const handleProcessTimeRangeChange = useCallback(
+    (hours: number) => {
+      setChartTimeRange("process", hours);
+    },
+    [setChartTimeRange]
+  );
 
   // 初始加载时显示骨架屏
   if (loading) {
@@ -36,9 +120,7 @@ export function ChartGroups({ uuid }: ChartGroupsProps) {
         </p>
         <button
           type="button"
-          onClick={() => {
-            void refresh();
-          }}
+          onClick={handleRefresh}
           className="mt-4 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
         >
           重试
@@ -58,36 +140,48 @@ export function ChartGroups({ uuid }: ChartGroupsProps) {
           </p>
         </div>
         <div className="grid grid-cols-1 gap-6">
-          <CpuChart
-            data={chartsData.cpu}
-            timeRange={timeRanges.cpu}
-            onTimeRangeChange={(hours) => setChartTimeRange("cpu", hours)}
-          />
-          <MemoryChart
-            data={chartsData.ram}
-            timeRange={timeRanges.ram}
-            onTimeRangeChange={(hours) => setChartTimeRange("ram", hours)}
-          />
-          <SwapChart
-            data={chartsData.swap}
-            timeRange={timeRanges.swap}
-            onTimeRangeChange={(hours) => setChartTimeRange("swap", hours)}
-          />
-          <DiskChart
-            data={chartsData.disk}
-            timeRange={timeRanges.disk}
-            onTimeRangeChange={(hours) => setChartTimeRange("disk", hours)}
-          />
-          <GpuChart
-            data={chartsData.gpu}
-            timeRange={timeRanges.gpu}
-            onTimeRangeChange={(hours) => setChartTimeRange("gpu", hours)}
-          />
-          <TempChart
-            data={chartsData.temp}
-            timeRange={timeRanges.temp}
-            onTimeRangeChange={(hours) => setChartTimeRange("temp", hours)}
-          />
+          <LazyChart>
+            <CpuChart
+              data={chartsData.cpu}
+              timeRange={timeRanges.cpu}
+              onTimeRangeChange={handleCpuTimeRangeChange}
+            />
+          </LazyChart>
+          <LazyChart>
+            <MemoryChart
+              data={chartsData.ram}
+              timeRange={timeRanges.ram}
+              onTimeRangeChange={handleMemoryTimeRangeChange}
+            />
+          </LazyChart>
+          <LazyChart>
+            <SwapChart
+              data={chartsData.swap}
+              timeRange={timeRanges.swap}
+              onTimeRangeChange={handleSwapTimeRangeChange}
+            />
+          </LazyChart>
+          <LazyChart>
+            <DiskChart
+              data={chartsData.disk}
+              timeRange={timeRanges.disk}
+              onTimeRangeChange={handleDiskTimeRangeChange}
+            />
+          </LazyChart>
+          <LazyChart>
+            <GpuChart
+              data={chartsData.gpu}
+              timeRange={timeRanges.gpu}
+              onTimeRangeChange={handleGpuTimeRangeChange}
+            />
+          </LazyChart>
+          <LazyChart>
+            <TempChart
+              data={chartsData.temp}
+              timeRange={timeRanges.temp}
+              onTimeRangeChange={handleTempTimeRangeChange}
+            />
+          </LazyChart>
         </div>
       </div>
 
@@ -100,23 +194,27 @@ export function ChartGroups({ uuid }: ChartGroupsProps) {
           </p>
         </div>
         <div className="grid grid-cols-1 gap-6">
-          <NetworkChart
-            data={chartsData.network}
-            timeRange={timeRanges.network}
-            onTimeRangeChange={(hours) => setChartTimeRange("network", hours)}
-          />
-          <ConnectionsChart
-            data={chartsData.connections}
-            timeRange={timeRanges.connections}
-            onTimeRangeChange={(hours) =>
-              setChartTimeRange("connections", hours)
-            }
-          />
-          <PingChart
-            data={chartsData.ping}
-            timeRange={timeRanges.ping}
-            onTimeRangeChange={(hours) => setChartTimeRange("ping", hours)}
-          />
+          <LazyChart>
+            <NetworkChart
+              data={chartsData.network}
+              timeRange={timeRanges.network}
+              onTimeRangeChange={handleNetworkTimeRangeChange}
+            />
+          </LazyChart>
+          <LazyChart>
+            <ConnectionsChart
+              data={chartsData.connections}
+              timeRange={timeRanges.connections}
+              onTimeRangeChange={handleConnectionsTimeRangeChange}
+            />
+          </LazyChart>
+          <LazyChart>
+            <PingChart
+              data={chartsData.ping}
+              timeRange={timeRanges.ping}
+              onTimeRangeChange={handlePingTimeRangeChange}
+            />
+          </LazyChart>
         </div>
       </div>
 
@@ -127,16 +225,20 @@ export function ChartGroups({ uuid }: ChartGroupsProps) {
           <p className="text-sm text-muted-foreground">系统负载和进程信息</p>
         </div>
         <div className="grid grid-cols-1 gap-6">
-          <LoadChart
-            data={chartsData.load}
-            timeRange={timeRanges.load}
-            onTimeRangeChange={(hours) => setChartTimeRange("load", hours)}
-          />
-          <ProcessChart
-            data={chartsData.process}
-            timeRange={timeRanges.process}
-            onTimeRangeChange={(hours) => setChartTimeRange("process", hours)}
-          />
+          <LazyChart>
+            <LoadChart
+              data={chartsData.load}
+              timeRange={timeRanges.load}
+              onTimeRangeChange={handleLoadTimeRangeChange}
+            />
+          </LazyChart>
+          <LazyChart>
+            <ProcessChart
+              data={chartsData.process}
+              timeRange={timeRanges.process}
+              onTimeRangeChange={handleProcessTimeRangeChange}
+            />
+          </LazyChart>
         </div>
       </div>
     </div>

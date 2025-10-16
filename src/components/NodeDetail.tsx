@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
-import { Breadcrumb } from "./Breadcrumb";
-import { NodeRealtimeCard } from "./NodeRealtimeCard";
-import { NodeRealtimeCardSkeleton } from "./NodeRealtimeCardSkeleton";
-import { ChartGroups } from "./charts/ChartGroups";
-import { ChartGroupsSkeleton } from "./charts/ChartGroupsSkeleton";
+import { useState, useEffect, useCallback } from "react";
+
+import { Breadcrumb } from "@/components/Breadcrumb";
+import { NodeRealtimeCard } from "@/components/NodeRealtimeCard";
+import { NodeRealtimeCardSkeleton } from "@/components/NodeRealtimeCardSkeleton";
+import { ChartGroups } from "@/components/charts/ChartGroups";
+import { ChartGroupsSkeleton } from "@/components/charts/ChartGroupsSkeleton";
+
 import { useNodeData } from "@/hooks/useNodeStore";
 
 interface NodeDetailProps {
@@ -39,6 +41,10 @@ export function NodeDetail({ uuid: propUuid }: NodeDetailProps) {
     refresh,
   } = useNodeData(uuid, 1000, 3000);
 
+  const handleRefresh = useCallback(() => {
+    void refresh();
+  }, [refresh]);
+
   // 加载中状态
   if (dataLoading || !uuid) {
     return (
@@ -63,9 +69,7 @@ export function NodeDetail({ uuid: propUuid }: NodeDetailProps) {
           </p>
           <button
             type="button"
-            onClick={() => {
-              void refresh();
-            }}
+            onClick={handleRefresh}
             className="mt-4 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             重试

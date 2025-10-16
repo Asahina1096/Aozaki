@@ -1,12 +1,4 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "./ui/card";
-import { Progress } from "./ui/progress";
-import { Separator } from "./ui/separator";
+import { useMemo } from "react";
 import {
   Box,
   Binary,
@@ -17,15 +9,28 @@ import {
   MemoryStick,
   MapPin,
 } from "lucide-react";
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+
 import {
   formatBytes,
   formatDuration,
   formatPercent,
   formatSpeed,
 } from "@/lib/utils";
+
+import { OSIcon } from "@/components/OSIcon";
+
 import type { Client, NodeStatus } from "@/lib/types/komari";
-import { OSIcon } from "./OSIcon";
-import { Skeleton } from "./ui/skeleton";
 
 interface NodeCardProps {
   client: Client;
@@ -40,26 +45,36 @@ export function NodeCard({ client, status }: NodeCardProps) {
   const diskUsage = status?.disk ?? 0;
   const diskTotal = status?.disk_total ?? client.disk_total;
   const hasStatus = Boolean(status);
-  const infoPillClass =
-    "inline-flex items-center gap-1 rounded-full border border-border/40 bg-muted/40 px-1.5 py-0.5 whitespace-nowrap";
 
-  const getCpuVariant = (
-    usage: number
-  ): "default" | "success" | "warning" | "danger" => {
-    if (usage >= 80) return "danger";
-    if (usage >= 60) return "warning";
-    return "success";
-  };
+  const infoPillClass = useMemo(
+    () =>
+      "inline-flex items-center gap-1 rounded-full border border-border/40 bg-muted/40 px-1.5 py-0.5 whitespace-nowrap",
+    []
+  );
 
-  const getMemVariant = (
-    usage: number,
-    total: number
-  ): "default" | "success" | "warning" | "danger" => {
-    const percent = (usage / total) * 100;
-    if (percent >= 90) return "danger";
-    if (percent >= 75) return "warning";
-    return "success";
-  };
+  const getCpuVariant = useMemo(
+    () =>
+      (usage: number): "default" | "success" | "warning" | "danger" => {
+        if (usage >= 80) return "danger";
+        if (usage >= 60) return "warning";
+        return "success";
+      },
+    []
+  );
+
+  const getMemVariant = useMemo(
+    () =>
+      (
+        usage: number,
+        total: number
+      ): "default" | "success" | "warning" | "danger" => {
+        const percent = (usage / total) * 100;
+        if (percent >= 90) return "danger";
+        if (percent >= 75) return "warning";
+        return "success";
+      },
+    []
+  );
 
   return (
     <a href={`/node.html?uuid=${client.uuid}`} className="block">

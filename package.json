@@ -1,11 +1,11 @@
 {
-  "name": "Aozaki",
+  "name": "aozaki",
   "version": "1.0.0",
   "description": "A modern Komari theme built with Astro, React, TailwindCSS and shadcn/ui",
   "type": "module",
   "scripts": {
     "dev": "astro dev",
-    "build": "NODE_OPTIONS='--max-old-space-size=16384' astro build",
+    "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
     "package": "bash scripts/package.sh",
@@ -33,7 +33,7 @@
     "astro": "5.14.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "lucide-react": "0.545.0",
+    "lucide-react": "0.546.0",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "recharts": "^3.2.1",

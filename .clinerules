@@ -1,228 +1,817 @@
 # .clinerules
 # =========================================================
-# Komari Aozaki 开发规范（Cline MCP + Context7 集成）
+# Komari Aozaki 开发规范（优化版）
 # =========================================================
-# 技术栈: Astro 4.x + React 18 + TypeScript 5.x + TailwindCSS 4.x + shadcn/ui + Recharts 3.x
+# 技术栈: Astro 5.x + React 19 + TypeScript 5.x + TailwindCSS 4.x + shadcn/ui + Recharts 3.x
 # 包管理器: Bun 1.3.x
+# 最后更新: 2025-10-16
 # =========================================================
 
 version: 1
 
+# =========================================================
+# MCP 服务器配置（简化版）
+# =========================================================
 mcp:
   servers:
-    # -----------------------------------------------------
-    # Context7 MCP Server — 提供语义上下文与规则解释
-    # -----------------------------------------------------
-    - id: context7
-      type: context
-      provider: Context7
-      config:
-        load: true
-        strict: true
-        autoExplainRules: true
-        summary:
-          include:
-            - "src/components/**/*"
-            - "src/hooks/**/*"
-            - "src/lib/**/*"
-          exclude:
-            - "dist"
-            - "node_modules"
-        behavior:
-          onViolation: "warn"      # 违规时发出警告但不中断
-          onCritical: "error"      # 严重违规中断构建
-          autoFormat: true         # 自动修正部分格式化问题
+    - id: sequentialthinking
+      description: 深度思考与问题分解辅助工具
+      usage: 用于复杂问题分解、架构设计、多步骤规划
 
-    # -----------------------------------------------------
-    # Filesystem MCP Server — 文件系统级别规则验证
-    # -----------------------------------------------------
+    - id: context7
+      description: 提供语义上下文与文档检索
+      usage: 代码模式理解、规则解释、上下文获取
+
     - id: filesystem
-      type: filesystem
-      provider: Filesystem
-      config:
-        root: .
-        include:
-          - "src/**/*.{ts,tsx,astro}"
-          - "scripts/**/*.ts"
-        exclude:
-          - "node_modules"
-          - "dist"
-        watch: true
-        behavior:
-          onCreate: "validate"
-          onUpdate: "validate"
-          onDelete: "ignore"
+      description: 文件系统级别操作验证
+      usage: 文件创建、更新、结构验证
+
+# =========================================================
+# PLAN MODE 工作流规范（新增）
+# =========================================================
+
+- id: plan-mode-filesystem-workflow
+  description: PLAN MODE 下主动使用 filesystem MCP Server 的工作流
+  priority: critical
+  mode: PLAN_MODE
+
+  enforce:
+    - proactive_file_exploration: true       # 主动探索文件
+    - use_mcp_filesystem_tools: true         # 优先使用 MCP 工具
+    - gather_context_before_planning: true   # 规划前收集上下文
+    - read_relevant_files: true              # 读取相关文件
+    - no_assumptions_without_reading: true   # 不基于假设规划
+
+  workflow:
+    step_1_task_analysis:
+      description: "分析任务，确定需要探索的模块"
+      actions:
+        - "识别任务涉及的组件/文件类型"
+        - "确定需要读取的目录和文件"
+        - "列出关键文件清单"
+
+    step_2_directory_exploration:
+      description: "使用 MCP 工具探索目录结构"
+      mcp_tools:
+        - "list_directory: 列出目录内容"
+        - "directory_tree: 获取完整目录树"
+        - "search_files: 搜索特定文件模式"
+      examples:
+        - "列出 src/components/charts/ 目录"
+        - "搜索所有 *.tsx 文件"
+        - "获取 src/ 的完整目录树"
+
+    step_3_file_reading:
+      description: "读取关键文件内容"
+      mcp_tools:
+        - "read_text_file: 读取文本文件"
+        - "read_multiple_files: 批量读取多个文件"
+      priority_files:
+        - "核心组件文件"
+        - "配置文件（tsconfig.json, package.json）"
+        - "类型定义文件"
+        - "共享工具/配置"
+      examples:
+        - "读取 BaseChart.tsx 了解图表架构"
+        - "读取 chartConfig.tsx 了解配置结构"
+        - "读取相关 Hook 文件"
+
+    step_4_pattern_analysis:
+      description: "分析代码模式和架构"
+      actions:
+        - "理解现有代码结构"
+        - "识别设计模式"
+        - "找出命名规范"
+        - "分析依赖关系"
+
+    step_5_plan_formulation:
+      description: "基于实际代码制定详细方案"
+      include:
+        - "具体的文件路径"
+        - "代码片段引用"
+        - "遵循现有模式"
+        - "详细实施步骤"
+
+  mcp_tool_usage_patterns:
+    when_to_use:
+      list_directory:
+        - "探索不熟悉的目录结构"
+        - "确认目录是否存在"
+        - "列出可用的组件/工具"
+
+      read_text_file:
+        - "查看具体文件内容"
+        - "理解代码实现细节"
+        - "获取配置信息"
+
+      search_files:
+        - "查找特定代码模式"
+        - "定位需要修改的所有位置"
+        - "搜索特定 import 语句"
+
+      directory_tree:
+        - "获取完整项目结构"
+        - "理解模块组织方式"
+
+    syntax_examples:
+      list_directory: |
+        <use_mcp_tool>
+        <server_name>github.com/modelcontextprotocol/servers/tree/main/src/filesystem</server_name>
+        <tool_name>list_directory</tool_name>
+        <arguments>
+        {
+          "path": "/home/mihari/Server/Aozaki/src/components/charts"
+        }
+        </arguments>
+        </use_mcp_tool>
+
+      read_text_file: |
+        <use_mcp_tool>
+        <server_name>github.com/modelcontextprotocol/servers/tree/main/src/filesystem</server_name>
+        <tool_name>read_text_file</tool_name>
+        <arguments>
+        {
+          "path": "/home/mihari/Server/Aozaki/src/components/charts/shared/BaseChart.tsx"
+        }
+        </arguments>
+        </use_mcp_tool>
+
+      search_files: |
+        <use_mcp_tool>
+        <server_name>github.com/modelcontextprotocol/servers/tree/main/src/filesystem</server_name>
+        <tool_name>search_files</tool_name>
+        <arguments>
+        {
+          "path": "/home/mihari/Server/Aozaki/src",
+          "pattern": "import.*BaseChart",
+          "excludePatterns": ["node_modules", "dist"]
+        }
+        </arguments>
+        </use_mcp_tool>
+
+  best_practices:
+    - "在给出方案前，至少读取 2-3 个相关文件"
+    - "使用完整路径（/home/mihari/Server/Aozaki/...）"
+    - "先探索目录，再读取文件"
+    - "批量读取多个相关文件"
+    - "基于实际代码制定方案，而非假设"
+
+  anti_patterns:
+    - "❌ 在没有读取文件的情况下猜测代码结构"
+    - "❌ 使用相对路径（会导致 'Access denied' 错误）"
+    - "❌ 跳过文件读取直接给出方案"
+    - "❌ 基于 environment_details 的文件列表就认为了解了代码"
+
+  example_workflow:
+    task: "添加一个新的温度图表组件"
+    steps:
+      - step: "探索图表目录"
+        tool: "list_directory"
+        path: "/home/mihari/Server/Aozaki/src/components/charts"
+
+      - step: "读取 BaseChart 源码"
+        tool: "read_text_file"
+        path: "/home/mihari/Server/Aozaki/src/components/charts/shared/BaseChart.tsx"
+
+      - step: "读取现有温度相关图表"
+        tool: "read_text_file"
+        path: "/home/mihari/Server/Aozaki/src/components/charts/TempChart.tsx"
+
+      - step: "读取图表配置"
+        tool: "read_text_file"
+        path: "/home/mihari/Server/Aozaki/src/components/charts/shared/chartConfig.tsx"
+
+      - step: "制定详细方案"
+        action: "基于读取的代码结构，制定符合现有模式的实现方案"
+
+  success_criteria:
+    - "方案中包含具体的文件路径"
+    - "方案引用了实际读取的代码片段"
+    - "方案遵循项目的现有模式"
+    - "在 ACT MODE 实施时无需大幅调整"
 
 # =========================================================
 # 项目开发规则
 # =========================================================
 rules:
   # -----------------------------------------------------
-  # 📦 基础规范
+  # 📦 技术栈与包管理
   # -----------------------------------------------------
   - id: tech-stack
     description: 必须使用指定版本的技术栈
+    priority: critical
     assert:
-      astro: "4.x"
-      react: "18.x"
+      astro: "5.x"          # ✅ 修正为实际版本
+      react: "19.x"         # ✅ 修正为实际版本
       typescript: "5.x"
       tailwindcss: "4.x"
       recharts: "3.x"
+    verify: |
+      检查 package.json 中的依赖版本是否匹配
 
   - id: package-manager
     description: 必须使用 Bun 作为包管理器
+    priority: critical
     require:
       - "bun.lockb"
     forbid:
       - "yarn.lock"
       - "package-lock.json"
       - "pnpm-lock.yaml"
-
-  - id: bun-scripts
-    description: 所有运行脚本需使用 Bun
-    check: |
-      所有命令必须以 `bun run` 形式执行：
-        bun install
-        bun run dev
-        bun run check:all
+    scripts:
+      - "bun install"
+      - "bun run dev"
+      - "bun run build"
+      - "bun run check:all"
 
   # -----------------------------------------------------
-  # 🧩 命名与导入规则
+  # 📁 项目结构与路径别名
   # -----------------------------------------------------
-  - id: naming
-    description: 命名规范
-    match:
-      - "*.ts"
-      - "*.tsx"
-    patterns:
-      component: "PascalCase"
-      variable: "camelCase"
-      constant: "UPPER_SNAKE_CASE"
-      hook: "^use[A-Z]"
-
-  - id: import-order
-    description: 导入顺序
-    order:
-      - react
-      - third-party
-      - internal
-      - types
-
-  # -----------------------------------------------------
-  # ⚛️ 组件开发规则
-  # -----------------------------------------------------
-  - id: component-rules
-    description: React 组件开发强制要求
+  - id: path-aliases
+    description: 强制使用路径别名导入内部模块
+    priority: high
     enforce:
-      - must_use_typescript: true
-      - prefer_shadcn_ui: true
-      - chart_disable_animation: true
-      - useMemo_for_data: true
-      - responsive_design: "mobile-first"
-
-  # -----------------------------------------------------
-  # 📊 图表组件规范
-  # -----------------------------------------------------
-  - id: chart-structure
-    description: 所有图表组件必须通过 BaseChart 实现
-    require:
-      - "BaseChart"
-    enforce:
-      - use_transformData_and_renderChart: true
-      - lowercase_config_keys: true
-      - import_recharts_components: true
-      - reuse_shared_config: "CHART_CONFIG"
-      - reuse_gradients: true
-    forbid:
-      - define_chart_config_locally
-      - uppercase_config_keys
-      - direct_use_of_ResponsiveContainer
-
-  - id: chart-example
-    description: 图表示例对照
+      - use_at_prefix: true           # 使用 @/ 导入内部模块
+      - no_relative_imports: true     # 禁止 ../../../ 形式
+      - consistent_paths: true        # 路径保持一致
     examples:
       good: |
-        renderChart={(chartData, { xAxis, yAxis, cartesianGrid, tooltip }) => (
-          <LineChart data={chartData}>
-            <CartesianGrid {...cartesianGrid} />
-            <XAxis {...xAxis} />
-          </LineChart>
-        )}
+        import { nodeStore } from "@/lib/nodeStore";
+        import { Button } from "@/components/ui/button";
+        import type { Client } from "@/lib/types/komari";
       bad: |
-        renderChart={(chartData, { XAxis, YAxis }) => (
-          <LineChart>
-            <CartesianGrid {...XAxis} />  # ❌ 错误：配置名冲突
-          </LineChart>
-        )}
+        import { nodeStore } from "../../../lib/nodeStore";  # ❌
+        import { Button } from "../../components/ui/button"; # ❌
+
+  - id: file-structure
+    description: 强制执行项目文件结构规范
+    priority: high
+    structure:
+      src/components/:
+        - "React 组件 (*.tsx)"
+        - "可包含子目录（charts/, ui/, overview/）"
+      src/hooks/: "自定义 Hooks (*.ts)"
+      src/lib/: "工具函数、Store、类型定义"
+      src/pages/: "Astro 页面 (*.astro)"
+      src/styles/: "全局样式"
+    forbid:
+      - "src/ 下直接放置 .tsx 文件"
+      - "components/ 下放置非组件文件"
 
   # -----------------------------------------------------
-  # ⚙️ 性能优化
+  # 🧩 命名规范（增强版）
   # -----------------------------------------------------
-  - id: performance
-    description: 性能优化约束
-    enforce:
-      - memoize_chart_data: true
-      - no_inline_objects: true
-      - reuse_chart_configs: true
-      - use_skeleton_loading: true
-
-  # -----------------------------------------------------
-  # 🧠 数据管理
-  # -----------------------------------------------------
-  - id: data-management
-    description: 数据管理规范
-    enforce:
-      - global_singleton: "NodeStore"
-      - dev_polling: true
-      - prod_websocket: true
-      - history_http_rpc2: true
-      - charts_hook: "useAllChartsData"
-
-  # -----------------------------------------------------
-  # 🔌 数据获取 Hooks
-  # -----------------------------------------------------
-  - id: hooks-usage
-    description: Hooks 统一调用规范
+  - id: naming-conventions
+    description: 统一的命名规范
+    priority: high
+    patterns:
+      component_file: "PascalCase.tsx"        # NodeCard.tsx
+      component_name: "PascalCase"            # function NodeCard()
+      hook_file: "camelCase.ts"               # useNodeStore.ts
+      hook_name: "^use[A-Z][a-zA-Z]*$"       # useNodesData
+      variable: "camelCase"                   # chartData, timeRange
+      constant: "UPPER_SNAKE_CASE"           # CHART_CONFIG, API_URL
+      type_interface: "PascalCase"           # Client, NodeStatus
+      enum: "PascalCase"                     # TimeRange
+      private_property: "^_[a-z]"            # _internalState
     examples:
-      useNodesData: |
-        import { useNodesData } from "hooks/useNodeStore";
-        const { clients, statuses, loading } = useNodesData(1000);
-      useNodeData: |
-        import { useNodeData } from "hooks/useNodeStore";
-        const { client, status } = useNodeData(uuid, 1000);
-      useAllChartsData: |
-        import { useAllChartsData } from "hooks/useAllChartsData";
-        const { chartsData, timeRanges, setChartTimeRange } = useAllChartsData(uuid);
+      components: |
+        ✅ NodeCard.tsx → function NodeCard()
+        ✅ ChartContainer.tsx → function ChartContainer()
+        ❌ nodeCard.tsx, node-card.tsx
+      hooks: |
+        ✅ useNodeStore.ts → export function useNodesData()
+        ✅ useAllChartsData.ts → export function useAllChartsData()
+        ❌ UseNodeStore.ts, use-node-store.ts
+      constants: |
+        ✅ CHART_CONFIG, DEFAULT_TIMEOUT
+        ❌ chartConfig, default_timeout
 
   # -----------------------------------------------------
-  # 🧰 工具函数
+  # 📥 导入顺序（增强版）
   # -----------------------------------------------------
-  - id: utils
-    description: 工具函数导入规则
-    require:
-      - "formatBytes"
-      - "formatPercent"
-      - "formatSpeed"
-      - "formatTimestamp"
-    from: "lib/utils"
+  - id: import-order
+    description: 统一的导入顺序和分组
+    priority: medium
+    order:
+      1_react: "React 核心库"
+      2_external: "第三方库（按字母序）"
+      3_internal_components: "@/components/"
+      4_internal_hooks: "@/hooks/"
+      5_internal_lib: "@/lib/"
+      6_types: "类型导入（放最后）"
+    rules:
+      - group_by_category: true
+      - alphabetical_within_group: true
+      - separate_with_blank_line: true
+      - types_last: true
+    examples:
+      good: |
+        import { useState, useMemo } from "react";
+
+        import { Card } from "@/components/ui/card";
+        import { LineChart, XAxis } from "recharts";
+
+        import { ChartContainer } from "@/components/charts/ChartContainer";
+        import { BaseChart } from "@/components/charts/shared/BaseChart";
+
+        import { useNodesData } from "@/hooks/useNodeStore";
+
+        import { formatBytes, cn } from "@/lib/utils";
+
+        import type { Client, NodeStatus } from "@/lib/types/komari";
 
   # -----------------------------------------------------
-  # 🚨 错误与状态处理
+  # ⚛️ React 组件开发规范（增强版）
+  # -----------------------------------------------------
+  - id: react-component-rules
+    description: React 组件开发最佳实践
+    priority: high
+    enforce:
+      - must_use_typescript: true
+      - prefer_function_components: true
+      - prefer_named_exports: true
+      - use_props_interface: true
+      - explicit_return_types: false      # 可推断时不强制
+
+    memo_rules:
+      - memo_expensive_components: true
+      - memo_list_items: true
+      - memo_chart_components: false      # 图表已由 BaseChart 优化
+
+    hooks_rules:
+      - useMemo_for_expensive_calculations: true
+      - useCallback_for_child_props: true
+      - exhaustive_deps: true             # 依赖数组必须完整
+      - no_inline_functions: true         # 避免内联函数
+
+    examples:
+      props_interface: |
+        ✅ 好的做法：
+        interface NodeCardProps {
+          client: Client;
+          status: NodeStatus | null;
+        }
+        export function NodeCard({ client, status }: NodeCardProps) { ... }
+
+        ❌ 坏的做法：
+        export function NodeCard({ client, status }: any) { ... }  # 没有类型
+        export default function NodeCard(props) { ... }             # 默认导出
+
+      useMemo_example: |
+        ✅ 正确的 useMemo 使用：
+        const chartData = useMemo(
+          () => transformData(data, timeRange),
+          [data, timeRange]  # 完整依赖
+        );
+
+        ❌ 错误：
+        const chartData = transformData(data, timeRange);  # 每次重新计算
+
+  # -----------------------------------------------------
+  # 🏗️ Astro 组件规范（新增）
+  # -----------------------------------------------------
+  - id: astro-component-rules
+    description: Astro 组件特定规范
+    priority: high
+    enforce:
+      - use_layouts: true
+      - client_directives_explicit: true
+      - props_typed: true
+
+    client_directives:
+      - "client:load - 页面加载时立即加载"
+      - "client:idle - 页面空闲时加载"
+      - "client:visible - 元素可见时加载"
+      - "client:only - 仅客户端渲染"
+
+    examples:
+      good: |
+        ---
+        import BaseLayout from '@/layouts/BaseLayout.astro';
+        import NodesGrid from '@/components/NodesGrid';
+        ---
+        <BaseLayout title="Nodes">
+          <NodesGrid client:load />
+        </BaseLayout>
+
+      bad: |
+        <NodesGrid />  # ❌ 缺少 client 指令
+
+  # -----------------------------------------------------
+  # 📊 图表组件规范（优化版）
+  # -----------------------------------------------------
+  - id: chart-architecture
+    description: 基于 BaseChart 的统一图表架构
+    priority: critical
+    enforce:
+      - must_extend_BaseChart: true
+      - use_transformData_pattern: true
+      - use_renderChart_pattern: true
+      - reuse_CHART_CONFIG: true
+      - lowercase_config_keys: true       # xAxis, yAxis (小写)
+      - no_direct_ResponsiveContainer: true
+
+    required_imports:
+      - "BaseChart from '@/components/charts/shared/BaseChart'"
+      - "CHART_CONFIG from '@/components/charts/shared/chartConfig'"
+      - "recharts components (LineChart, AreaChart, etc.)"
+
+    structure: |
+      所有图表必须通过 BaseChart 实现，提供：
+      1. transformData: 数据转换函数
+      2. renderChart: 图表渲染函数
+      3. 使用共享的 CHART_CONFIG
+
+    examples:
+      correct_structure: |
+        import { useMemo } from "react";
+        import { LineChart, Line, XAxis, YAxis } from "recharts";
+        import { BaseChart } from "@/components/charts/shared/BaseChart";
+        import { CHART_CONFIG, CHART_COLORS } from "@/components/charts/shared/chartConfig";
+        import type { BaseChartProps } from "@/components/charts/shared/chartConfig";
+
+        export function CpuChart({ data, timeRange, onTimeRangeChange }: CpuChartProps) {
+          const transformData = useMemo(
+            () => (rawData: HistoryData[], range: number) => {
+              // 转换逻辑
+            },
+            []
+          );
+
+          return (
+            <BaseChart
+              data={data}
+              timeRange={timeRange}
+              onTimeRangeChange={onTimeRangeChange}
+              transformData={transformData}
+              renderChart={(chartData, { xAxis, yAxis, cartesianGrid, tooltip }) => (
+                <LineChart data={chartData}>
+                  <CartesianGrid {...cartesianGrid} />
+                  <XAxis {...xAxis} />
+                  <YAxis {...yAxis} />
+                  <Line type="monotone" dataKey="value" stroke={CHART_COLORS.primary} />
+                </LineChart>
+              )}
+            />
+          );
+        }
+
+      config_keys_warning: |
+        ⚠️ 注意配置名称必须小写：
+        ✅ { xAxis, yAxis, cartesianGrid, tooltip }
+        ❌ { XAxis, YAxis }  # 会与组件名冲突
+
+  - id: chart-gradients
+    description: 图表渐变效果复用
+    priority: medium
+    enforce:
+      - use_ChartGradients_component: true
+      - reference_by_url: true
+    examples:
+      good: |
+        import { ChartGradients } from "@/components/charts/shared/ChartGradients";
+
+        <LineChart>
+          <defs>
+            <ChartGradients />
+          </defs>
+          <Area fill="url(#colorPrimary)" />
+        </LineChart>
+
+  # -----------------------------------------------------
+  # 🔌 数据管理规范（优化版）
+  # -----------------------------------------------------
+  - id: data-management-architecture
+    description: NodeStore 单例模式 + Hooks 订阅
+    priority: critical
+    architecture:
+      global_store: "nodeStore (Singleton)"
+      hooks_layer: "useNodesData, useNodeData, useAllChartsData"
+      data_sources:
+        dev: "HTTP 轮询 (1000ms)"
+        prod: "WebSocket 实时推送"
+        history: "HTTP RPC2"
+
+    enforce:
+      - use_nodeStore_singleton: true
+      - no_direct_store_access: true      # 必须通过 hooks
+      - subscribe_pattern: true
+      - cleanup_on_unmount: true
+
+    forbidden:
+      - "组件中直接调用 nodeStore.getClients()"
+      - "组件中直接使用 fetch/axios"
+      - "useEffect 中直接轮询数据"
+
+  - id: hooks-usage-patterns
+    description: 数据 Hooks 统一调用规范
+    priority: high
+    hooks:
+      useNodesData:
+        description: "获取所有节点数据"
+        signature: "(refreshInterval?: number) => UseNodesDataResult"
+        returns: "{ clients, statuses, loading, error, refresh }"
+        example: |
+          const { clients, statuses, loading } = useNodesData(1000);
+
+      useNodeData:
+        description: "获取单个节点数据"
+        signature: "(uuid: string, refreshInterval?: number) => UseNodeDataResult"
+        returns: "{ client, status, loading, notFound, error, refresh }"
+        example: |
+          const { client, status, loading, notFound } = useNodeData(uuid, 1000);
+
+      useAllChartsData:
+        description: "获取节点的所有图表数据"
+        signature: "(uuid: string) => UseAllChartsDataResult"
+        returns: "{ chartsData, timeRanges, setChartTimeRange, loading }"
+        example: |
+          const { chartsData, timeRanges, setChartTimeRange } = useAllChartsData(uuid);
+
+  # -----------------------------------------------------
+  # 🧰 工具函数规范
+  # -----------------------------------------------------
+  - id: utility-functions
+    description: 统一的工具函数使用
+    priority: medium
+    required_utils:
+      formatting:
+        - "formatBytes(bytes: number): string"
+        - "formatPercent(value: number): string"
+        - "formatSpeed(bytesPerSecond: number): string"
+        - "formatTimestamp(timestamp: number): string"
+      styling:
+        - "cn(...inputs: ClassValue[]): string"  # Tailwind class merge
+
+    import_from: "@/lib/utils"
+
+    examples:
+      good: |
+        import { formatBytes, formatSpeed, cn } from "@/lib/utils";
+
+        const usage = formatBytes(client.mem_used);
+        const speed = formatSpeed(status.network_tx);
+        const classes = cn("text-sm", isActive && "font-bold");
+
+  # -----------------------------------------------------
+  # 🎨 UI 组件规范
+  # -----------------------------------------------------
+  - id: ui-components
+    description: shadcn/ui 组件使用规范
+    priority: high
+    enforce:
+      - prefer_shadcn_components: true
+      - no_custom_basic_ui: true          # 不自己实现基础组件
+      - consistent_variants: true
+
+    available_components:
+      - "Card, CardHeader, CardTitle, CardContent"
+      - "Button"
+      - "Badge"
+      - "Select, SelectTrigger, SelectValue, SelectContent, SelectItem"
+      - "Skeleton"
+      - "Progress"
+      - "Separator"
+
+    import_from: "@/components/ui/*"
+
+    examples:
+      good: |
+        import { Card, CardContent } from "@/components/ui/card";
+        import { Badge } from "@/components/ui/badge";
+
+      bad: |
+        # ❌ 不要自己实现 Card 组件
+        function CustomCard({ children }) { ... }
+
+  # -----------------------------------------------------
+  # 🚨 错误与状态处理（优化版）
   # -----------------------------------------------------
   - id: error-handling
-    description: 错误与空状态显示规范
+    description: 统一的错误和状态处理规范
+    priority: high
+    states:
+      loading: "显示 Skeleton 组件"
+      error: "显示错误信息 + 重试按钮"
+      empty: "显示空状态提示"
+      success: "显示数据内容"
+
     enforce:
-      - show_retry_on_network_error: true
-      - show_empty_state_on_no_data: true
       - show_skeleton_on_loading: true
+      - show_error_with_retry: true
+      - show_empty_state: true
       - graceful_degradation: true
+      - no_silent_failures: true
+
+    examples:
+      complete_pattern: |
+        function NodeCard() {
+          const { client, status, loading, error } = useNodeData(uuid);
+
+          if (loading) return <NodeCardSkeleton />;
+          if (error) return <ErrorState error={error} onRetry={refresh} />;
+          if (!client) return <EmptyState message="节点不存在" />;
+
+          return <Card>{/* 正常内容 */}</Card>;
+        }
 
   # -----------------------------------------------------
-  # 💡 核心原则
+  # ⚡ 性能优化规范（可量化）
   # -----------------------------------------------------
-  - id: philosophy
-    description: 保持高质量、性能优化与卓越用户体验
+  - id: performance-optimization
+    description: 性能优化的具体要求
+    priority: high
+    targets:
+      bundle_size: "< 500KB (gzipped)"
+      first_paint: "< 1.5s"
+      time_to_interactive: "< 3s"
+      lighthouse_score: "> 90"
+
     enforce:
-      - code_quality: "high"
-      - performance: "optimized"
-      - ux: "smooth"
+      - memoize_chart_data: true
+      - memoize_expensive_calculations: true
+      - no_inline_objects_in_jsx: true
+      - no_inline_functions_in_jsx: true
+      - reuse_chart_configs: true
+      - lazy_load_routes: true
+      - code_splitting: true
+
+    examples:
+      inline_objects_bad: |
+        # ❌ 每次渲染都创建新对象
+        <Component style={{ color: 'red' }} />
+        <Component onClick={() => handleClick()} />
+
+      inline_objects_good: |
+        # ✅ 提取到外部或使用 useMemo/useCallback
+        const style = useMemo(() => ({ color: 'red' }), []);
+        const onClick = useCallback(() => handleClick(), []);
+        <Component style={style} onClick={onClick} />
+
+  # -----------------------------------------------------
+  # 🔒 类型安全规范（新增）
+  # -----------------------------------------------------
+  - id: type-safety
+    description: TypeScript 类型安全最佳实践
+    priority: critical
+    enforce:
+      - no_any: true
+      - no_implicit_any: true
+      - strict_null_checks: true
+      - no_non_null_assertion: false      # 允许 ! 但需谨慎
+      - prefer_interfaces_for_objects: true
+      - prefer_type_for_unions: true
+
+    naming:
+      interfaces: "PascalCase (Client, NodeStatus)"
+      types: "PascalCase (TimeRange, ChartData)"
+      generics: "T, U, V 或描述性名称 (TData, TConfig)"
+
+    examples:
+      good: |
+        interface Client {
+          uuid: string;
+          name: string;
+          platform: string;
+        }
+
+        type TimeRange = 1 | 3 | 6 | 12 | 24;
+
+        function getData<T>(items: T[]): T | null {
+          return items[0] ?? null;
+        }
+
+      bad: |
+        const data: any = fetchData();  # ❌ 禁止 any
+        const result = data!.value;     # ⚠️ 谨慎使用 !
+
+  # -----------------------------------------------------
+  # 🎯 代码质量保证
+  # -----------------------------------------------------
+  - id: code-quality
+    description: 代码质量检查工具链
+    priority: high
+    tools:
+      linting: "ESLint (eslint.config.js)"
+      formatting: "Prettier (.prettierrc)"
+      type_checking: "TypeScript (tsconfig.json)"
+      bundle_analysis: "Astro build --analyze"
+
+    scripts:
+      - "bun run lint         # ESLint 检查"
+      - "bun run lint:fix     # 自动修复"
+      - "bun run format       # Prettier 格式化"
+      - "bun run format:check # 格式检查"
+      - "bun run check        # Astro + TypeScript 检查"
+      - "bun run check:all    # 完整检查流程"
+
+    pre_commit:
+      - "bun run check:all    # 提交前必须通过"
+
+    ci_cd:
+      - "bun run check:all"
+      - "bun run build"
+
+  # -----------------------------------------------------
+  # 📐 响应式设计规范（新增）
+  # -----------------------------------------------------
+  - id: responsive-design
+    description: Mobile-First 响应式设计
+    priority: high
+    approach: "mobile-first"
+    breakpoints:
+      sm: "640px"
+      md: "768px"
+      lg: "1024px"
+      xl: "1280px"
+      "2xl": "1536px"
+
+    enforce:
+      - mobile_first_classes: true
+      - test_all_breakpoints: true
+      - no_fixed_widths: true
+
+    examples:
+      good: |
+        # ✅ Mobile-first 方式
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+
+      bad: |
+        # ❌ 固定宽度
+        <div className="w-[500px]">
+
+  # -----------------------------------------------------
+  # 🔄 Git 工作流规范（新增）
+  # -----------------------------------------------------
+  - id: git-workflow
+    description: Git 提交和分支管理规范
+    priority: medium
+    commit_format: "type(scope): subject"
+    commit_types:
+      feat: "新功能"
+      fix: "Bug 修复"
+      docs: "文档更新"
+      style: "代码格式（不影响功能）"
+      refactor: "重构"
+      perf: "性能优化"
+      test: "测试"
+      chore: "构建/工具链"
+
+    examples:
+      - "feat(charts): add CPU temperature chart"
+      - "fix(hooks): resolve memory leak in useNodeData"
+      - "refactor(components): extract common chart logic"
+      - "perf(charts): optimize data transformation"
+
+  # -----------------------------------------------------
+  # 💡 开发哲学（优化版）
+  # -----------------------------------------------------
+  - id: development-philosophy
+    description: 项目核心价值观
+    priority: medium
+    principles:
+      code_quality:
+        - "类型安全：严格的 TypeScript"
+        - "代码清晰：自解释的命名和结构"
+        - "易维护：DRY 原则和模块化"
+
+      performance:
+        - "首屏速度：< 1.5s"
+        - "交互响应：< 100ms"
+        - "内存管理：避免泄漏和过度渲染"
+
+      user_experience:
+        - "平滑加载：Skeleton 占位"
+        - "错误友好：清晰的错误提示和恢复选项"
+        - "响应式：所有设备完美体验"
+
+      developer_experience:
+        - "工具完善：Lint + Format + Type Check"
+        - "文档齐全：代码注释和规则说明"
+        - "快速反馈：热重载和快速构建"
+
+  # -----------------------------------------------------
+  # 🎓 学习资源（新增）
+  # -----------------------------------------------------
+  - id: learning-resources
+    description: 推荐的学习和参考资源
+    priority: low
+    resources:
+      astro: "https://docs.astro.build"
+      react: "https://react.dev"
+      typescript: "https://www.typescriptlang.org/docs"
+      tailwindcss: "https://tailwindcss.com/docs"
+      recharts: "https://recharts.org"
+      shadcn: "https://ui.shadcn.com"
+
+# =========================================================
+# 规则版本历史
+# =========================================================
+# v1.0 - 2025-10-16
+#   - 修正技术栈版本（Astro 5.x, React 19.x）
+#   - 简化 MCP 配置
+#   - 新增路径别名、Astro 组件、类型安全、响应式设计规范
+#   - 优化图表组件、数据管理、性能优化规范
+#   - 添加 Git 工作流和学习资源
+# =========================================================
