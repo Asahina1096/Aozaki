@@ -67,15 +67,18 @@ export default defineConfig({
               );
             });
             // WebSocket 特定事件
-            proxy.on("proxyReqWs", (proxyReq, req, socket, options, head) => {
-              console.log(
-                "🔌 WebSocket 代理请求:",
-                req.url,
-                "→",
-                options.target
-              );
-            });
-            proxy.on("proxyResWs", (proxyRes, req, socket) => {
+            proxy.on(
+              "proxyReqWs",
+              (_proxyReq, req, _socket, options, _head) => {
+                console.log(
+                  "🔌 WebSocket 代理请求:",
+                  req.url,
+                  "→",
+                  options.target
+                );
+              }
+            );
+            proxy.on("proxyResWs", (proxyRes, req, _socket) => {
               console.log(
                 "🔌 WebSocket 代理响应:",
                 req.url,
@@ -83,7 +86,7 @@ export default defineConfig({
                 proxyRes.statusCode
               );
             });
-            proxy.on("error", (err, req, res) => {
+            proxy.on("error", (err, req, _res) => {
               if (req.url?.includes("/api/rpc2")) {
                 console.log("🔴 WebSocket/代理错误详情:", {
                   url: req.url,

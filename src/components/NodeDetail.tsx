@@ -35,6 +35,8 @@ export function NodeDetail({ uuid: propUuid }: NodeDetailProps) {
     status,
     loading: dataLoading,
     notFound,
+    error,
+    refresh,
   } = useNodeData(uuid, 1000, 3000);
 
   // 加载中状态
@@ -44,6 +46,31 @@ export function NodeDetail({ uuid: propUuid }: NodeDetailProps) {
         <Breadcrumb nodeName="加载中..." />
         <NodeRealtimeCardSkeleton />
         <ChartGroupsSkeleton />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Breadcrumb />
+        <div className="rounded-lg border border-border bg-card px-6 py-12 text-center shadow-sm">
+          <p className="text-lg font-semibold text-destructive">
+            无法获取节点详情
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {error.message || "请检查网络连接后重试。"}
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              void refresh();
+            }}
+            className="mt-4 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            重试
+          </button>
+        </div>
       </div>
     );
   }

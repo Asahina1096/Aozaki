@@ -17,12 +17,34 @@ interface ChartGroupsProps {
 }
 
 export function ChartGroups({ uuid }: ChartGroupsProps) {
-  const { chartsData, loading, timeRanges, setChartTimeRange } =
+  const { chartsData, loading, timeRanges, setChartTimeRange, error, refresh } =
     useAllChartsData(uuid);
 
   // 初始加载时显示骨架屏
   if (loading) {
     return <ChartGroupsSkeleton />;
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center rounded-lg border border-border bg-card px-6 py-12 text-center shadow-sm">
+        <p className="text-lg font-semibold text-destructive">
+          无法获取历史图表数据
+        </p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {error.message || "请稍后再试。"}
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            void refresh();
+          }}
+          className="mt-4 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+        >
+          重试
+        </button>
+      </div>
+    );
   }
 
   return (

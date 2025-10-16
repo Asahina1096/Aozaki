@@ -1,11 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { getSharedClient } from "@/lib/rpc2";
+import { getSharedWsClient } from "@/lib/wsRpc2";
 import type {
   StatusRecord,
   PingRecord,
   PingBasicInfo,
   PingTaskInfo,
   GetRecordsParams,
+  RecordsResponse,
+  PingRecordsResponse,
 } from "@/lib/types/komari";
 
 // 图表时间范围配置
@@ -42,6 +45,18 @@ export interface ChartsData {
   };
 }
 
+export interface UseAllChartsDataResult {
+  chartsData: ChartsData;
+  loading: boolean;
+  timeRanges: ChartTimeRanges;
+  setChartTimeRange: (
+    _chartType: keyof ChartTimeRanges,
+    _hours: number
+  ) => void;
+  refresh: () => Promise<void>;
+  error: Error | null;
+}
+
 const DEFAULT_TIME_RANGES: ChartTimeRanges = {
   cpu: 1,
   ram: 1,
@@ -59,7 +74,7 @@ const DEFAULT_TIME_RANGES: ChartTimeRanges = {
 export function useAllChartsData(
   uuid: string,
   refreshInterval: number = 30000
-) {
+): UseAllChartsDataResult {
   const [timeRanges, setTimeRanges] =
     useState<ChartTimeRanges>(DEFAULT_TIME_RANGES);
   const [chartsData, setChartsData] = useState<ChartsData>({
@@ -80,15 +95,22 @@ export function useAllChartsData(
     },
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const isFirstLoadRef = useRef(true);
+  const requestIdRef = useRef(0);
 
   // 设置单个图表的时间范围
   const setChartTimeRange = useCallback(
     (chartType: keyof ChartTimeRanges, hours: number) => {
-      setTimeRanges((prev) => ({
-        ...prev,
-        [chartType]: hours,
-      }));
+      setTimeRanges((prev) => {
+        if (prev[chartType] === hours) {
+          return prev;
+        }
+        return {
+          ...prev,
+          [chartType]: hours,
+        };
+      });
     },
     []
   );
@@ -96,49 +118,104 @@ export function useAllChartsData(
   // 获取所有图表数据
   const fetchAllData = useCallback(async () => {
     if (!uuid) return;
+    const requestId = ++requestIdRef.current;
 
     try {
       if (isFirstLoadRef.current) {
         setLoading(true);
       }
+      setError(null);
 
-      const rpc = getSharedClient();
+      const httpClient = getSharedClient();
+      const wsClient = getSharedWsClient();
+      let useHttp = import.meta.env.DEV;
+
+      if (!useHttp) {
+        try {
+          await wsClient.connect();
+        } catch (error) {
+          console.error("WebSocket 连接失败，回退至 HTTP 请求:", error);
+          useHttp = true;
+        }
+      }
 
       // 并发获取所有类型的数据
-      const requests = Object.entries(timeRanges).map(async ([type, hours]) => {
+      const requests = (
+        Object.entries(timeRanges) as [keyof ChartTimeRanges, number][]
+      ).map(async ([type, hours]) => {
         try {
-          let result;
           let records: StatusRecord[] | PingRecord[] = [];
           let basicInfo: PingBasicInfo[] = [];
           let taskInfo: PingTaskInfo[] = [];
 
           if (type === "ping") {
-            // Ping 数据使用专门的 API 调用方式
-            result = await rpc.getPingRecordsWithNames(uuid, hours);
+            if (useHttp) {
+              const result = await httpClient.getPingRecordsWithNames(
+                uuid,
+                hours
+              );
 
-            if (result.records && Array.isArray(result.records)) {
-              records = result.records as PingRecord[];
-            }
-            if (result.tasks && Array.isArray(result.tasks)) {
-              taskInfo = result.tasks as PingTaskInfo[];
-              basicInfo = result.tasks.map((task) => ({
-                client: "",
-                loss: task.loss,
-                min: 0,
-                max: 0,
-              })) as PingBasicInfo[];
+              if (result.records && Array.isArray(result.records)) {
+                records = result.records as PingRecord[];
+              }
+              if (result.tasks && Array.isArray(result.tasks)) {
+                taskInfo = result.tasks as PingTaskInfo[];
+                basicInfo = result.tasks.map((task) => ({
+                  client: "",
+                  loss: task.loss,
+                  min: 0,
+                  max: 0,
+                })) as PingBasicInfo[];
+              }
+            } else {
+              const [wsResult, namedResult] = await Promise.all([
+                wsClient.call<PingRecordsResponse>("common:getRecords", {
+                  type: "ping",
+                  uuid,
+                  hours,
+                  maxCount: 4000,
+                }),
+                httpClient
+                  .getPingRecordsWithNames(uuid, hours)
+                  .catch((error) => {
+                    console.warn("获取 Ping 任务信息失败:", error);
+                    return null;
+                  }),
+              ]);
+
+              if (wsResult.records && Array.isArray(wsResult.records)) {
+                records = wsResult.records as PingRecord[];
+              }
+
+              if (wsResult.basic_info && Array.isArray(wsResult.basic_info)) {
+                basicInfo = wsResult.basic_info as PingBasicInfo[];
+              }
+
+              if (namedResult?.tasks && Array.isArray(namedResult.tasks)) {
+                taskInfo = namedResult.tasks as PingTaskInfo[];
+              }
             }
           } else {
-            // 其他数据使用原有的 API 调用方式
-            result = await rpc.getRecords({
+            const params: GetRecordsParams = {
               type: "load",
               uuid,
               hours,
               load_type: type as GetRecordsParams["load_type"],
               maxCount: 4000,
-            });
+            };
 
-            if (result.records) {
+            let result: RecordsResponse | null = null;
+
+            if (useHttp) {
+              result = await httpClient.getRecords(params);
+            } else {
+              result = await wsClient.call<RecordsResponse>(
+                "common:getRecords",
+                params as Record<string, unknown>
+              );
+            }
+
+            if (result?.records) {
               if (Array.isArray(result.records)) {
                 records = result.records as StatusRecord[];
               } else {
@@ -158,6 +235,10 @@ export function useAllChartsData(
       });
 
       const results = await Promise.all(requests);
+
+      if (requestId !== requestIdRef.current) {
+        return;
+      }
 
       // 更新所有图表数据
       const newChartsData: ChartsData = {
@@ -194,13 +275,24 @@ export function useAllChartsData(
       setChartsData(newChartsData);
     } catch (err) {
       console.error("获取图表数据失败:", err);
+      if (requestId === requestIdRef.current) {
+        const normalizedError =
+          err instanceof Error ? err : new Error(String(err));
+        setError(normalizedError);
+      }
     } finally {
-      if (isFirstLoadRef.current) {
+      if (requestId === requestIdRef.current && isFirstLoadRef.current) {
         setLoading(false);
         isFirstLoadRef.current = false;
       }
     }
   }, [uuid, timeRanges]);
+
+  const refresh = useCallback(async () => {
+    isFirstLoadRef.current = true;
+    setLoading(true);
+    await fetchAllData();
+  }, [fetchAllData]);
 
   // 初始加载和定时刷新
   useEffect(() => {
@@ -227,5 +319,7 @@ export function useAllChartsData(
     loading,
     timeRanges,
     setChartTimeRange,
+    refresh,
+    error,
   };
 }
