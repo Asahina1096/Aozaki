@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { getSharedClient } from "@/lib/rpc2";
-import { getSharedWsClient } from "@/lib/wsRpc2";
+import { nodeStore } from "@/lib/nodeStore";
 import type {
   StatusRecord,
   PingRecord,
@@ -126,18 +125,13 @@ export function useAllChartsData(
       }
       setError(null);
 
-      const httpClient = getSharedClient();
-      const wsClient = getSharedWsClient();
-      let useHttp = import.meta.env.DEV;
+      // ✅ 确保 nodeStore 已启动（触发连接建立）
+      await nodeStore.start(1000);
 
-      if (!useHttp) {
-        try {
-          await wsClient.connect();
-        } catch (error) {
-          console.error("WebSocket 连接失败，回退至 HTTP 请求:", error);
-          useHttp = true;
-        }
-      }
+      // ✅ 复用 nodeStore 的连接状态
+      const useHttp = import.meta.env.DEV || !nodeStore.isWebSocketReady();
+      const httpClient = nodeStore.getHttpClient();
+      const wsClient = nodeStore.getWsClient();
 
       // 并发获取所有类型的数据
       const requests = (

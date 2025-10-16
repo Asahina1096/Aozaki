@@ -5,10 +5,13 @@ import type { PublicInfo } from "@/lib/types/komari";
 import { Skeleton } from "./ui/skeleton";
 
 export function Header() {
+  const [mounted, setMounted] = useState(false);
   const [isDark, setIsDark] = useState(true);
   const [publicInfo, setPublicInfo] = useState<PublicInfo | null>(null);
 
   useEffect(() => {
+    setMounted(true);
+
     // 获取公开信息
     getSharedClient().getPublicInfo().then(setPublicInfo).catch(console.error);
 
@@ -55,13 +58,17 @@ export function Header() {
         <div className="flex items-center gap-2">
           <button
             onClick={toggleTheme}
-            className="inline-flex items-center justify-center rounded-md p-2 hover:bg-accent hover:text-accent-foreground transition-colors"
+            className="inline-flex items-center justify-center rounded-md p-2 w-10 h-10 hover:bg-accent hover:text-accent-foreground transition-colors"
             aria-label="切换主题"
           >
-            {isDark ? (
-              <Sun className="h-5 w-5" />
+            {mounted ? (
+              isDark ? (
+                <Sun className="h-5 w-5" />
+              ) : (
+                <Moon className="h-5 w-5" />
+              )
             ) : (
-              <Moon className="h-5 w-5" />
+              <div className="h-5 w-5" />
             )}
           </button>
         </div>

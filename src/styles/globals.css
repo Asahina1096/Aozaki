@@ -179,3 +179,9 @@
     }
   }
 }
+
+/* 移除图表点击时的 focus outline */
+.recharts-wrapper,
+.recharts-surface {
+  outline: none !important;
+}

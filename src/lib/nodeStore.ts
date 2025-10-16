@@ -210,6 +210,33 @@ class NodeStore {
   isWebSocketConnected(): boolean {
     return this.wsConnected;
   }
+
+  // 获取共享的 HTTP 客户端
+  getHttpClient() {
+    return getSharedClient();
+  }
+
+  // 获取共享的 WebSocket 客户端
+  getWsClient() {
+    return this.wsClient;
+  }
+
+  // 检查 WebSocket 是否可用（连接状态 + 客户端状态）
+  isWebSocketReady(): boolean {
+    return this.wsConnected && this.wsClient.isConnected();
+  }
+
+  // 等待 WebSocket 就绪（可选，用于需要确保连接的场景）
+  async waitForWebSocket(timeout: number = 5000): Promise<boolean> {
+    if (this.isWebSocketReady()) return true;
+
+    const startTime = Date.now();
+    while (Date.now() - startTime < timeout) {
+      if (this.isWebSocketReady()) return true;
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    return false;
+  }
 }
 
 // 单例实例
