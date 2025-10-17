@@ -1,7 +1,7 @@
 ---
 description: "Komari Aozaki 项目开发规范 - MCP 优先 + 类型安全 + 性能优化"
 author: "Asahina1096"
-version: "1.8.0"
+version: "2.0.0"
 globs:
   - "**/*.tsx"
   - "**/*.ts"
@@ -56,11 +56,6 @@ typescript: /microsoft/typescript
 
 **触发关键词**: 不确定、不知道、如何、API、函数、Hook、props、最佳实践、优化、版本、兼容
 
-**反模式** ❌:
-- 凭记忆写代码不查文档
-- 使用过时/不推荐的 API
-- 忽略版本差异导致问题
-
 ### Fetch MCP - 网页内容获取 (HIGH)
 
 **使用场景**:
@@ -71,92 +66,42 @@ typescript: /microsoft/typescript
 
 **工具**: `fetch_html` | `fetch_markdown` | `fetch_txt` | `fetch_json`
 
-**特性**: 自定义请求头 • 最大长度限制 • 分页获取
+### Git Tools - 版本控制管理 (HIGH)
+
+**使用场景**:
+- Git 状态检查 / 分支管理
+- 代码提交 / 暂存操作
+- Diff 查看 / 代码历史
+- 分支创建 / 切换
+
+**核心工具**: `git_status` | `git_add` | `git_commit` | `git_diff` | `git_branch` | `git_checkout` | `git_log` | `git_show`
+
+### Sequential Thinking - 复杂问题分析 (ACT MODE ONLY)
+
+**限制**: 仅在 ACT MODE 下使用
+
+**使用场景**:
+- ✅ 复杂问题分解和步骤规划
+- ✅ 需要动态反思和调整解决方案时
+- ✅ 多步骤解决方案设计
+- ✅ 不确定完整范围的问题分析
+- ✅ 需要验证假设的复杂任务
+
+**核心工具**: `sequentialthinking`
+
+**特点**:
+- 动态调整思考步骤
+- 支持修正和分支思考
+- 生成和验证解决方案假设
+- 适应性问题解决流程
 
 **反模式** ❌:
-- 用 curl/wget 手动解析
-- 忽视 MCP 原生 Markdown 转换
+- 凭记忆写代码不查文档
+- 用 `curl`/`wget` 手动解析网页
+- 手动 `execute_command: git` 命令
+- 在 PLAN MODE 下使用 Sequential Thinking
 
-### 决策流程
-
-```
-任务开始 → 是否有 MCP 工具？
-         ├─ 是 → 使用 MCP 工具
-         └─ 否 → 评估必要性 → 传统工具
-```
-
-**示例对比**:
-
-| 场景 | ❌ 错误 | ✅ 正确 |
-|------|---------|---------|
-| 查看 React 19 新 API | 凭记忆/搜索引擎 | `context7: resolve-library-id + get-library-docs` |
-| 获取网页内容 | `execute_command: curl \| html2text` | `fetch-mcp: fetch_markdown` |
-
-## 工作流程
-
-### PLAN MODE
-
-**MCP 优先**: ✅ 启用
-
-**必须执行**:
-1. 【CRITICAL】任何 API/库使用前 → `context7` 确认
-2. 计划引用真实路径、现有模式、预期输出
-3. 文档确认流程: `context7: resolve-library-id → get-library-docs`
-4. 整合分步计划，明确要改的文件与方法
-
-**禁止** ❌:
-- 跳过 MCP 工具直接用传统命令
-- 不查文档凭印象写代码
-
-### ACT MODE
-
-**MCP 优先**: ✅ 启用
-
-**必须执行**:
-1. 【CRITICAL】实现前 → `context7` 确认 API/最佳实践
-2. 【MANDATORY】遇疑问 → 立即查询 `context7`，不假设
-3. 实现完成 → 对照官方示例/兼容说明
-4. 必要时补充版本差异备注
-
-**禁止** ❌:
-- 凭记忆使用可能已变更的 API
-
-### 自动触发器
-
-**任务开始检查**:
-- [ ] 是否需要查询文档？（新 API/不熟悉的库）
-- [ ] 是否需要获取外部内容？（用 fetch-mcp）
-
-**Context7 触发词**: 不确定、不知道、如何、是否、API、方法、函数、组件、Hook、props、参数、最佳实践、优化、性能、示例、兼容、版本、升级、迁移
-
-**Context7 执行流**:
-1. 识别触发源 → 确定对应库
-2. `resolve-library-id` → `get-library-docs`
-3. 根据文档调整方案/实现
-4. 记录结论与引用出处
-
-**Fetch 触发词**: 网页、URL、HTTP、API 响应、HTML、外部文档
-
-**Fetch 执行规则**:
-- ❌ 禁止: `curl`/`wget` 手动处理
-- ✅ 强制: 使用 `fetch-mcp` 工具
-- 💡 推荐: `fetch_markdown` 自动转换
-
-### 测试验证
-
-**最佳实践**:
-- ✅ 本地测试开发服务器
-- ✅ 验证响应式设计（所有断点）
-- ✅ 检查控制台错误（零容忍）
-- ✅ 无验证不提交
-
-**反模式** ❌:
-- 跳过测试或忽略控制台错误
-- 未验证响应式就提交
-
-## 开发规范
-
-### 1. 技术栈约束
+## 技术栈与包管理
 
 **固定版本**:
 - Astro 5.x
@@ -169,7 +114,9 @@ typescript: /microsoft/typescript
 - ✅ 唯一: `bun.lockb`
 - ❌ 禁止: `yarn.lock`, `package-lock.json`, `pnpm-lock.yaml`
 
-### 2. 导入规范
+## 代码规范
+
+### 导入规范
 
 **路径别名**: 强制使用 `@/`，禁止 `../../../`
 
@@ -190,7 +137,7 @@ import { cn } from '@/lib/utils'
 import type { NodeData } from '@/lib/types/komari'
 ```
 
-### 3. 命名规范
+### 命名规范
 
 | 类型 | 规则 | 示例 |
 |------|------|------|
@@ -202,7 +149,7 @@ import type { NodeData } from '@/lib/types/komari'
 | 常量 | UPPER_SNAKE_CASE | `const MAX_RETRIES = 3` |
 | 类型/接口 | PascalCase | `interface NodeData` |
 
-### 4. React 组件
+### React 组件
 
 **必须**:
 - ✅ TypeScript + 命名导出
@@ -227,13 +174,15 @@ export function NodeCard({ nodeId, onSelect }: NodeCardProps) {
 }
 ```
 
-### 5. Astro 组件
+### Astro 组件
 
 - 布局复用
 - `client:*` 指令明确
 - Props 类型化
 
-### 6. 图表架构
+## 项目架构
+
+### 图表架构
 
 **统一继承**: `BaseChart`
 
@@ -243,7 +192,7 @@ export function NodeCard({ nodeId, onSelect }: NodeCardProps) {
 - ✅ 复用 `CHART_CONFIG` / `CHART_GRADIENTS`
 - ✅ 配置键小写
 
-### 7. 数据管理
+### 数据管理
 
 **模式**: `nodeStore` 单例 + Hooks 访问
 
@@ -253,13 +202,7 @@ export function NodeCard({ nodeId, onSelect }: NodeCardProps) {
 - ❌ 组件层：禁止直接访问 `nodeStore` 或发起轮询
 - ✅ 订阅需清理
 
-### 8. 工具函数
-
-**集中位置**: `@/lib/utils`
-
-**推荐函数**: `formatBytes` | `formatPercent` | `formatSpeed` | `formatTimestamp` | `cn`
-
-### 9. UI 组件
+### UI 组件
 
 **默认基础**: shadcn/ui (`@/components/ui/*`)
 
@@ -268,7 +211,7 @@ export function NodeCard({ nodeId, onSelect }: NodeCardProps) {
 - ✅ 保持 variants 一致
 - ✅ 直接复用: `Skeleton` | `Badge` | `Select` | `Progress`
 
-### 10. 状态处理
+### 状态处理
 
 **统一模式**:
 - `loading` → `Skeleton` / `Placeholder`
@@ -276,7 +219,24 @@ export function NodeCard({ nodeId, onSelect }: NodeCardProps) {
 - `empty` → 明确文案
 - ❌ 禁止静默失败
 
-### 11. 性能优化
+### 工具函数
+
+**集中位置**: `@/lib/utils`
+
+**推荐函数**: `formatBytes` | `formatPercent` | `formatSpeed` | `formatTimestamp` | `cn`
+
+## 类型安全与性能
+
+### 类型安全
+
+**严格模式**:
+- ❌ 禁止 `any` / implicit any
+- ✅ 启用 `strictNullChecks`
+- ⚠️ 慎用非空断言 (`!`)
+- 💡 对象结构 → `interface`，联合类型 → `type`
+- 💡 泛型命名清晰: `TData`, `TResponse`
+
+### 性能优化
 
 **量化目标**:
 - Bundle: < 500KB (gzip)
@@ -290,16 +250,18 @@ export function NodeCard({ nodeId, onSelect }: NodeCardProps) {
 - ✅ 懒加载路由 + 代码拆分
 - ❌ 禁止 JSX 内联对象/函数
 
-### 12. 类型安全
+### 响应式设计
 
-**严格模式**:
-- ❌ 禁止 `any` / implicit any
-- ✅ 启用 `strictNullChecks`
-- ⚠️ 慎用非空断言 (`!`)
-- 💡 对象结构 → `interface`，联合类型 → `type`
-- 💡 泛型命名清晰: `TData`, `TResponse`
+**策略**: Mobile-first + Tailwind 断点
 
-### 13. 代码质量
+**断点**: `sm` (640px) | `md` (768px) | `lg` (1024px) | `xl` (1280px) | `2xl` (1536px)
+
+**规范**:
+- ✅ 优先 mobile-first 类名
+- ✅ 测试所有断点
+- ❌ 禁止固定宽度
+
+## 质量保证工具链
 
 **工具链**:
 ```bash
@@ -315,18 +277,7 @@ bun run check:all     # 完整检查（必须通过）
 - Pre-commit: `bun run check:all`
 - CI/CD: `bun run check:all` + `bun run build`
 
-### 14. 响应式设计
-
-**策略**: Mobile-first + Tailwind 断点
-
-**断点**: `sm` (640px) | `md` (768px) | `lg` (1024px) | `xl` (1280px) | `2xl` (1536px)
-
-**规范**:
-- ✅ 优先 mobile-first 类名
-- ✅ 测试所有断点
-- ❌ 禁止固定宽度
-
-### 15. Git 提交
+## Git 提交规范
 
 **规范**: Conventional Commits
 

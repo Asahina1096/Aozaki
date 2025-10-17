@@ -91,6 +91,7 @@ export function useNodesData(
     const unsubscribe = nodeStore.subscribe(() => {
       const newClients = nodeStore.getClients();
       const newStatuses = nodeStore.getStatuses();
+
       setClients((prev) => (prev === newClients ? prev : newClients));
       setStatuses((prev) => (prev === newStatuses ? prev : newStatuses));
 
@@ -98,14 +99,12 @@ export function useNodesData(
       const hasData =
         Object.keys(newClients).length > 0 ||
         Object.keys(newStatuses).length > 0;
-      if (hasData) {
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-          timeoutId = null;
-        }
-        if (isActive) {
-          stopLoadingIfNeeded();
-        }
+      if (hasData && timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+      if (hasData && isActive) {
+        stopLoadingIfNeeded();
       }
     });
 

@@ -1,4 +1,3 @@
-import { useCallback } from "react";
 import {
   AreaChart,
   Area,
@@ -7,11 +6,13 @@ import {
   YAxis,
   Tooltip,
 } from "recharts";
+import { useCallback } from "react";
 
 import { generateTimeAxis } from "@/lib/utils";
 
 import { BaseChart } from "@/components/charts/shared/BaseChart";
 import { SwapGradient } from "@/components/charts/shared/ChartGradients";
+import type { ChartComponents } from "@/components/charts/shared/chartConfig";
 
 import type { StatusRecord } from "@/lib/types/komari";
 
@@ -32,8 +33,8 @@ export function SwapChart({
   );
 
   const transformData = useCallback(
-    (data: StatusRecord[], _timeRange: number) => {
-      const timeAxis = generateTimeAxis(data, _timeRange);
+    (data: StatusRecord[], timeRange: number) => {
+      const timeAxis = generateTimeAxis(data, timeRange);
 
       return timeAxis.map(({ timestamp, timeLabel }) => {
         // 查找匹配的数据点（容忍 1 分钟误差）
@@ -61,18 +62,8 @@ export function SwapChart({
 
   const renderChart = useCallback(
     (
-      chartData: unknown[],
-      {
-        xAxis,
-        yAxis,
-        cartesianGrid,
-        tooltip,
-      }: {
-        xAxis: Record<string, unknown>;
-        yAxis: Record<string, unknown>;
-        cartesianGrid: Record<string, unknown>;
-        tooltip: Record<string, unknown>;
-      }
+      chartData: unknown,
+      { xAxis, yAxis, cartesianGrid, tooltip }: ChartComponents
     ) => (
       <AreaChart
         data={

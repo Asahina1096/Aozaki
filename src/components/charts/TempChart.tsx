@@ -1,4 +1,3 @@
-import { useCallback, useMemo } from "react";
 import {
   LineChart,
   Line,
@@ -7,10 +6,12 @@ import {
   YAxis,
   Tooltip,
 } from "recharts";
+import { useCallback } from "react";
 
 import { generateTimeAxis } from "@/lib/utils";
 
 import { BaseChart } from "@/components/charts/shared/BaseChart";
+import type { ChartComponents } from "@/components/charts/shared/chartConfig";
 
 import type { StatusRecord } from "@/lib/types/komari";
 
@@ -53,13 +54,6 @@ export function TempChart({
     []
   );
 
-  const yAxisConfig = useMemo(
-    () => ({
-      unit: "°C",
-    }),
-    []
-  );
-
   const tooltipFormatter = useCallback(
     (value: unknown) => [`${Number(value)}°C`, ""] as [string, string],
     []
@@ -68,19 +62,11 @@ export function TempChart({
   const renderChart = useCallback(
     (
       chartData: unknown[],
-      {
-        xAxis,
-        yAxis,
-        cartesianGrid,
-        tooltip,
-      }: {
-        xAxis: Record<string, unknown>;
-        yAxis: Record<string, unknown>;
-        cartesianGrid: Record<string, unknown>;
-        tooltip: Record<string, unknown>;
-      }
+      { xAxis, yAxis, cartesianGrid, tooltip }: ChartComponents
     ) => (
-      <LineChart data={chartData as Array<{ time: string; value: number }>}>
+      <LineChart
+        data={chartData as Array<{ time: string; value: number | null }>}
+      >
         <CartesianGrid {...cartesianGrid} />
         <XAxis {...xAxis} />
         <YAxis {...yAxis} />
@@ -109,7 +95,9 @@ export function TempChart({
       onTimeRangeChange={_onTimeRangeChange}
       shouldShow={shouldShow}
       transformData={transformData}
-      yAxisConfig={yAxisConfig}
+      yAxisConfig={{
+        unit: "°C",
+      }}
       tooltipFormatter={tooltipFormatter}
       renderChart={renderChart}
     />

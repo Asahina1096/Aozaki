@@ -1,4 +1,3 @@
-import { useCallback, useMemo } from "react";
 import {
   LineChart,
   Line,
@@ -8,11 +7,13 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
+import { useCallback } from "react";
 
 import { generateTimeAxis, formatSpeed } from "@/lib/utils";
 
 import { BaseChart } from "@/components/charts/shared/BaseChart";
 import { CustomSpeedYAxisTick } from "@/components/charts/shared/CustomTicks";
+import type { ChartComponents } from "@/components/charts/shared/chartConfig";
 
 import type { StatusRecord } from "@/lib/types/komari";
 
@@ -27,9 +28,15 @@ export function NetworkChart({
   timeRange,
   onTimeRangeChange: _onTimeRangeChange,
 }: NetworkChartProps) {
+  const shouldShow = useCallback(
+    (data: StatusRecord[]) =>
+      data.some((record) => record.net_in > 0 || record.net_out > 0),
+    []
+  );
+
   const transformData = useCallback(
-    (data: StatusRecord[], _timeRange: number) => {
-      const timeAxis = generateTimeAxis(data, _timeRange);
+    (data: StatusRecord[], timeRange: number) => {
+      const timeAxis = generateTimeAxis(data, timeRange);
 
       return timeAxis.map(({ timestamp, timeLabel }) => {
         // 查找匹配的数据点（容忍 1 分钟误差）
@@ -51,7 +58,7 @@ export function NetworkChart({
     []
   );
 
-  const yAxisConfig = useMemo(
+  const yAxisConfig = useCallback(
     () => ({
       tick: CustomSpeedYAxisTick,
     }),
@@ -65,18 +72,8 @@ export function NetworkChart({
 
   const renderChart = useCallback(
     (
-      chartData: unknown[],
-      {
-        xAxis,
-        yAxis,
-        cartesianGrid,
-        tooltip,
-      }: {
-        xAxis: Record<string, unknown>;
-        yAxis: Record<string, unknown>;
-        cartesianGrid: Record<string, unknown>;
-        tooltip: Record<string, unknown>;
-      }
+      chartData: unknown,
+      { xAxis, yAxis, cartesianGrid, tooltip }: ChartComponents
     ) => (
       <LineChart
         data={
@@ -124,8 +121,9 @@ export function NetworkChart({
       title="网络流量"
       description="实时网络流量变化"
       onTimeRangeChange={_onTimeRangeChange}
+      shouldShow={shouldShow}
       transformData={transformData}
-      yAxisConfig={yAxisConfig}
+      yAxisConfig={yAxisConfig()}
       tooltipFormatter={tooltipFormatter}
       renderChart={renderChart}
     />

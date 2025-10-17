@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import {
   Box,
   Binary,
@@ -67,6 +68,26 @@ export function NodeCard({ client, status }: NodeCardProps) {
   const diskTotal = status?.disk_total ?? client.disk_total;
   const hasStatus = Boolean(status);
 
+  // 优化计算密集的值
+  const cpuVariant = useMemo(() => getCpuVariant(cpuUsage), [cpuUsage]);
+  const memVariant = useMemo(
+    () => getMemVariant(memUsage, memTotal),
+    [memUsage, memTotal]
+  );
+  const diskVariant = useMemo(
+    () => getMemVariant(diskUsage, diskTotal),
+    [diskUsage, diskTotal]
+  );
+  const memPercent = useMemo(
+    () => formatPercent(memUsage, memTotal),
+    [memUsage, memTotal]
+  );
+  const diskPercent = useMemo(
+    () => formatPercent(diskUsage, diskTotal),
+    [diskUsage, diskTotal]
+  );
+  const cpuDisplay = useMemo(() => cpuUsage.toFixed(1), [cpuUsage]);
+
   return (
     <a href={`/node.html?uuid=${client.uuid}`} className="block">
       <Card className="min-h-[420px] overflow-hidden transition-all hover:shadow-lg cursor-pointer">
@@ -126,12 +147,12 @@ export function NodeCard({ client, status }: NodeCardProps) {
                 <Cpu className="h-4 w-4" />
                 <span>CPU</span>
               </div>
-              <span className="text-black">{cpuUsage.toFixed(1)}%</span>
+              <span className="text-black">{cpuDisplay}%</span>
             </div>
             <Progress
               value={cpuUsage}
               max={100}
-              variant={isOnline ? getCpuVariant(cpuUsage) : "muted"}
+              variant={isOnline ? cpuVariant : "muted"}
             />
             <p className="text-xs text-muted-foreground truncate">
               {client.cpu_name}
@@ -147,14 +168,12 @@ export function NodeCard({ client, status }: NodeCardProps) {
                 <MemoryStick className="h-4 w-4" />
                 <span>内存</span>
               </div>
-              <span className="text-black">
-                {formatPercent(memUsage, memTotal)}
-              </span>
+              <span className="text-black">{memPercent}</span>
             </div>
             <Progress
               value={memUsage}
               max={memTotal}
-              variant={isOnline ? getMemVariant(memUsage, memTotal) : "muted"}
+              variant={isOnline ? memVariant : "muted"}
             />
             <p className="text-xs text-muted-foreground">
               {formatBytes(memUsage)} / {formatBytes(memTotal)}
@@ -170,12 +189,12 @@ export function NodeCard({ client, status }: NodeCardProps) {
                 <HardDrive className="h-4 w-4" />
                 <span>磁盘</span>
               </div>
-              <span>{formatPercent(diskUsage, diskTotal)}</span>
+              <span>{diskPercent}</span>
             </div>
             <Progress
               value={diskUsage}
               max={diskTotal}
-              variant={isOnline ? getMemVariant(diskUsage, diskTotal) : "muted"}
+              variant={isOnline ? diskVariant : "muted"}
             />
             <p className="text-xs text-muted-foreground">
               {formatBytes(diskUsage)} / {formatBytes(diskTotal)}

@@ -26,8 +26,11 @@ export function BaseChart<T>({
 
   // 转换数据
   const chartData = useMemo(
-    () => (shouldRender ? transformData(data, timeRange) : []),
-    [data, timeRange, shouldRender, transformData]
+    () =>
+      data?.length > 0 && shouldShow(data)
+        ? transformData(data, timeRange)
+        : [],
+    [data, timeRange, shouldShow, transformData]
   );
 
   // 如果不应该渲染，返回 null

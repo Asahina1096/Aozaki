@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   LineChart,
   Line,
@@ -12,6 +12,7 @@ import {
 import { cn, generateTimeAxis } from "@/lib/utils";
 
 import { BaseChart } from "@/components/charts/shared/BaseChart";
+import type { ChartComponents } from "@/components/charts/shared/chartConfig";
 
 import type {
   PingRecord,
@@ -47,7 +48,7 @@ export function PingChart({
   }, [records]);
 
   // 切换线条显示/隐藏
-  const toggleLine = (taskId: number) => {
+  const toggleLine = useCallback((taskId: number) => {
     setVisibleLines((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(taskId)) {
@@ -57,10 +58,31 @@ export function PingChart({
       }
       return newSet;
     });
-  };
+  }, []);
+
+  // 获取所有唯一的 task_id 用于生成线条
+  const taskIds = useMemo(
+    () => Array.from(new Set(records.map((record) => record.task_id))).sort(),
+    [records]
+  );
+
+  // 生成颜色数组
+  const colors = useMemo(
+    () => [
+      "#3b82f6", // blue
+      "#8b5cf6", // violet
+      "#10b981", // emerald
+      "#f59e0b", // amber
+      "#ef4444", // red
+      "#06b6d4", // cyan
+      "#84cc16", // lime
+      "#f97316", // orange
+    ],
+    []
+  );
 
   // 自定义 Legend 组件
-  const CustomLegend = () => {
+  const CustomLegend = useCallback(() => {
     return (
       <div className="flex flex-wrap gap-4 justify-center mt-4">
         {taskIds.map((taskId: number, index: number) => {
@@ -98,26 +120,81 @@ export function PingChart({
         })}
       </div>
     );
-  };
+  }, [taskIds, taskInfo, colors, visibleLines, toggleLine]);
 
-  // 获取所有唯一的 task_id 用于生成线条
-  const taskIds = useMemo(() => {
-    const ids = new Set<number>();
-    records.forEach((record) => ids.add(record.task_id));
-    return Array.from(ids).sort();
-  }, [records]);
+  const shouldShow = useCallback((data: PingRecord[]) => data.length > 0, []);
 
-  // 生成颜色数组
-  const colors = [
-    "#3b82f6", // blue
-    "#8b5cf6", // violet
-    "#10b981", // emerald
-    "#f59e0b", // amber
-    "#ef4444", // red
-    "#06b6d4", // cyan
-    "#84cc16", // lime
-    "#f97316", // orange
-  ];
+  const transformData = useCallback(
+    (records: PingRecord[], timeRange: number) => {
+      const timeAxis = generateTimeAxis(records, timeRange);
+
+      return timeAxis.map(({ timestamp, timeLabel }) => {
+        const dataPoint: Record<string, number | string | null> = {
+          time: timeLabel,
+        };
+
+        // 为每个 task_id 查找匹配的数据点
+        taskIds.forEach((taskId) => {
+          const record = records.find((r) => {
+            if (r.task_id !== taskId) return false;
+            const recordTime =
+              typeof r.time === "string"
+                ? new Date(r.time).getTime()
+                : r.time * 1000;
+            return Math.abs(recordTime - timestamp) < 60000; // 1分钟误差
+          });
+
+          dataPoint[`task_${taskId}`] = record?.value ?? null;
+        });
+
+        return dataPoint;
+      });
+    },
+    [taskIds]
+  );
+
+  const tooltipFormatter = useCallback(
+    (value: unknown) => [`${Number(value)}ms`, "延迟"] as [string, string],
+    []
+  );
+
+  const renderChart = useCallback(
+    (
+      chartData: unknown[],
+      { xAxis, yAxis, cartesianGrid, tooltip }: ChartComponents
+    ) => (
+      <LineChart data={chartData}>
+        <CartesianGrid {...cartesianGrid} />
+        <XAxis {...xAxis} />
+        <YAxis {...yAxis} />
+        <Tooltip {...tooltip} />
+        <Legend content={<CustomLegend />} />
+        {taskIds.map((taskId, index) => {
+          // 根据 taskInfo 获取任务信息
+          const taskInfoForTask = taskInfo.find((task) => task.id === taskId);
+          const displayName = taskInfoForTask
+            ? `${taskInfoForTask.name} (丢包率 ${taskInfoForTask.loss}%)`
+            : `任务 ${taskId}`;
+
+          return (
+            <Line
+              key={taskId}
+              type="monotone"
+              dataKey={`task_${taskId}`}
+              stroke={colors[index % colors.length]}
+              strokeWidth={2}
+              strokeOpacity={visibleLines.has(taskId) ? 1 : 0.2}
+              name={displayName}
+              dot={false}
+              isAnimationActive={false}
+              connectNulls={false}
+            />
+          );
+        })}
+      </LineChart>
+    ),
+    [taskIds, taskInfo, colors, visibleLines, CustomLegend]
+  );
 
   return (
     <BaseChart
@@ -126,64 +203,10 @@ export function PingChart({
       title="Ping 历史检测"
       description="网络延迟历史数据（毫秒）"
       onTimeRangeChange={_onTimeRangeChange}
-      shouldShow={(data) => data.length > 0}
-      transformData={(records, timeRange) => {
-        const timeAxis = generateTimeAxis(records, timeRange);
-
-        return timeAxis.map(({ timestamp, timeLabel }) => {
-          const dataPoint: Record<string, number | string | null> = {
-            time: timeLabel,
-          };
-
-          // 为每个 task_id 查找匹配的数据点
-          taskIds.forEach((taskId) => {
-            const record = records.find((r) => {
-              if (r.task_id !== taskId) return false;
-              const recordTime =
-                typeof r.time === "string"
-                  ? new Date(r.time).getTime()
-                  : r.time * 1000;
-              return Math.abs(recordTime - timestamp) < 60000; // 1分钟误差
-            });
-
-            dataPoint[`task_${taskId}`] = record?.value ?? null;
-          });
-
-          return dataPoint;
-        });
-      }}
-      tooltipFormatter={(value: unknown) => [`${Number(value)}ms`, "延迟"]}
-      renderChart={(chartData, { xAxis, yAxis, cartesianGrid, tooltip }) => (
-        <LineChart data={chartData}>
-          <CartesianGrid {...cartesianGrid} />
-          <XAxis {...xAxis} />
-          <YAxis {...yAxis} />
-          <Tooltip {...tooltip} />
-          <Legend content={<CustomLegend />} />
-          {taskIds.map((taskId, index) => {
-            // 根据 taskInfo 获取任务信息
-            const taskInfoForTask = taskInfo.find((task) => task.id === taskId);
-            const displayName = taskInfoForTask
-              ? `${taskInfoForTask.name} (丢包率 ${taskInfoForTask.loss}%)`
-              : `任务 ${taskId}`;
-
-            return (
-              <Line
-                key={taskId}
-                type="monotone"
-                dataKey={`task_${taskId}`}
-                stroke={colors[index % colors.length]}
-                strokeWidth={2}
-                strokeOpacity={visibleLines.has(taskId) ? 1 : 0.2}
-                name={displayName}
-                dot={false}
-                isAnimationActive={false}
-                connectNulls={false}
-              />
-            );
-          })}
-        </LineChart>
-      )}
+      shouldShow={shouldShow}
+      transformData={transformData}
+      tooltipFormatter={tooltipFormatter}
+      renderChart={renderChart}
     />
   );
 }

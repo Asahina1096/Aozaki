@@ -1,4 +1,3 @@
-import { useCallback } from "react";
 import {
   AreaChart,
   Area,
@@ -7,11 +6,13 @@ import {
   YAxis,
   Tooltip,
 } from "recharts";
+import { useCallback } from "react";
 
 import { generateTimeAxis } from "@/lib/utils";
 
 import { BaseChart } from "@/components/charts/shared/BaseChart";
 import { DiskGradient } from "@/components/charts/shared/ChartGradients";
+import type { ChartComponents } from "@/components/charts/shared/chartConfig";
 
 import type { StatusRecord } from "@/lib/types/komari";
 
@@ -26,9 +27,15 @@ export function DiskChart({
   timeRange,
   onTimeRangeChange: _onTimeRangeChange,
 }: DiskChartProps) {
+  const shouldShow = useCallback(
+    (data: StatusRecord[]) =>
+      data.some((record) => record.disk > 0 && record.disk_total > 0),
+    []
+  );
+
   const transformData = useCallback(
-    (data: StatusRecord[], _timeRange: number) => {
-      const timeAxis = generateTimeAxis(data, _timeRange);
+    (data: StatusRecord[], timeRange: number) => {
+      const timeAxis = generateTimeAxis(data, timeRange);
 
       return timeAxis.map(({ timestamp, timeLabel }) => {
         // 查找匹配的数据点（容忍 1 分钟误差）
@@ -55,18 +62,8 @@ export function DiskChart({
 
   const renderChart = useCallback(
     (
-      chartData: unknown[],
-      {
-        xAxis,
-        yAxis,
-        cartesianGrid,
-        tooltip,
-      }: {
-        xAxis: Record<string, unknown>;
-        yAxis: Record<string, unknown>;
-        cartesianGrid: Record<string, unknown>;
-        tooltip: Record<string, unknown>;
-      }
+      chartData: unknown,
+      { xAxis, yAxis, cartesianGrid, tooltip }: ChartComponents
     ) => (
       <AreaChart
         data={
@@ -106,6 +103,7 @@ export function DiskChart({
       title="磁盘使用率"
       description="实时磁盘使用率变化"
       onTimeRangeChange={_onTimeRangeChange}
+      shouldShow={shouldShow}
       transformData={transformData}
       renderChart={renderChart}
     />
