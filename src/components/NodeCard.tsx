@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import {
   Box,
   Binary,
@@ -32,6 +31,28 @@ import { OSIcon } from "@/components/OSIcon";
 
 import type { Client, NodeStatus } from "@/lib/types/komari";
 
+// 纯函数，移到组件外部避免不必要的重新创建
+const INFO_PILL_CLASS =
+  "inline-flex items-center gap-1 rounded-full border border-border/40 bg-muted/40 px-1.5 py-0.5 whitespace-nowrap";
+
+const getCpuVariant = (
+  usage: number
+): "default" | "success" | "warning" | "danger" => {
+  if (usage >= 80) return "danger";
+  if (usage >= 60) return "warning";
+  return "success";
+};
+
+const getMemVariant = (
+  usage: number,
+  total: number
+): "default" | "success" | "warning" | "danger" => {
+  const percent = (usage / total) * 100;
+  if (percent >= 90) return "danger";
+  if (percent >= 75) return "warning";
+  return "success";
+};
+
 interface NodeCardProps {
   client: Client;
   status?: NodeStatus;
@@ -45,36 +66,6 @@ export function NodeCard({ client, status }: NodeCardProps) {
   const diskUsage = status?.disk ?? 0;
   const diskTotal = status?.disk_total ?? client.disk_total;
   const hasStatus = Boolean(status);
-
-  const infoPillClass = useMemo(
-    () =>
-      "inline-flex items-center gap-1 rounded-full border border-border/40 bg-muted/40 px-1.5 py-0.5 whitespace-nowrap",
-    []
-  );
-
-  const getCpuVariant = useMemo(
-    () =>
-      (usage: number): "default" | "success" | "warning" | "danger" => {
-        if (usage >= 80) return "danger";
-        if (usage >= 60) return "warning";
-        return "success";
-      },
-    []
-  );
-
-  const getMemVariant = useMemo(
-    () =>
-      (
-        usage: number,
-        total: number
-      ): "default" | "success" | "warning" | "danger" => {
-        const percent = (usage / total) * 100;
-        if (percent >= 90) return "danger";
-        if (percent >= 75) return "warning";
-        return "success";
-      },
-    []
-  );
 
   return (
     <a href={`/node.html?uuid=${client.uuid}`} className="block">
@@ -95,32 +86,32 @@ export function NodeCard({ client, status }: NodeCardProps) {
           </div>
           <CardDescription className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             {status?.uptime !== undefined && status?.uptime > 0 ? (
-              <span className={infoPillClass}>
+              <span className={INFO_PILL_CLASS}>
                 <Clock4 className="h-3.5 w-3.5" />
                 <span className="leading-none">
                   {formatDuration(status.uptime)}
                 </span>
               </span>
             ) : (
-              <span className={infoPillClass}>
+              <span className={INFO_PILL_CLASS}>
                 <Clock4 className="h-3.5 w-3.5" />
                 <span className="leading-none">--</span>
               </span>
             )}
             {client.virtualization && (
-              <span className={infoPillClass}>
+              <span className={INFO_PILL_CLASS}>
                 <Box className="h-3.5 w-3.5" />
                 <span className="leading-none">{client.virtualization}</span>
               </span>
             )}
             {client.arch && (
-              <span className={infoPillClass}>
+              <span className={INFO_PILL_CLASS}>
                 <Binary className="h-3.5 w-3.5" />
                 <span className="leading-none">{client.arch}</span>
               </span>
             )}
             {client.region && (
-              <span className={infoPillClass}>
+              <span className={INFO_PILL_CLASS}>
                 <MapPin className="h-3.5 w-3.5" />
                 <span className="leading-none">{client.region}</span>
               </span>
@@ -200,7 +191,7 @@ export function NodeCard({ client, status }: NodeCardProps) {
               <span>网络</span>
             </div>
             <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className={`${infoPillClass} justify-between`}>
+              <div className={`${INFO_PILL_CLASS} justify-between`}>
                 <span className="text-muted-foreground">↑ 上传</span>
                 <span className="font-medium">
                   {hasStatus ? (
@@ -210,7 +201,7 @@ export function NodeCard({ client, status }: NodeCardProps) {
                   )}
                 </span>
               </div>
-              <div className={`${infoPillClass} justify-between`}>
+              <div className={`${INFO_PILL_CLASS} justify-between`}>
                 <span className="text-muted-foreground">↓ 下载</span>
                 <span className="font-medium">
                   {hasStatus ? (
@@ -222,7 +213,7 @@ export function NodeCard({ client, status }: NodeCardProps) {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className={`${infoPillClass} justify-between`}>
+              <div className={`${INFO_PILL_CLASS} justify-between`}>
                 <span className="text-muted-foreground">↑ 总上传</span>
                 <span className="font-medium">
                   {hasStatus ? (
@@ -232,7 +223,7 @@ export function NodeCard({ client, status }: NodeCardProps) {
                   )}
                 </span>
               </div>
-              <div className={`${infoPillClass} justify-between`}>
+              <div className={`${INFO_PILL_CLASS} justify-between`}>
                 <span className="text-muted-foreground">↓ 总下载</span>
                 <span className="font-medium">
                   {hasStatus ? (

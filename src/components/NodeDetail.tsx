@@ -9,22 +9,27 @@ import { ChartGroupsSkeleton } from "@/components/charts/ChartGroupsSkeleton";
 import { useNodeData } from "@/hooks/useNodeStore";
 
 interface NodeDetailProps {
-  uuid: string;
+  uuid?: string;
 }
 
-export function NodeDetail({ uuid: propUuid }: NodeDetailProps) {
+export function NodeDetail({ uuid: propUuid = "" }: NodeDetailProps) {
   // 从 URL 获取 UUID（优先使用 URL 参数）
-  const [uuid, setUuid] = useState<string>("");
+  const [uuid, setUuid] = useState<string>(propUuid);
 
   // 从 URL 获取 UUID
   useEffect(() => {
     if (typeof window === "undefined") return;
 
     const urlParams = new URLSearchParams(window.location.search);
-    const uuidFromUrl = urlParams.get("uuid") || propUuid;
+    const pathSegments = window.location.pathname.split("/").filter(Boolean);
+    const uuidFromPath =
+      pathSegments.length > 1 ? pathSegments[pathSegments.length - 1] : "";
 
-    if (uuidFromUrl) {
-      setUuid(uuidFromUrl);
+    const rawUuid = urlParams.get("uuid") || uuidFromPath || propUuid || "";
+    const normalizedUuid = rawUuid.trim();
+
+    if (normalizedUuid && normalizedUuid !== "node") {
+      setUuid((prev) => (prev === normalizedUuid ? prev : normalizedUuid));
     } else {
       // 如果没有 UUID，重定向到首页
       window.location.href = "/";

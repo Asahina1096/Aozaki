@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import {
   LineChart,
   Line,
@@ -8,7 +9,7 @@ import {
   Tooltip,
 } from "recharts";
 
-import { formatChartTimeByRange } from "@/lib/utils";
+import { generateTimeAxis } from "@/lib/utils";
 
 import { BaseChart } from "@/components/charts/shared/BaseChart";
 
@@ -25,6 +26,78 @@ export function ConnectionsChart({
   timeRange,
   onTimeRangeChange: _onTimeRangeChange,
 }: ConnectionsChartProps) {
+  const transformData = useCallback(
+    (data: StatusRecord[], _timeRange: number) => {
+      const timeAxis = generateTimeAxis(data, _timeRange);
+
+      return timeAxis.map(({ timestamp, timeLabel }) => {
+        // 查找匹配的数据点（容忍 1 分钟误差）
+        const record = data.find((r) => {
+          const recordTime =
+            typeof r.time === "string"
+              ? new Date(r.time).getTime()
+              : r.time * 1000;
+          return Math.abs(recordTime - timestamp) < 60000;
+        });
+
+        return {
+          time: timeLabel,
+          tcp: record?.connections ?? null,
+          udp: record?.connections_udp ?? null,
+        };
+      });
+    },
+    []
+  );
+
+  const renderChart = useCallback(
+    (
+      chartData: unknown[],
+      {
+        xAxis,
+        yAxis,
+        cartesianGrid,
+        tooltip,
+      }: {
+        xAxis: Record<string, unknown>;
+        yAxis: Record<string, unknown>;
+        cartesianGrid: Record<string, unknown>;
+        tooltip: Record<string, unknown>;
+      }
+    ) => (
+      <LineChart
+        data={chartData as Array<{ time: string; tcp: number; udp: number }>}
+      >
+        <CartesianGrid {...cartesianGrid} />
+        <XAxis {...xAxis} />
+        <YAxis {...yAxis} />
+        <Tooltip {...tooltip} />
+        <Legend />
+        <Line
+          type="monotone"
+          dataKey="tcp"
+          stroke="#3b82f6"
+          strokeWidth={2}
+          name="TCP"
+          dot={false}
+          isAnimationActive={false}
+          connectNulls={false}
+        />
+        <Line
+          type="monotone"
+          dataKey="udp"
+          stroke="#8b5cf6"
+          strokeWidth={2}
+          name="UDP"
+          dot={false}
+          isAnimationActive={false}
+          connectNulls={false}
+        />
+      </LineChart>
+    ),
+    []
+  );
+
   return (
     <BaseChart
       data={data}
@@ -32,40 +105,8 @@ export function ConnectionsChart({
       title="连接数"
       description="实时 TCP/UDP 连接数变化"
       onTimeRangeChange={_onTimeRangeChange}
-      transformData={(data, _timeRange) =>
-        data.map((record) => ({
-          time: formatChartTimeByRange(record.time, _timeRange),
-          tcp: record.connections,
-          udp: record.connections_udp,
-        }))
-      }
-      renderChart={(chartData, { xAxis, yAxis, cartesianGrid, tooltip }) => (
-        <LineChart data={chartData}>
-          <CartesianGrid {...cartesianGrid} />
-          <XAxis {...xAxis} />
-          <YAxis {...yAxis} />
-          <Tooltip {...tooltip} />
-          <Legend />
-          <Line
-            type="monotone"
-            dataKey="tcp"
-            stroke="#3b82f6"
-            strokeWidth={2}
-            name="TCP"
-            dot={false}
-            isAnimationActive={false}
-          />
-          <Line
-            type="monotone"
-            dataKey="udp"
-            stroke="#8b5cf6"
-            strokeWidth={2}
-            name="UDP"
-            dot={false}
-            isAnimationActive={false}
-          />
-        </LineChart>
-      )}
+      transformData={transformData}
+      renderChart={renderChart}
     />
   );
 }

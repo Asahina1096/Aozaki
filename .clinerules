@@ -1,7 +1,7 @@
 ---
 description: "Komari Aozaki 项目开发规范 - MCP 优先 + 类型安全 + 性能优化"
 author: "Asahina1096"
-version: "1.7.0"
+version: "1.8.0"
 globs:
   - "**/*.tsx"
   - "**/*.ts"
@@ -242,15 +242,15 @@ export function NodeCard({ nodeId, onSelect }: NodeCardProps) {
 - ✅ `renderChart` 回调输出 Recharts 组件
 - ✅ 复用 `CHART_CONFIG` / `CHART_GRADIENTS`
 - ✅ 配置键小写
-- ❌ 不直接使用 `ResponsiveContainer`
 
 ### 7. 数据管理
 
 **模式**: `nodeStore` 单例 + Hooks 访问
 
 **规范**:
-- ✅ 只通过 `useNodesData` / `useNodeData` / `useAllChartsData` 获取
-- ❌ 组件不直接访问 `nodeStore` 或发起轮询
+- ✅ 组件层：只通过 `useNodesData` / `useNodeData` / `useAllChartsData` 获取数据
+- ✅ Hooks 层：可直接调用 `nodeStore` 方法（如 `start()`, `getHttpClient()` 等）
+- ❌ 组件层：禁止直接访问 `nodeStore` 或发起轮询
 - ✅ 订阅需清理
 
 ### 8. 工具函数

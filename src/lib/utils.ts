@@ -77,24 +77,31 @@ export function formatPercent(
 }
 
 /**
- * 格式化网络速度
+ * 格式化网络速度（智能小数位）
  * @param bytesPerSecond - 每秒字节数
- * @param decimals - 小数位数，默认 2
- * @returns 格式化后的速度字符串，如 "1.23 MB/s"
+ * @param decimals - 小数位数，可选。不提供时自动根据数值大小决定
+ * @returns 格式化后的速度字符串，如 "1.5 MB/s" 或 "15 MB/s"
  */
-export function formatSpeed(
-  bytesPerSecond: number,
-  decimals: number = 2
-): string {
+export function formatSpeed(bytesPerSecond: number, decimals?: number): string {
   if (bytesPerSecond === 0) return "0 B/s";
   if (bytesPerSecond < 0) return "0 B/s";
 
   const k = 1024;
-  const dm = decimals < 0 ? 0 : decimals;
   const sizes = ["B/s", "KB/s", "MB/s", "GB/s", "TB/s"];
 
   const i = Math.floor(Math.log(bytesPerSecond) / Math.log(k));
-  const speed = parseFloat((bytesPerSecond / Math.pow(k, i)).toFixed(dm));
+  const value = bytesPerSecond / Math.pow(k, i);
+
+  // 智能小数位：未指定时根据数值大小自动决定
+  let dm: number;
+  if (decimals !== undefined) {
+    dm = decimals < 0 ? 0 : decimals;
+  } else {
+    // 小于 10 用 1 位小数，大于等于 10 用整数
+    dm = value < 10 ? 1 : 0;
+  }
+
+  const speed = parseFloat(value.toFixed(dm));
 
   return `${speed} ${sizes[i]}`;
 }
@@ -166,4 +173,47 @@ export function formatChartTimeByRange(
   const month = (date.getMonth() + 1).toString().padStart(2, "0");
   const day = date.getDate().toString().padStart(2, "0");
   return `${year}/${month}/${day}`;
+}
+
+/**
+ * 根据时间范围获取合适的数据点间隔（毫秒）
+ * @param hours - 时间范围（小时）
+ * @returns 间隔时间（毫秒）
+ */
+function getTimeInterval(hours: number): number {
+  if (hours <= 1) return 2 * 60 * 1000; // 2分钟
+  if (hours <= 6) return 15 * 60 * 1000; // 15分钟
+  if (hours <= 24) return 60 * 60 * 1000; // 1小时
+  if (hours <= 24 * 7) return 6 * 60 * 60 * 1000; // 6小时
+  return 24 * 60 * 60 * 1000; // 1天
+}
+
+/**
+ * 生成完整的时间轴数据点
+ * @param data - 原始数据数组（需包含 time 字段）
+ * @param timeRangeHours - 时间范围（小时）
+ * @returns 时间轴数据点数组
+ */
+export function generateTimeAxis(
+  data: Array<{ time: string | number }>,
+  timeRangeHours: number
+): Array<{ timestamp: number; timeLabel: string }> {
+  if (data.length === 0) return [];
+
+  const now = Date.now();
+  const rangeMs = timeRangeHours * 60 * 60 * 1000;
+  const startTime = now - rangeMs;
+
+  // 根据时间范围决定间隔
+  const interval = getTimeInterval(timeRangeHours);
+
+  const points: Array<{ timestamp: number; timeLabel: string }> = [];
+  for (let t = startTime; t <= now; t += interval) {
+    points.push({
+      timestamp: t,
+      timeLabel: formatChartTimeByRange(t / 1000, timeRangeHours),
+    });
+  }
+
+  return points;
 }

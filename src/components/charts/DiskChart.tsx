@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import {
   AreaChart,
   Area,
@@ -7,7 +8,7 @@ import {
   Tooltip,
 } from "recharts";
 
-import { formatChartTimeByRange } from "@/lib/utils";
+import { generateTimeAxis } from "@/lib/utils";
 
 import { BaseChart } from "@/components/charts/shared/BaseChart";
 import { DiskGradient } from "@/components/charts/shared/ChartGradients";
@@ -25,6 +26,79 @@ export function DiskChart({
   timeRange,
   onTimeRangeChange: _onTimeRangeChange,
 }: DiskChartProps) {
+  const transformData = useCallback(
+    (data: StatusRecord[], _timeRange: number) => {
+      const timeAxis = generateTimeAxis(data, _timeRange);
+
+      return timeAxis.map(({ timestamp, timeLabel }) => {
+        // 查找匹配的数据点（容忍 1 分钟误差）
+        const record = data.find((r) => {
+          const recordTime =
+            typeof r.time === "string"
+              ? new Date(r.time).getTime()
+              : r.time * 1000;
+          return Math.abs(recordTime - timestamp) < 60000;
+        });
+
+        return {
+          time: timeLabel,
+          value: record
+            ? Number(((record.disk / record.disk_total) * 100).toFixed(1))
+            : null,
+          used: record?.disk ?? 0,
+          total: record?.disk_total ?? 0,
+        };
+      });
+    },
+    []
+  );
+
+  const renderChart = useCallback(
+    (
+      chartData: unknown[],
+      {
+        xAxis,
+        yAxis,
+        cartesianGrid,
+        tooltip,
+      }: {
+        xAxis: Record<string, unknown>;
+        yAxis: Record<string, unknown>;
+        cartesianGrid: Record<string, unknown>;
+        tooltip: Record<string, unknown>;
+      }
+    ) => (
+      <AreaChart
+        data={
+          chartData as Array<{
+            time: string;
+            value: number;
+            used: number;
+            total: number;
+          }>
+        }
+      >
+        <DiskGradient />
+        <CartesianGrid {...cartesianGrid} />
+        <XAxis {...xAxis} />
+        <YAxis {...yAxis} domain={[0, 100]} unit="%" />
+        <Tooltip {...tooltip} />
+        <Area
+          type="monotone"
+          dataKey="value"
+          stroke="#8b5cf6"
+          fill="url(#colorDisk)"
+          strokeWidth={2}
+          name="磁盘"
+          unit="%"
+          isAnimationActive={false}
+          connectNulls={false}
+        />
+      </AreaChart>
+    ),
+    []
+  );
+
   return (
     <BaseChart
       data={data}
@@ -32,33 +106,8 @@ export function DiskChart({
       title="磁盘使用率"
       description="实时磁盘使用率变化"
       onTimeRangeChange={_onTimeRangeChange}
-      transformData={(data, _timeRange) =>
-        data.map((record) => ({
-          time: formatChartTimeByRange(record.time, _timeRange),
-          value: Number(((record.disk / record.disk_total) * 100).toFixed(1)),
-          used: record.disk,
-          total: record.disk_total,
-        }))
-      }
-      renderChart={(chartData, { xAxis, yAxis, cartesianGrid, tooltip }) => (
-        <AreaChart data={chartData}>
-          <DiskGradient />
-          <CartesianGrid {...cartesianGrid} />
-          <XAxis {...xAxis} />
-          <YAxis {...yAxis} domain={[0, 100]} unit="%" />
-          <Tooltip {...tooltip} />
-          <Area
-            type="monotone"
-            dataKey="value"
-            stroke="#8b5cf6"
-            fill="url(#colorDisk)"
-            strokeWidth={2}
-            name="磁盘"
-            unit="%"
-            isAnimationActive={false}
-          />
-        </AreaChart>
-      )}
+      transformData={transformData}
+      renderChart={renderChart}
     />
   );
 }

@@ -1,5 +1,10 @@
 import type { ReactElement } from "react";
 
+import {
+  CustomXAxisTick,
+  CustomYAxisTick,
+} from "@/components/charts/shared/CustomTicks";
+
 // 统一的图表配置
 export const CHART_CONFIG = {
   height: 300,
@@ -8,12 +13,10 @@ export const CHART_CONFIG = {
     className: "stroke-muted",
   },
   xAxis: {
-    className: "text-xs",
-    tick: { fill: "hsl(var(--muted-foreground))" },
+    tick: CustomXAxisTick,
   },
   yAxis: {
-    className: "text-xs",
-    tick: { fill: "hsl(var(--muted-foreground))" },
+    tick: CustomYAxisTick,
   },
   tooltip: {
     contentStyle: {
@@ -59,6 +62,11 @@ export interface BaseChartProps<T> {
     domain?: [number, number];
     unit?: string;
     tickFormatter?: (_value: number) => string;
+    tick?: (_props: {
+      x?: number;
+      y?: number;
+      payload?: { value: string | number };
+    }) => ReactElement | null;
   };
   tooltipFormatter?: (
     _value: unknown,

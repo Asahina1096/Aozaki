@@ -9,7 +9,7 @@ import {
   Tooltip,
 } from "recharts";
 
-import { cn, formatChartTimeByRange } from "@/lib/utils";
+import { cn, generateTimeAxis } from "@/lib/utils";
 
 import { BaseChart } from "@/components/charts/shared/BaseChart";
 
@@ -128,22 +128,28 @@ export function PingChart({
       onTimeRangeChange={_onTimeRangeChange}
       shouldShow={(data) => data.length > 0}
       transformData={(records, timeRange) => {
-        // 按 task_id 分组数据
-        const groupedData: Record<string, Record<string, number | string>> = {};
+        const timeAxis = generateTimeAxis(records, timeRange);
 
-        records.forEach((record) => {
-          const timeKey = formatChartTimeByRange(record.time, timeRange);
-          if (!groupedData[timeKey]) {
-            groupedData[timeKey] = { time: timeKey };
-          }
-          groupedData[timeKey][`task_${record.task_id}`] = record.value;
-        });
+        return timeAxis.map(({ timestamp, timeLabel }) => {
+          const dataPoint: Record<string, number | string | null> = {
+            time: timeLabel,
+          };
 
-        // 转换为数组并按时间排序
-        return Object.values(groupedData).sort((a, b) => {
-          const timeA = a.time as string;
-          const timeB = b.time as string;
-          return timeA.localeCompare(timeB);
+          // 为每个 task_id 查找匹配的数据点
+          taskIds.forEach((taskId) => {
+            const record = records.find((r) => {
+              if (r.task_id !== taskId) return false;
+              const recordTime =
+                typeof r.time === "string"
+                  ? new Date(r.time).getTime()
+                  : r.time * 1000;
+              return Math.abs(recordTime - timestamp) < 60000; // 1分钟误差
+            });
+
+            dataPoint[`task_${taskId}`] = record?.value ?? null;
+          });
+
+          return dataPoint;
         });
       }}
       tooltipFormatter={(value: unknown) => [`${Number(value)}ms`, "延迟"]}
@@ -172,6 +178,7 @@ export function PingChart({
                 name={displayName}
                 dot={false}
                 isAnimationActive={false}
+                connectNulls={false}
               />
             );
           })}

@@ -4,17 +4,5 @@ import { NodeDetail } from "@/components/NodeDetail";
 ---
 
 <BaseLayout title="节点详情">
-  <NodeDetail client:only="react" uuid="" />
+  <NodeDetail client:only="react" />
 </BaseLayout>
-
-<script>
-  // 从 URL 中获取 UUID 并传递给组件
-  const urlParams = new URLSearchParams(window.location.search);
-  const uuid =
-    urlParams.get("uuid") || window.location.pathname.split("/").pop() || "";
-
-  // 如果没有 UUID，重定向到首页
-  if (!uuid || uuid === "node") {
-    window.location.href = "/";
-  }
-</script>
