@@ -7,6 +7,7 @@ import {
   Network,
   MemoryStick,
   MapPin,
+  Globe,
 } from "lucide-react";
 
 import {
@@ -92,38 +93,57 @@ export function NodeCard({ client, status }: NodeCardProps) {
               }`}
             />
           </div>
-          <CardDescription className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            {status?.uptime !== undefined && status?.uptime > 0 ? (
-              <span className={INFO_PILL_CLASS}>
-                <Clock4 className="h-3.5 w-3.5" />
-                <span className="leading-none">
-                  {formatDuration(status.uptime)}
+          <CardDescription className="flex flex-col gap-2 text-xs text-muted-foreground">
+            {/* 第一行：运行时间 + IPV4 + IPV6 + 地区 */}
+            <div className="flex flex-wrap items-center gap-2">
+              {status?.uptime !== undefined && status?.uptime > 0 ? (
+                <span className={INFO_PILL_CLASS}>
+                  <Clock4 className="h-3.5 w-3.5" />
+                  <span className="leading-none">
+                    {formatDuration(status.uptime)}
+                  </span>
                 </span>
-              </span>
-            ) : (
-              <span className={INFO_PILL_CLASS}>
-                <Clock4 className="h-3.5 w-3.5" />
-                <span className="leading-none">--</span>
-              </span>
-            )}
-            {client.virtualization && (
-              <span className={INFO_PILL_CLASS}>
-                <Box className="h-3.5 w-3.5" />
-                <span className="leading-none">{client.virtualization}</span>
-              </span>
-            )}
-            {client.arch && (
-              <span className={INFO_PILL_CLASS}>
-                <Binary className="h-3.5 w-3.5" />
-                <span className="leading-none">{client.arch}</span>
-              </span>
-            )}
-            {client.region && (
-              <span className={INFO_PILL_CLASS}>
-                <MapPin className="h-3.5 w-3.5" />
-                <span className="leading-none">{client.region}</span>
-              </span>
-            )}
+              ) : (
+                <span className={INFO_PILL_CLASS}>
+                  <Clock4 className="h-3.5 w-3.5" />
+                  <span className="leading-none">--</span>
+                </span>
+              )}
+              {(client.ipv4 || client.ipv6) && (
+                <span className={INFO_PILL_CLASS}>
+                  <Globe className="h-3.5 w-3.5" />
+                  <span className="leading-none">
+                    {client.ipv4 && client.ipv6
+                      ? "IPv4 / IPv6"
+                      : client.ipv4
+                        ? "IPv4"
+                        : "IPv6"}
+                  </span>
+                </span>
+              )}
+              {client.region && (
+                <span className={INFO_PILL_CLASS}>
+                  <MapPin className="h-3.5 w-3.5" />
+                  <span className="leading-none">{client.region}</span>
+                </span>
+              )}
+            </div>
+
+            {/* 第二行：虚拟化 + 系统架构 */}
+            <div className="flex flex-wrap items-center gap-2">
+              {client.virtualization && (
+                <span className={INFO_PILL_CLASS}>
+                  <Box className="h-3.5 w-3.5" />
+                  <span className="leading-none">{client.virtualization}</span>
+                </span>
+              )}
+              {client.arch && (
+                <span className={INFO_PILL_CLASS}>
+                  <Binary className="h-3.5 w-3.5" />
+                  <span className="leading-none">{client.arch}</span>
+                </span>
+              )}
+            </div>
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
