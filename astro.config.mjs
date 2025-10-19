@@ -10,7 +10,13 @@ const env = loadEnv("development", process.cwd(), "");
 
 // https://astro.build/config
 export default defineConfig({
-  integrations: [react()],
+  integrations: [
+    react({
+      babel: {
+        plugins: ["babel-plugin-react-compiler"],
+      },
+    }),
+  ],
   publicDir: "./public",
   vite: {
     plugins: [

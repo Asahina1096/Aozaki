@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { nodeStore } from "@/lib/nodeStore";
 import type { Client, NodeStatus } from "@/lib/types/komari";
 
@@ -38,7 +38,8 @@ export function useNodesData(
     };
   }, []);
 
-  const refresh = useCallback(async () => {
+  // React Compiler 会自动优化这个函数
+  const refresh = async () => {
     if (!isMountedRef.current) return;
     setError(null);
     setLoading(true);
@@ -49,7 +50,7 @@ export function useNodesData(
       setError(normalizeError(err));
       setLoading(false);
     }
-  }, [refreshInterval]);
+  };
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout | null = null;
@@ -138,7 +139,8 @@ export function useNodeData(
     };
   }, []);
 
-  const refresh = useCallback(async () => {
+  // React Compiler 会自动优化这个函数
+  const refresh = async () => {
     if (!uuid || !isMountedRef.current) return;
     setError(null);
     setNotFound((prev) => (prev ? false : prev));
@@ -150,7 +152,7 @@ export function useNodeData(
       setError(normalizeError(err));
       setLoading((prev) => (prev ? false : prev));
     }
-  }, [refreshInterval, uuid]);
+  };
 
   useEffect(() => {
     if (!uuid) {

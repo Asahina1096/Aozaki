@@ -28,7 +28,7 @@ export function formatBytes(bytes: number, decimals: number = 2): string {
 /**
  * 格式化时长
  * @param seconds - 秒数
- * @returns 格式化后的字符串，如 "1天2小时" 或 "3小时30分钟"
+ * @returns 格式化后的字符串，如 "1天"、"2小时"、"30分钟" 或 "45秒"
  */
 export function formatDuration(seconds: number): string {
   if (seconds < 0) return "0秒";
@@ -39,24 +39,23 @@ export function formatDuration(seconds: number): string {
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = Math.floor(seconds % 60);
 
-  const parts: string[] = [];
-
+  // 大于等于1天：只显示天数
   if (days > 0) {
-    parts.push(`${days}天`);
-  }
-  if (hours > 0) {
-    parts.push(`${hours}小时`);
-  }
-  if (minutes > 0 && days === 0) {
-    // 如果有天数，不显示分钟
-    parts.push(`${minutes}分钟`);
-  }
-  if (secs > 0 && days === 0 && hours === 0) {
-    // 如果有天数或小时，不显示秒
-    parts.push(`${secs}秒`);
+    return `${days}天`;
   }
 
-  return parts.length > 0 ? parts.slice(0, 2).join("") : "0秒";
+  // 大于等于1小时：只显示小时数
+  if (hours > 0) {
+    return `${hours}小时`;
+  }
+
+  // 大于等于1分钟：只显示分钟数
+  if (minutes > 0) {
+    return `${minutes}分钟`;
+  }
+
+  // 小于1分钟：只显示秒数
+  return `${secs}秒`;
 }
 
 /**

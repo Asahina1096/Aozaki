@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import {
   Box,
   Binary,
@@ -68,25 +67,13 @@ export function NodeCard({ client, status }: NodeCardProps) {
   const diskTotal = status?.disk_total ?? client.disk_total;
   const hasStatus = Boolean(status);
 
-  // 优化计算密集的值
-  const cpuVariant = useMemo(() => getCpuVariant(cpuUsage), [cpuUsage]);
-  const memVariant = useMemo(
-    () => getMemVariant(memUsage, memTotal),
-    [memUsage, memTotal]
-  );
-  const diskVariant = useMemo(
-    () => getMemVariant(diskUsage, diskTotal),
-    [diskUsage, diskTotal]
-  );
-  const memPercent = useMemo(
-    () => formatPercent(memUsage, memTotal),
-    [memUsage, memTotal]
-  );
-  const diskPercent = useMemo(
-    () => formatPercent(diskUsage, diskTotal),
-    [diskUsage, diskTotal]
-  );
-  const cpuDisplay = useMemo(() => cpuUsage.toFixed(1), [cpuUsage]);
+  // React Compiler 会自动优化这些计算
+  const cpuVariant = getCpuVariant(cpuUsage);
+  const memVariant = getMemVariant(memUsage, memTotal);
+  const diskVariant = getMemVariant(diskUsage, diskTotal);
+  const memPercent = formatPercent(memUsage, memTotal);
+  const diskPercent = formatPercent(diskUsage, diskTotal);
+  const cpuDisplay = cpuUsage.toFixed(1);
 
   return (
     <a href={`/node.html?uuid=${client.uuid}`} className="block">
