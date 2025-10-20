@@ -101,20 +101,36 @@ export function ServerCard({ server }: ServerCardProps) {
               </span>
             )}
             <span className={INFO_PILL_CLASS}>
-              <div className={`h-2 w-2 rounded-full ${
-                server.online4 ? 'bg-green-500' : 'bg-gray-400'
-              }`} />
-              <span className={`leading-none ${
-                server.online4 ? 'text-foreground' : 'text-muted-foreground opacity-50'
-              }`}>v4</span>
+              <div
+                className={`h-2 w-2 rounded-full ${
+                  server.online4 ? "bg-green-500" : "bg-gray-400"
+                }`}
+              />
+              <span
+                className={`leading-none ${
+                  server.online4
+                    ? "text-foreground"
+                    : "text-muted-foreground opacity-50"
+                }`}
+              >
+                v4
+              </span>
             </span>
             <span className={INFO_PILL_CLASS}>
-              <div className={`h-2 w-2 rounded-full ${
-                server.online6 ? 'bg-green-500' : 'bg-gray-400'
-              }`} />
-              <span className={`leading-none ${
-                server.online6 ? 'text-foreground' : 'text-muted-foreground opacity-50'
-              }`}>v6</span>
+              <div
+                className={`h-2 w-2 rounded-full ${
+                  server.online6 ? "bg-green-500" : "bg-gray-400"
+                }`}
+              />
+              <span
+                className={`leading-none ${
+                  server.online6
+                    ? "text-foreground"
+                    : "text-muted-foreground opacity-50"
+                }`}
+              >
+                v6
+              </span>
             </span>
             {server.location && (
               <span className={INFO_PILL_CLASS}>
@@ -209,13 +225,13 @@ export function ServerCard({ server }: ServerCardProps) {
             <div className={`${INFO_PILL_CLASS} justify-between`}>
               <span className="text-muted-foreground">↑ 上传</span>
               <span className="font-medium">
-                {formatSpeed(server.network_out)}
+                {formatSpeed(server.network_tx)}
               </span>
             </div>
             <div className={`${INFO_PILL_CLASS} justify-between`}>
               <span className="text-muted-foreground">↓ 下载</span>
               <span className="font-medium">
-                {formatSpeed(server.network_in)}
+                {formatSpeed(server.network_rx)}
               </span>
             </div>
           </div>
@@ -223,13 +239,13 @@ export function ServerCard({ server }: ServerCardProps) {
             <div className={`${INFO_PILL_CLASS} justify-between`}>
               <span className="text-muted-foreground">↑ 总上传</span>
               <span className="font-medium">
-                {formatBytes(server.network_tx)}
+                {formatBytes(server.network_out)}
               </span>
             </div>
             <div className={`${INFO_PILL_CLASS} justify-between`}>
               <span className="text-muted-foreground">↓ 总下载</span>
               <span className="font-medium">
-                {formatBytes(server.network_rx)}
+                {formatBytes(server.network_in)}
               </span>
             </div>
           </div>

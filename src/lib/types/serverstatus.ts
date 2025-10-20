@@ -4,12 +4,12 @@
  */
 
 /**
- * 服务器统计信息
+ * 节点统计信息
  */
 export interface ServerStats {
-  /** 服务器名称 */
+  /** 节点名称 */
   name: string;
-  /** 服务器别名 */
+  /** 节点别名 */
   alias?: string;
   /** 虚拟化类型 (如 "kvm", "docker", "lxc") */
   type?: string;
@@ -41,13 +41,13 @@ export interface ServerStats {
   hdd_total: number;
   /** 已使用硬盘空间 (字节) */
   hdd_used: number;
-  /** 总接收字节数 */
-  network_rx: number;
-  /** 总发送字节数 */
-  network_tx: number;
   /** 当前网络接收速率 (字节/秒) */
-  network_in: number;
+  network_rx: number;
   /** 当前网络发送速率 (字节/秒) */
+  network_tx: number;
+  /** 累计网络接收字节数 */
+  network_in: number;
+  /** 累计网络发送字节数 */
   network_out: number;
   /** 上次网络接收总量 */
   last_network_in?: number;
@@ -95,7 +95,7 @@ export interface ServerStats {
 export interface StatsResponse {
   /** 更新时间戳 */
   updated: number;
-  /** 服务器列表 */
+  /** 节点列表 */
   servers: ServerStats[];
 }
 
@@ -132,7 +132,7 @@ export interface SysInfo {
 }
 
 /**
- * 详细服务器统计信息 (Admin API)
+ * 详细节点统计信息 (Admin API)
  */
 export interface DetailedServerStats extends ServerStats {
   /** IP 信息 */
@@ -147,6 +147,6 @@ export interface DetailedServerStats extends ServerStats {
 export interface DetailedStatsResponse {
   /** 更新时间戳 */
   updated: number;
-  /** 服务器列表 */
+  /** 节点列表 */
   servers: DetailedServerStats[];
 }

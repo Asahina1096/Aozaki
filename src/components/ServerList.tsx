@@ -53,13 +53,19 @@ export function ServerList({ refreshInterval = 5000 }: ServerListProps) {
         {/* 概览骨架屏 */}
         <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           {Array.from({ length: 4 }).map((_, index) => (
-            <Skeleton key={`overview-skeleton-${index}`} className="h-24 rounded-lg" />
+            <Skeleton
+              key={`overview-skeleton-${index}`}
+              className="h-24 rounded-lg"
+            />
           ))}
         </div>
         {/* 卡片骨架屏 */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {Array.from({ length: 4 }).map((_, index) => (
-            <Skeleton key={`card-skeleton-${index}`} className="h-[420px] rounded-lg" />
+            <Skeleton
+              key={`card-skeleton-${index}`}
+              className="h-[420px] rounded-lg"
+            />
           ))}
         </div>
       </div>
@@ -70,7 +76,7 @@ export function ServerList({ refreshInterval = 5000 }: ServerListProps) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <p className="text-lg font-semibold text-destructive">
-          无法加载服务器数据
+          无法加载节点数据
         </p>
         <p className="mt-2 text-sm text-muted-foreground">
           {error || "请稍后再试。"}
@@ -89,7 +95,7 @@ export function ServerList({ refreshInterval = 5000 }: ServerListProps) {
   if (servers.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
-        暂无服务器数据
+        暂无节点数据
       </div>
     );
   }
@@ -99,7 +105,7 @@ export function ServerList({ refreshInterval = 5000 }: ServerListProps) {
       <ServerOverview servers={servers} />
       <div className="flex items-center">
         <span className="text-xl md:text-2xl font-bold text-primary">
-          服务器列表
+          节点列表
         </span>
       </div>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

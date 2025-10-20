@@ -12,28 +12,31 @@ export function ServerOverview({ servers }: ServerOverviewProps) {
   const onlineServers = servers.filter((s) => s.online4 || s.online6).length;
   const offlineServers = totalServers - onlineServers;
 
-  // 计算平均负载（仅在线服务器）
+  // 计算平均CPU使用率（仅在线节点）
   const onlineServersList = servers.filter((s) => s.online4 || s.online6);
-  const avgLoad =
+  const avgCpu =
     onlineServersList.length > 0
-      ? onlineServersList.reduce((sum, s) => sum + s.load_1, 0) /
+      ? onlineServersList.reduce((sum, s) => sum + s.cpu, 0) /
         onlineServersList.length
       : 0;
 
-  // 计算总网络流量
-  const totalNetworkIn = servers.reduce((sum, s) => sum + s.network_in, 0);
-  const totalNetworkOut = servers.reduce((sum, s) => sum + s.network_out, 0);
+  // 计算实时网络速率
+  const totalRealtimeDownload = servers.reduce(
+    (sum, s) => sum + s.network_rx,
+    0
+  );
+  const totalRealtimeUpload = servers.reduce((sum, s) => sum + s.network_tx, 0);
 
-  // 计算总网络传输量
-  const totalNetworkRx = servers.reduce((sum, s) => sum + s.network_rx, 0);
-  const totalNetworkTx = servers.reduce((sum, s) => sum + s.network_tx, 0);
+  // 计算累计网络流量
+  const totalDataDownloaded = servers.reduce((sum, s) => sum + s.network_in, 0);
+  const totalDataUploaded = servers.reduce((sum, s) => sum + s.network_out, 0);
 
   return (
     <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-      {/* 总服务器数 */}
+      {/* 总节点数 */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">服务器总数</CardTitle>
+          <CardTitle className="text-sm font-medium">节点总数</CardTitle>
           <Server className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
@@ -44,44 +47,47 @@ export function ServerOverview({ servers }: ServerOverviewProps) {
         </CardContent>
       </Card>
 
-      {/* 平均负载 */}
+      {/* 平均CPU使用率 */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">平均负载</CardTitle>
+          <CardTitle className="text-sm font-medium">平均CPU使用率</CardTitle>
           <Cpu className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{avgLoad.toFixed(2)}</div>
-          <p className="text-xs text-muted-foreground">1 分钟平均负载</p>
+          <div className="text-2xl font-bold">{avgCpu.toFixed(1)}%</div>
         </CardContent>
       </Card>
 
-      {/* 实时网络 */}
+      {/* 实时网络速率 */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">实时网络</CardTitle>
-          <Network className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-sm font-medium">实时网络速率</CardTitle>
+          <HardDrive className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            {formatSpeed(totalNetworkOut)}
+            {formatSpeed(totalRealtimeUpload + totalRealtimeDownload)}
           </div>
           <p className="text-xs text-muted-foreground">
-            ↑ 上传 · ↓ 下载 {formatSpeed(totalNetworkIn)}
+            ↑ 上传 {formatBytes(totalRealtimeUpload)}· ↓ 下载{" "}
+            {formatSpeed(totalRealtimeDownload)}
           </p>
         </CardContent>
       </Card>
 
-      {/* 网络统计 */}
+      {/* 流量统计 */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">网络统计</CardTitle>
-          <HardDrive className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-sm font-medium">流量统计</CardTitle>
+          <Network className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{formatBytes(totalNetworkTx)}</div>
+          <div className="text-2xl font-bold">
+            {formatBytes(totalDataUploaded + totalDataDownloaded)}
+          </div>
           <p className="text-xs text-muted-foreground">
-            ↑ 总上传 · ↓ 总下载 {formatBytes(totalNetworkRx)}
+            ↑ 上传 {formatBytes(totalDataUploaded)}· ↓ 下载{" "}
+            {formatBytes(totalDataDownloaded)}
           </p>
         </CardContent>
       </Card>
