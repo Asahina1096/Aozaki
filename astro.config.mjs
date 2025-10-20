@@ -108,7 +108,7 @@ export default defineConfig({
     },
     // 性能优化配置
     optimizeDeps: {
-      include: ["react", "react-dom", "recharts"],
+      include: ["react", "react-dom"],
       exclude: [],
     },
     build: {
@@ -121,14 +121,6 @@ export default defineConfig({
         output: {
           // 手动分块以优化加载性能
           manualChunks: {
-            recharts: ["recharts"],
-            radix: [
-              "@radix-ui/react-select",
-              "@radix-ui/react-dialog",
-              "@radix-ui/react-dropdown-menu",
-              "@radix-ui/react-switch",
-              "@radix-ui/react-slot",
-            ],
             react: ["react", "react-dom"],
           },
           // 优化文件名以便于缓存
