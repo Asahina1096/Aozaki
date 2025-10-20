@@ -1,12 +1,14 @@
 # build output
 dist/
 .output/
-*.zip
+.vercel/
+.netlify/
+
+# generated types
 .astro/
 
 # dependencies
 node_modules/
-bun.lockb
 
 # logs
 npm-debug.log*
@@ -17,12 +19,16 @@ pnpm-debug.log*
 # environment variables
 .env
 .env.production
+.env.local
 
 # macOS-specific files
 .DS_Store
 
-# jetbrains setting folders
+# IDEs
+.vscode/
 .idea/
 
-# Other
-diff.md
+# cache
+.cache/
+*.zip
+bun.lock
