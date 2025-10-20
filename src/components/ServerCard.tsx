@@ -15,7 +15,6 @@ import {
   Network,
   MemoryStick,
   MapPin,
-  Globe,
   Server,
 } from "lucide-react";
 import {
