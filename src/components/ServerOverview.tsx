@@ -69,7 +69,7 @@ export function ServerOverview({ servers }: ServerOverviewProps) {
             {formatSpeed(totalRealtimeUpload + totalRealtimeDownload)}
           </div>
           <p className="text-xs text-muted-foreground">
-            ↑ 上传 {formatBytes(totalRealtimeUpload)}· ↓ 下载{" "}
+            ↑ 上传 {formatSpeed(totalRealtimeUpload)}· ↓ 下载{" "}
             {formatSpeed(totalRealtimeDownload)}
           </p>
         </CardContent>

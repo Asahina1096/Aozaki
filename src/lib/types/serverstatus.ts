@@ -29,17 +29,17 @@ export interface ServerStats {
   load_15: number;
   /** CPU 使用率 (百分比) */
   cpu: number;
-  /** 总内存 (字节) */
+  /** 总内存 (KB) */
   memory_total: number;
-  /** 已使用内存 (字节) */
+  /** 已使用内存 (KB) */
   memory_used: number;
-  /** 总交换分区 (字节) */
+  /** 总交换分区 (KB) */
   swap_total: number;
-  /** 已使用交换分区 (字节) */
+  /** 已使用交换分区 (KB) */
   swap_used: number;
-  /** 总硬盘空间 (字节) */
+  /** 总硬盘空间 (MB) */
   hdd_total: number;
-  /** 已使用硬盘空间 (字节) */
+  /** 已使用硬盘空间 (MB) */
   hdd_used: number;
   /** 当前网络接收速率 (字节/秒) */
   network_rx: number;

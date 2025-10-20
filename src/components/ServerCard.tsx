@@ -32,24 +32,6 @@ interface ServerCardProps {
 const INFO_PILL_CLASS =
   "inline-flex items-center gap-1 rounded-full border border-border/40 bg-muted/40 px-1.5 py-0.5 whitespace-nowrap";
 
-const getCpuVariant = (
-  usage: number
-): "default" | "success" | "warning" | "danger" => {
-  if (usage >= 80) return "danger";
-  if (usage >= 60) return "warning";
-  return "success";
-};
-
-const getMemVariant = (
-  usage: number,
-  total: number
-): "default" | "success" | "warning" | "danger" => {
-  const percent = (usage / total) * 100;
-  if (percent >= 90) return "danger";
-  if (percent >= 75) return "warning";
-  return "success";
-};
-
 export function ServerCard({ server }: ServerCardProps) {
   const isOnline = server.online4 || server.online6;
   const cpuUsage = server.cpu;
@@ -59,9 +41,6 @@ export function ServerCard({ server }: ServerCardProps) {
   const diskTotal = server.hdd_total;
 
   // React Compiler 会自动优化这些计算
-  const cpuVariant = getCpuVariant(cpuUsage);
-  const memVariant = getMemVariant(memUsage, memTotal);
-  const diskVariant = getMemVariant(diskUsage, diskTotal);
   const memPercent = formatPercent(memUsage, memTotal);
   const diskPercent = formatPercent(diskUsage, diskTotal);
   const cpuDisplay = cpuUsage.toFixed(1);
@@ -158,12 +137,12 @@ export function ServerCard({ server }: ServerCardProps) {
               <Cpu className="h-4 w-4" />
               <span>CPU</span>
             </div>
-            <span className="text-black">{cpuDisplay}%</span>
+            <span>{cpuDisplay}%</span>
           </div>
           <Progress
             value={cpuUsage}
             max={100}
-            variant={isOnline ? cpuVariant : "muted"}
+            variant={isOnline ? "auto" : "muted"}
           />
           <p className="text-xs text-muted-foreground">
             负载: {server.load_1.toFixed(2)} / {server.load_5.toFixed(2)} /{" "}
@@ -180,15 +159,15 @@ export function ServerCard({ server }: ServerCardProps) {
               <MemoryStick className="h-4 w-4" />
               <span>内存</span>
             </div>
-            <span className="text-black">{memPercent}</span>
+            <span>{memPercent}</span>
           </div>
           <Progress
             value={memUsage}
             max={memTotal}
-            variant={isOnline ? memVariant : "muted"}
+            variant={isOnline ? "auto" : "muted"}
           />
           <p className="text-xs text-muted-foreground">
-            {formatBytes(memUsage)} / {formatBytes(memTotal)}
+            {formatBytes(memUsage * 1024)} / {formatBytes(memTotal * 1024)}
           </p>
         </div>
 
@@ -206,10 +185,11 @@ export function ServerCard({ server }: ServerCardProps) {
           <Progress
             value={diskUsage}
             max={diskTotal}
-            variant={isOnline ? diskVariant : "muted"}
+            variant={isOnline ? "auto" : "muted"}
           />
           <p className="text-xs text-muted-foreground">
-            {formatBytes(diskUsage)} / {formatBytes(diskTotal)}
+            {formatBytes(diskUsage * 1024 * 1024)} /{" "}
+            {formatBytes(diskTotal * 1024 * 1024)}
           </p>
         </div>
 
