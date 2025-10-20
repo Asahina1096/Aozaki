@@ -20,9 +20,9 @@ import {
 } from "lucide-react";
 import {
   formatBytes,
-  formatDuration,
   formatPercent,
   formatSpeed,
+  formatUptime,
 } from "@/lib/utils";
 
 interface ServerCardProps {
@@ -69,7 +69,7 @@ export function ServerCard({ server }: ServerCardProps) {
 
   return (
     <Card className="min-h-[420px] overflow-hidden transition-all hover:shadow-lg cursor-pointer">
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-0 space-y-1">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Server className="h-5 w-5" />
@@ -85,14 +85,14 @@ export function ServerCard({ server }: ServerCardProps) {
             }`}
           />
         </div>
-        <CardDescription className="flex flex-col gap-2 text-xs text-muted-foreground">
+        <CardDescription className="flex flex-col gap-1 text-xs text-muted-foreground">
           {/* 第一行：运行时间 + IPV4 + IPV6 + 地区 */}
           <div className="flex flex-wrap items-center gap-2">
-            {server.uptime !== undefined && server.uptime > 0 ? (
+            {server.uptime ? (
               <span className={INFO_PILL_CLASS}>
                 <Clock4 className="h-3.5 w-3.5" />
                 <span className="leading-none">
-                  {formatDuration(server.uptime)}
+                  {formatUptime(server.uptime)}
                 </span>
               </span>
             ) : (
@@ -101,18 +101,22 @@ export function ServerCard({ server }: ServerCardProps) {
                 <span className="leading-none">--</span>
               </span>
             )}
-            {(server.online4 || server.online6) && (
-              <span className={INFO_PILL_CLASS}>
-                <Globe className="h-3.5 w-3.5" />
-                <span className="leading-none">
-                  {server.online4 && server.online6
-                    ? "IPv4 / IPv6"
-                    : server.online4
-                      ? "IPv4"
-                      : "IPv6"}
-                </span>
-              </span>
-            )}
+            <span className={INFO_PILL_CLASS}>
+              <div className={`h-2 w-2 rounded-full ${
+                server.online4 ? 'bg-green-500' : 'bg-gray-400'
+              }`} />
+              <span className={`leading-none ${
+                server.online4 ? 'text-foreground' : 'text-muted-foreground opacity-50'
+              }`}>v4</span>
+            </span>
+            <span className={INFO_PILL_CLASS}>
+              <div className={`h-2 w-2 rounded-full ${
+                server.online6 ? 'bg-green-500' : 'bg-gray-400'
+              }`} />
+              <span className={`leading-none ${
+                server.online6 ? 'text-foreground' : 'text-muted-foreground opacity-50'
+              }`}>v6</span>
+            </span>
             {server.location && (
               <span className={INFO_PILL_CLASS}>
                 <MapPin className="h-3.5 w-3.5" />
@@ -120,7 +124,6 @@ export function ServerCard({ server }: ServerCardProps) {
               </span>
             )}
           </div>
-
           {/* 第二行：类型 */}
           <div className="flex flex-wrap items-center gap-2">
             {server.type && (
@@ -132,9 +135,9 @@ export function ServerCard({ server }: ServerCardProps) {
           </div>
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3 pt-1">
         {/* CPU */}
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2">
               <Cpu className="h-4 w-4" />
@@ -153,10 +156,10 @@ export function ServerCard({ server }: ServerCardProps) {
           </p>
         </div>
 
-        <Separator />
+        <Separator className="my-2" />
 
         {/* 内存 */}
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2">
               <MemoryStick className="h-4 w-4" />
@@ -174,10 +177,10 @@ export function ServerCard({ server }: ServerCardProps) {
           </p>
         </div>
 
-        <Separator />
+        <Separator className="my-2" />
 
         {/* 磁盘 */}
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2">
               <HardDrive className="h-4 w-4" />
@@ -195,10 +198,10 @@ export function ServerCard({ server }: ServerCardProps) {
           </p>
         </div>
 
-        <Separator />
+        <Separator className="my-2" />
 
         {/* 网络 */}
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <div className="flex items-center gap-2 text-sm">
             <Network className="h-4 w-4" />
             <span>网络</span>

@@ -105,3 +105,48 @@ export function formatSpeed(bytesPerSecond: number, decimals?: number): string {
   return `${speed} ${sizes[i]}`;
 }
 
+/**
+ * 美化 uptime 显示
+ * @param uptime - uptime 字符串（如 "05:45:24" 或 "28 天"）
+ * @returns 格式化后的 uptime 字符串（如 "5h45m" 或 "28d"）
+ */
+export function formatUptime(uptime: string): string {
+  if (!uptime || uptime === "--") return "--";
+
+  // 处理中文格式（如 "28 天"）
+  if (uptime.includes("天")) {
+    const days = parseInt(uptime.replace(/[^\d]/g, ""), 10);
+    return days > 0 ? `${days}d` : uptime;
+  }
+
+  // 解析 HH:MM:SS 格式
+  const parts = uptime.split(":");
+  if (parts.length === 3) {
+    const hours = parseInt(parts[0], 10);
+    const minutes = parseInt(parts[1], 10);
+    const seconds = parseInt(parts[2], 10);
+
+    // 计算年、天、小时
+    const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+    const years = Math.floor(totalSeconds / (365 * 24 * 3600));
+    const days = Math.floor((totalSeconds % (365 * 24 * 3600)) / (24 * 3600));
+    const hrs = Math.floor((totalSeconds % (24 * 3600)) / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+
+    // 构建结果，只显示有值的单位
+    const result: string[] = [];
+    if (years > 0) result.push(`${years}y`);
+    if (days > 0) result.push(`${days}d`);
+    if (hrs > 0) result.push(`${hrs}h`);
+    if (mins > 0) result.push(`${mins}m`);
+    if (secs > 0) result.push(`${secs}s`);
+
+    // 如果所有值都是0，返回 0s
+    return result.length > 0 ? result.join("") : "0s";
+  }
+
+  // 无法解析，返回原始字符串
+  return uptime;
+}
+

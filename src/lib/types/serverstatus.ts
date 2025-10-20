@@ -19,8 +19,8 @@ export interface ServerStats {
   online4: boolean;
   /** IPv6 在线状态 */
   online6: boolean;
-  /** 运行时长 */
-  uptime: number;
+  /** 运行时长 (字符串格式，如 "05:45:24" 或 "28 天") */
+  uptime: string;
   /** 1分钟系统负载 */
   load_1: number;
   /** 5分钟系统负载 */
@@ -49,20 +49,38 @@ export interface ServerStats {
   network_in: number;
   /** 当前网络发送速率 (字节/秒) */
   network_out: number;
+  /** 上次网络接收总量 */
+  last_network_in?: number;
+  /** 上次网络发送总量 */
+  last_network_out?: number;
   /** 月流量起始日 */
   monthstart?: number;
   /** 自定义标签 */
   labels?: string;
+  /** 自定义数据 */
+  custom?: string;
+  /** 组 ID */
+  gid?: string;
   /** 权重 (用于排序) */
   weight?: number;
   /** 是否禁用 */
   disabled?: boolean;
-  /** 区域 */
-  region?: string;
+  /** 最新时间戳 */
+  latest_ts?: number;
+  /** SI 单位 */
+  si?: boolean;
+  /** 是否通知 */
+  notify?: boolean;
+  /** 是否启用 vnstat */
+  vnstat?: boolean;
   /** Ping 延迟 (自定义端点) */
   ping_10010?: number;
   ping_189?: number;
   ping_10086?: number;
+  /** Ping 时间 */
+  time_10010?: number;
+  time_189?: number;
+  time_10086?: number;
   /** TCP/UDP/进程数 */
   tcp_count?: number;
   udp_count?: number;
