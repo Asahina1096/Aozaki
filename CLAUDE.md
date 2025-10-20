@@ -64,13 +64,13 @@ The project strictly follows Astro's Islands Architecture philosophy:
 
 ```
 src/
-├── components/          # React components (.tsx)
+├── components/          # React & Astro components
 │   ├── ui/             # shadcn/ui primitives (Button, Card, etc.)
-│   ├── ServerCard.tsx  # Server info card
-│   ├── ServerList.tsx  # Main data fetching component
-│   ├── ServerOverview.tsx
-│   ├── Header.tsx
-│   └── Footer.tsx
+│   ├── ServerCard.tsx  # Server info card (React)
+│   ├── ServerList.tsx  # Main data fetching component (React)
+│   ├── ServerOverview.tsx  # Aggregated stats (React)
+│   ├── Header.tsx      # Navigation header (React)
+│   └── Footer.astro    # Static footer (Astro)
 ├── layouts/            # Astro layouts (.astro)
 │   └── BaseLayout.astro
 ├── pages/              # Astro pages (.astro)
@@ -177,10 +177,11 @@ Configured for Vercel deployment (see `vercel.json`):
 ### ESLint Configuration
 
 - Flat config format (eslint.config.js)
-- React 18+ rules (no React import needed)
+- React 19 with React 18+ rules (no React import needed)
 - TypeScript support with relaxed rules
 - Astro plugin enabled
 - Unused vars prefixed with `_` are ignored
+- Performance optimized: no project-level type checking in ESLint
 
 ### Prettier
 
@@ -194,12 +195,4 @@ Configured for Vercel deployment (see `vercel.json`):
 3. **Path Aliases**: Use `@/*` instead of relative imports (e.g., `@/lib/api` not `../../lib/api`)
 4. **Client Directives**: Never forget `client:*` on React components in `.astro` files
 5. **API Dependency**: The application requires a running ServerStatus-Rust backend exposing `/json/stats.json`
-6. **Islands Architecture**: Follow the optimization guidelines in `/docs/` - prefer Astro components for static content, use appropriate `client:*` directives for React components
-
-## Documentation
-
-Detailed architecture and best practices documentation:
-
-- **`/docs/OPTIMIZATION_SUMMARY.md`** - Recent Islands Architecture optimizations applied to this project
-- **`/docs/ASTRO_ISLANDS_BEST_PRACTICES.md`** - Complete guide to Astro Islands patterns
-- **`/docs/ARCHITECTURE_VISUALIZATION.md`** - Visual architecture diagrams and comparisons
+6. **Islands Architecture**: Prefer Astro components for static content, use appropriate `client:*` directives for React components (see Footer.astro as an example of a static Astro component)

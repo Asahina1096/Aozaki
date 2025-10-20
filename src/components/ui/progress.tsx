@@ -11,23 +11,30 @@ const Progress = React.forwardRef<
 >(({ className, value = 0, max = 100, variant = "default", ...props }, ref) => {
   const percentage = Math.min(Math.max((value / max) * 100, 0), 100);
 
-  // 自动根据百分比确定颜色
-  const getAutoVariant = () => {
-    if (percentage >= 80) return "danger";
-    if (percentage >= 60) return "warning";
-    return "success";
+  // 自动根据百分比确定渐变色
+  const getAutoGradient = () => {
+    if (percentage >= 80) {
+      // 80-100%: 橙红到红色渐变
+      return "bg-gradient-to-r from-orange-500 via-red-500 to-red-600";
+    }
+    if (percentage >= 60) {
+      // 60-80%: 黄色到橙色渐变
+      return "bg-gradient-to-r from-yellow-400 via-yellow-500 to-orange-500";
+    }
+    // 0-60%: 青绿到绿色渐变
+    return "bg-gradient-to-r from-emerald-400 via-green-500 to-green-600";
   };
-
-  const actualVariant = variant === "auto" ? getAutoVariant() : variant;
 
   const variantClasses = {
-    default: "bg-primary",
-    success: "bg-green-500",
-    warning: "bg-yellow-500",
-    danger: "bg-red-500",
-    muted: "bg-gray-400",
-    auto: "bg-primary", // fallback
+    default: "bg-gradient-to-r from-primary/80 via-primary to-primary/80",
+    success: "bg-gradient-to-r from-emerald-400 via-green-500 to-green-600",
+    warning: "bg-gradient-to-r from-yellow-400 via-yellow-500 to-orange-500",
+    danger: "bg-gradient-to-r from-orange-500 via-red-500 to-red-600",
+    muted: "bg-gradient-to-r from-gray-300 via-gray-400 to-gray-500",
+    auto: getAutoGradient(),
   };
+
+  const actualVariant = variant === "auto" ? "auto" : variant;
 
   return (
     <div
