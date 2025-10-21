@@ -1,0 +1,48 @@
+---
+import { Moon, Sun } from "lucide-react";
+import { Button } from "./ui/button";
+---
+
+<header
+  class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60"
+>
+  <div class="container flex h-16 items-center justify-between">
+    <div class="flex items-center gap-3">
+      <h1
+        class="text-2xl font-bold bg-gradient-to-r from-primary via-primary/70 to-primary/30 bg-clip-text text-transparent"
+      >
+        Aozaki
+      </h1>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <Button
+        variant="ghost"
+        size="icon"
+        id="theme-toggle"
+        aria-label="切换主题"
+      >
+        <Sun className="h-5 w-5 dark:hidden" />
+        <Moon className="h-5 w-5 hidden dark:block" />
+      </Button>
+    </div>
+  </div>
+</header>
+
+<script>
+  // 主题切换逻辑
+  function initThemeToggle() {
+    const toggle = document.getElementById("theme-toggle");
+    if (!toggle) return;
+
+    toggle.addEventListener("click", () => {
+      document.documentElement.classList.toggle("dark");
+    });
+  }
+
+  // 初始化
+  initThemeToggle();
+
+  // 支持 Astro View Transitions
+  document.addEventListener("astro:page-load", initThemeToggle);
+</script>

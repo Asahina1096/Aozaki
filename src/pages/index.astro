@@ -1,14 +1,29 @@
 ---
 import Footer from "@/components/Footer.astro";
-import { Header } from "@/components/Header";
+import Header from "@/components/Header.astro";
 import { ServerList } from "@/components/ServerList";
 import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getAPIClient } from "@/lib/api";
+import type { ServerStats } from "@/lib/types/serverstatus";
+
+// 在服务器端获取初始数据
+let initialServers: ServerStats[] = [];
+let initialError: string | null = null;
+
+try {
+  const client = getAPIClient();
+  const data = await client.getStats();
+  initialServers = data.servers;
+} catch (err) {
+  initialError = err instanceof Error ? err.message : "获取数据失败";
+  console.error("Failed to fetch initial server data:", err);
+}
 ---
 
 <BaseLayout>
   <div class="flex min-h-screen flex-col">
-    <!-- 主题切换非关键功能，使用 client:idle 延迟加载 -->
-    <Header client:idle />
+    <!-- Header 改为静态 Astro 组件，主题切换使用原生 JS -->
+    <Header />
 
     <main class="flex-1">
       <div class="container py-8">
@@ -16,8 +31,13 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
           <h2 class="text-2xl md:text-3xl font-bold text-primary">节点状态</h2>
         </div>
 
-        <!-- ServerList 是核心交互，保持 client:load -->
-        <ServerList client:load refreshInterval={2000} />
+        <!-- ServerList 接收 SSR 初始数据，客户端负责定时刷新 -->
+        <ServerList
+          client:load
+          initialServers={initialServers}
+          initialError={initialError}
+          refreshInterval={2000}
+        />
       </div>
     </main>
 
