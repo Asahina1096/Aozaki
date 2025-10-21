@@ -7,7 +7,15 @@
  * 节点统计信息
  */
 export interface ServerStats {
-  /** 节点名称 */
+  /**
+   * 节点名称（唯一标识符）
+   *
+   * 在 ServerStatus-Rust 配置中，name 字段是主机的唯一标识符，不可重复。
+   * 用于客户端认证和服务器识别。
+   *
+   * @example "h1", "server-beijing", "node-us-01"
+   * @see https://github.com/zdz/ServerStatus-Rust
+   */
   name: string;
   /** 节点别名 */
   alias?: string;

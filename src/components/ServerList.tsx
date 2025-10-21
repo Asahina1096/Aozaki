@@ -19,6 +19,24 @@ export function ServerList({
   const [servers, setServers] = useState<ServerStats[]>(initialServers);
   const [error, setError] = useState<string | null>(initialError);
 
+  // 开发环境：验证 name 字段的唯一性
+  if (import.meta.env.DEV && servers.length > 0) {
+    const names = servers.map((s) => s.name);
+    const duplicates = names.filter(
+      (name, index) => names.indexOf(name) !== index
+    );
+    if (duplicates.length > 0) {
+      console.error(
+        "⚠️ ServerList: 检测到重复的 server.name 值，这会导致 React key 警告:",
+        [...new Set(duplicates)]
+      );
+      console.error(
+        "受影响的服务器:",
+        servers.filter((s) => duplicates.includes(s.name))
+      );
+    }
+  }
+
   useEffect(() => {
     // 只负责定时刷新，不做初始加载
     if (refreshInterval <= 0) return;
@@ -78,6 +96,9 @@ export function ServerList({
       </div>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {sortedServers.map((server) => (
+          // 使用 server.name 作为 key：
+          // 根据 ServerStatus-Rust 文档，name 字段是唯一标识符（不可重复）
+          // 参考：https://github.com/zdz/ServerStatus-Rust
           <ServerCard key={server.name} server={server} />
         ))}
       </div>

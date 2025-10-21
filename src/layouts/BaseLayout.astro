@@ -14,7 +14,7 @@ const {
 ---
 
 <!doctype html>
-<html lang="zh-CN" class="dark">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <meta name="description" content={description} />
@@ -23,37 +23,51 @@ const {
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <title>{title}</title>
+    <!--
+      主题脚本：必须在 <head> 中内联执行，避免 FOUC (Flash of Unstyled Content)
+      is:inline 指令确保脚本在 HTML 解析前同步执行，防止主题闪烁
+    -->
     <script is:inline>
-      // 主题切换脚本
-      const getThemePreference = () => {
+      // 立即执行，无需等待 DOM 加载
+      (function() {
         const stored = localStorage.getItem("appearance");
-        if (stored) return stored;
-        return window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light";
-      };
+        const theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
 
-      const theme = getThemePreference();
-      if (theme === "dark") {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-      }
-
-      window.addEventListener("DOMContentLoaded", () => {
-        const observer = new MutationObserver(() => {
-          const isDark = document.documentElement.classList.contains("dark");
-          localStorage.setItem("appearance", isDark ? "dark" : "light");
-        });
-        observer.observe(document.documentElement, {
-          attributes: true,
-          attributeFilter: ["class"],
-        });
-      });
+        // 在 HTML 解析时立即应用主题，避免闪烁
+        if (theme === "dark") {
+          document.documentElement.classList.add("dark");
+        }
+      })();
     </script>
   </head>
   <body>
     <slot />
     <SpeedInsights />
+
+    <!-- 主题持久化脚本：监听主题变化并保存到 localStorage -->
+    <script is:inline>
+      // MutationObserver 用于监听主题切换并保存偏好
+      const observer = new MutationObserver(() => {
+        const isDark = document.documentElement.classList.contains("dark");
+        localStorage.setItem("appearance", isDark ? "dark" : "light");
+      });
+
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["class"],
+      });
+
+      // 支持 Astro View Transitions 的页面切换
+      document.addEventListener("astro:after-swap", () => {
+        const stored = localStorage.getItem("appearance");
+        const theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+
+        if (theme === "dark") {
+          document.documentElement.classList.add("dark");
+        } else {
+          document.documentElement.classList.remove("dark");
+        }
+      });
+    </script>
   </body>
 </html>
