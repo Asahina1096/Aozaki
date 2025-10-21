@@ -27,9 +27,11 @@ bun run preview          # Preview production build
 # Quality Checks
 bun run check            # Astro type check + clean cache
 bun run check:all        # Run all checks (type + lint + format)
-bun run lint             # ESLint check (tolerates warnings)
-bun run lint:fix         # Fix ESLint issues
-bun run format           # Format code with Prettier
+bun run biome:check      # Biome lint and format check
+bun run biome:fix        # Fix Biome issues (lint + format)
+bun run lint             # Biome lint only
+bun run lint:fix         # Fix lint issues only
+bun run format           # Format code with Biome
 bun run format:check     # Check code formatting
 
 # Cleanup
@@ -53,10 +55,12 @@ The project strictly follows Astro's Islands Architecture philosophy:
 ```astro
 <!-- Static layout (BaseLayout.astro, no JS) -->
 <BaseLayout>
+  <!-- Static Astro components (no JS) -->
+  <Header />
   <!-- Interactive React islands with client:load -->
-  <Header client:load />
   <ServerList client:load refreshInterval={5000} />
-  <Footer client:load />
+  <!-- Static footer (Astro component, no JS) -->
+  <Footer />
 </BaseLayout>
 ```
 
@@ -69,7 +73,7 @@ src/
 │   ├── ServerCard.tsx  # Server info card (React)
 │   ├── ServerList.tsx  # Main data fetching component (React)
 │   ├── ServerOverview.tsx  # Aggregated stats (React)
-│   ├── Header.tsx      # Navigation header (React)
+│   ├── Header.astro    # Static header (Astro)
 │   └── Footer.astro    # Static footer (Astro)
 ├── layouts/            # Astro layouts (.astro)
 │   └── BaseLayout.astro
@@ -174,25 +178,33 @@ Configured for Vercel deployment (see `vercel.json`):
 
 ## Code Quality
 
-### ESLint Configuration
+### Biome Configuration
 
-- Flat config format (eslint.config.js)
-- React 19 with React 18+ rules (no React import needed)
-- TypeScript support with relaxed rules
-- Astro plugin enabled
-- Unused vars prefixed with `_` are ignored
-- Performance optimized: no project-level type checking in ESLint
+The project uses **Biome** (not ESLint/Prettier) for both linting and formatting:
 
-### Prettier
-
-- Configured to format `.js`, `.ts`, `.tsx`, `.astro`, `.json`, `.css`, `.md`
-- Uses caching for performance (`.cache/prettier/`)
+- Configuration file: `biome.json`
+- Flat config with comprehensive linting rules
+- TypeScript support with strict type checking
+- Astro-specific overrides for `.astro` files
+- Auto-import organization enabled
+- Custom rules:
+  - `noExplicitAny`: warn (not error)
+  - `noUnusedVariables`: warn in JS/TS, off in Astro
+  - React hooks rules enabled (`useHookAtTopLevel`, `useExhaustiveDependencies`)
+- Formatting:
+  - Line width: 80
+  - Indent: 2 spaces
+  - Semicolons: always
+  - Quotes: double
+  - Trailing commas: ES5
+  - JSX quotes: double
 
 ## Important Notes
 
 1. **Package Manager**: Must use `bun` (defined in package.json `packageManager` field)
-2. **React Version**: React 19 is used; ensure compatibility when adding new libraries
-3. **Path Aliases**: Use `@/*` instead of relative imports (e.g., `@/lib/api` not `../../lib/api`)
-4. **Client Directives**: Never forget `client:*` on React components in `.astro` files
-5. **API Dependency**: The application requires a running ServerStatus-Rust backend exposing `/json/stats.json`
-6. **Islands Architecture**: Prefer Astro components for static content, use appropriate `client:*` directives for React components (see Footer.astro as an example of a static Astro component)
+2. **Linting/Formatting**: Uses Biome, not ESLint/Prettier - run `bun run biome:fix` to auto-fix issues
+3. **React Version**: React 19 is used; ensure compatibility when adding new libraries
+4. **Path Aliases**: Use `@/*` instead of relative imports (e.g., `@/lib/api` not `../../lib/api`)
+5. **Client Directives**: Never forget `client:*` on React components in `.astro` files
+6. **API Dependency**: The application requires a running ServerStatus-Rust backend exposing `/json/stats.json`
+7. **Islands Architecture**: Prefer Astro components for static content (see Header.astro and Footer.astro as examples), use React with `client:*` directives only for interactive components

@@ -27,7 +27,8 @@
 | TailwindCSS   | 4.x  | CSS 框架              |
 | shadcn/ui     | -    | UI 组件库             |
 | TypeScript    | 5.x  | 类型系统              |
-| Lucide React  | -    | 图标库                |
+| Biome         | 2.x  | 代码检查和格式化      |
+| Bun           | 1.x  | 包管理器和运行时      |
 
 ---
 
@@ -56,10 +57,10 @@ cd aozaki
 
 ### 2. 安装依赖
 
+**推荐使用 Bun** (项目已配置 `packageManager` 为 bun)：
+
 ```bash
 bun install
-# 或
-npm install
 ```
 
 ### 3. 配置环境变量
@@ -80,8 +81,6 @@ PUBLIC_API_URL=https://your-serverstatus-backend.com
 
 ```bash
 bun run dev
-# 或
-npm run dev
 ```
 
 访问 `http://localhost:4321` 查看效果。
@@ -90,8 +89,6 @@ npm run dev
 
 ```bash
 bun run build
-# 或
-npm run build
 ```
 
 ---
@@ -156,22 +153,24 @@ vercel
 ```
 aozaki/
 ├── src/
-│   ├── components/        # React 组件
-│   │   ├── ServerCard.tsx # 服务器卡片
-│   │   ├── ServerList.tsx # 服务器列表
-│   │   ├── Header.tsx     # 页头
-│   │   ├── Footer.tsx     # 页脚
-│   │   └── ui/            # UI 基础组件
+│   ├── components/        # React & Astro 组件
+│   │   ├── ServerCard.tsx # 服务器卡片 (React)
+│   │   ├── ServerList.tsx # 服务器列表 (React)
+│   │   ├── ServerOverview.tsx # 服务器概览 (React)
+│   │   ├── Header.astro   # 页头 (Astro 静态组件)
+│   │   ├── Footer.astro   # 页脚 (Astro 静态组件)
+│   │   └── ui/            # shadcn/ui 基础组件
 │   ├── layouts/           # Astro 布局
 │   ├── lib/               # 工具库
 │   │   ├── api.ts         # API 客户端
-│   │   ├── types/         # TypeScript 类型
+│   │   ├── types/         # TypeScript 类型定义
 │   │   └── utils.ts       # 工具函数
 │   ├── pages/             # Astro 页面
 │   └── styles/            # 全局样式
 ├── public/                # 静态资源
 ├── .env.example           # 环境变量示例
 ├── astro.config.mjs       # Astro 配置
+├── biome.json             # Biome 配置
 ├── vercel.json            # Vercel 配置
 └── package.json           # 项目配置
 ```
@@ -179,12 +178,24 @@ aozaki/
 ### 可用命令
 
 ```bash
-bun run dev          # 启动开发服务器
-bun run build        # 构建生产版本
-bun run preview      # 预览生产构建
-bun run check        # 类型检查
-bun run lint         # 代码检查
-bun run format       # 代码格式化
+# 开发
+bun run dev              # 启动开发服务器
+bun run build            # 构建生产版本
+bun run preview          # 预览生产构建
+
+# 代码质量
+bun run check            # Astro 类型检查 + 清理缓存
+bun run check:all        # 运行所有检查 (类型 + lint + 格式)
+bun run biome:check      # Biome lint 和格式检查
+bun run biome:fix        # 自动修复 Biome 问题
+bun run lint             # 仅 lint 检查
+bun run lint:fix         # 自动修复 lint 问题
+bun run format           # 代码格式化
+bun run format:check     # 检查代码格式
+
+# 清理
+bun run clean            # 清理构建文件
+bun run clean:all        # 清理所有文件 (包括 node_modules)
 ```
 
 ---
@@ -195,6 +206,8 @@ bun run format       # 代码格式化
 - [Astro 官方文档](https://docs.astro.build/)
 - [shadcn/ui 文档](https://ui.shadcn.com/)
 - [TailwindCSS 文档](https://tailwindcss.com/)
+- [Biome 文档](https://biomejs.dev/)
+- [Bun 文档](https://bun.sh/docs)
 - [Vercel 文档](https://vercel.com/docs)
 
 ---

@@ -29,8 +29,9 @@ interface ServerCardProps {
 }
 
 // 纯函数，移到组件外部避免不必要的重新创建
+// 提升背景不透明度以改善对比度
 const INFO_PILL_CLASS =
-  "inline-flex items-center gap-1 rounded-full border border-border/40 bg-muted/40 px-1.5 py-0.5 whitespace-nowrap";
+  "inline-flex items-center gap-1 rounded-full border border-border/40 bg-muted/60 px-1.5 py-0.5 whitespace-nowrap";
 
 export function ServerCard({ server }: ServerCardProps) {
   const isOnline = server.online4 || server.online6;
@@ -87,9 +88,7 @@ export function ServerCard({ server }: ServerCardProps) {
               />
               <span
                 className={`leading-none ${
-                  server.online4
-                    ? "text-foreground"
-                    : "text-muted-foreground opacity-50"
+                  server.online4 ? "text-foreground" : "text-muted-foreground"
                 }`}
               >
                 v4
@@ -103,9 +102,7 @@ export function ServerCard({ server }: ServerCardProps) {
               />
               <span
                 className={`leading-none ${
-                  server.online6
-                    ? "text-foreground"
-                    : "text-muted-foreground opacity-50"
+                  server.online6 ? "text-foreground" : "text-muted-foreground"
                 }`}
               >
                 v6
