@@ -18,6 +18,18 @@ export default defineConfig({
     }),
   ],
   publicDir: "./public",
+  // 实验性特性：性能优化
+  experimental: {
+    // 启用客户端预渲染以提升页面导航速度
+    clientPrerender: true,
+    // 保持脚本和样式的声明顺序
+    preserveScriptOrder: true,
+  },
+  // Prefetch 配置：配合 clientPrerender 使用
+  prefetch: {
+    prefetchAll: true,
+    defaultStrategy: "viewport",
+  },
   vite: {
     plugins: [
       tailwindcss(),

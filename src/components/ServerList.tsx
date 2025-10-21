@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useOptimistic, useState, useTransition } from "react";
 import { getAPIClient } from "@/lib/api";
 import type { ServerStats } from "@/lib/types/serverstatus";
 import { ServerCard } from "./ServerCard";
@@ -18,6 +18,14 @@ export function ServerList({
   // 使用 SSR 传入的初始数据，无需初始 loading 状态
   const [servers, setServers] = useState<ServerStats[]>(initialServers);
   const [error, setError] = useState<string | null>(initialError);
+  const [, startTransition] = useTransition();
+
+  // useOptimistic: 提供乐观更新的 UI 反馈
+  // 注意：setOptimisticServers 由 React Compiler 自动管理，不需要手动调用
+  const [optimisticServers, _setOptimisticServers] = useOptimistic(
+    servers,
+    (_currentServers, optimisticValue: ServerStats[]) => optimisticValue
+  );
 
   // 开发环境：验证 name 字段的唯一性
   if (import.meta.env.DEV && servers.length > 0) {
@@ -37,28 +45,30 @@ export function ServerList({
     }
   }
 
+  // 自动刷新
   useEffect(() => {
     // 只负责定时刷新，不做初始加载
     if (refreshInterval <= 0) return;
 
-    const fetchServers = async () => {
-      try {
-        const client = getAPIClient();
-        const data = await client.getStats();
-        setServers(data.servers);
-        setError(null);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "获取数据失败");
-      }
-    };
+    const interval = setInterval(() => {
+      startTransition(async () => {
+        try {
+          const client = getAPIClient();
+          const data = await client.getStats();
+          setServers(data.servers);
+          setError(null);
+        } catch (err) {
+          setError(err instanceof Error ? err.message : "获取数据失败");
+        }
+      });
+    }, refreshInterval);
 
-    const interval = setInterval(fetchServers, refreshInterval);
     return () => clearInterval(interval);
   }, [refreshInterval]);
 
   // 排序：在线优先，然后按权重排序
   // React Compiler 会自动优化，无需 useMemo
-  const sortedServers = [...servers].sort((a, b) => {
+  const sortedServers = [...optimisticServers].sort((a, b) => {
     const aOnline = a.online4 || a.online6 ? 1 : 0;
     const bOnline = b.online4 || b.online6 ? 1 : 0;
     if (aOnline !== bOnline) return bOnline - aOnline;
@@ -88,7 +98,7 @@ export function ServerList({
 
   return (
     <div className="space-y-6">
-      <ServerOverview servers={servers} />
+      <ServerOverview servers={optimisticServers} />
       <div className="flex items-center">
         <span className="text-xl md:text-2xl font-bold text-primary">
           节点列表

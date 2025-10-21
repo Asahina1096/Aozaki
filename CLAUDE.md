@@ -95,19 +95,25 @@ src/
    - The compiler auto-optimizes component re-renders
    - Pure functions should be extracted outside components when possible
 
-2. **API Client Pattern**:
+2. **React 19 Features**: The project leverages React 19's new capabilities:
+   - **`useOptimistic`**: Used in ServerList for optimistic UI updates during data refresh
+   - **`useTransition`**: Provides non-blocking state updates with `isPending` feedback
+   - **`use` Hook**: Available for reading Promises and Context conditionally (not yet implemented)
+   - See "React 19 Features" section below for detailed usage patterns
+
+3. **API Client Pattern**:
    - Singleton `ServerStatusAPI` class in `src/lib/api.ts`
    - Fetches from `/json/stats.json` endpoint
    - Uses `cache: 'no-store'` for real-time data
    - Configurable via `PUBLIC_API_URL` environment variable
 
-3. **Type Safety**:
+4. **Type Safety**:
    - Complete type definitions in `src/lib/types/serverstatus.ts`
    - Matches ServerStatus-Rust JSON API schema
    - Use `@/*` path alias (configured in tsconfig.json)
 
-4. **Component Patterns**:
-   - **ServerList**: Main orchestrator (data fetching, auto-refresh, sorting)
+5. **Component Patterns**:
+   - **ServerList**: Main orchestrator (data fetching, auto-refresh, sorting, optimistic updates)
    - **ServerCard**: Stateless presentation component
    - **ServerOverview**: Aggregated statistics display
    - All use TypeScript interfaces for props
@@ -166,6 +172,96 @@ The project has several performance optimizations configured:
 
 3. **Custom Build Plugin**:
    - Automatically removes `preview.png` from dist after build
+
+## React 19 Features
+
+The project utilizes React 19's latest stable features for improved user experience:
+
+### 1. `useOptimistic` - Optimistic UI Updates
+
+**Location**: `src/components/ServerList.tsx`
+
+**Purpose**: Provides immediate UI feedback before async operations complete.
+
+**Implementation**:
+```tsx
+import { useOptimistic } from "react";
+
+const [optimisticServers, setOptimisticServers] = useOptimistic(
+  servers,
+  (currentServers, optimisticValue: ServerStats[]) => optimisticValue
+);
+```
+
+**Usage Pattern**:
+- Displays optimistic state during data refresh
+- Automatically reverts to actual state when fetch completes
+- Used in conjunction with `useTransition` for loading indicators
+
+### 2. `useTransition` - Non-Blocking Updates
+
+**Location**: `src/components/ServerList.tsx`
+
+**Purpose**: Marks state updates as non-urgent, preventing UI blocking.
+
+**Implementation**:
+```tsx
+import { useTransition } from "react";
+
+const [isPending, startTransition] = useTransition();
+
+const handleManualRefresh = () => {
+  startTransition(async () => {
+    await fetchServers();
+  });
+};
+```
+
+**Benefits**:
+- UI remains responsive during data fetching
+- `isPending` flag shows loading state (spinning icon, disabled buttons)
+- Automatic batching of state updates
+
+### 3. `use` Hook - Conditional Promise/Context Reading
+
+**Status**: Available but not yet implemented in the codebase.
+
+**Potential Use Cases**:
+```tsx
+import { use } from "react";
+
+// Reading context conditionally (unlike useContext)
+function ServerCard({ showTheme }) {
+  if (showTheme) {
+    const theme = use(ThemeContext);
+  }
+}
+
+// Reading Promises with Suspense
+function ServerList({ statsPromise }) {
+  const stats = use(statsPromise);
+  return <div>{/* render stats */}</div>;
+}
+```
+
+**Advantages over existing hooks**:
+- Can be used inside conditionals and loops
+- Works seamlessly with Suspense boundaries
+- More flexible than `useContext` for conditional logic
+
+### 4. React Compiler Auto-Optimization
+
+**Status**: Enabled via `babel-plugin-react-compiler`.
+
+**What It Does**:
+- Automatically memoizes expensive computations
+- Reduces need for manual `useMemo`/`useCallback`
+- Optimizes component re-renders
+
+**Developer Guidelines**:
+- Extract pure functions outside components when possible
+- Avoid manual memoization unless profiling shows necessity
+- Trust the compiler for most optimization needs
 
 ## Deployment
 
