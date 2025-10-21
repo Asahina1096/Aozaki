@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getAPIClient } from "@/lib/api";
 import type { ServerStats } from "@/lib/types/serverstatus";
 import { ServerCard } from "./ServerCard";

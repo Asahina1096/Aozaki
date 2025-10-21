@@ -1,7 +1,7 @@
+import { Cpu, HardDrive, Network, Server } from "lucide-react";
 import type { ServerStats } from "@/lib/types/serverstatus";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Server, Cpu, Network, HardDrive } from "lucide-react";
 import { formatBytes, formatSpeed } from "@/lib/utils";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 
 interface ServerOverviewProps {
   servers: ServerStats[];

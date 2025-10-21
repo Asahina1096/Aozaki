@@ -1,4 +1,19 @@
+import {
+  Clock4,
+  Cpu,
+  HardDrive,
+  MapPin,
+  MemoryStick,
+  Network,
+  Server,
+} from "lucide-react";
 import type { ServerStats } from "@/lib/types/serverstatus";
+import {
+  formatBytes,
+  formatPercent,
+  formatSpeed,
+  formatUptime,
+} from "@/lib/utils";
 import {
   Card,
   CardContent,
@@ -8,21 +23,6 @@ import {
 } from "./ui/card";
 import { Progress } from "./ui/progress";
 import { Separator } from "./ui/separator";
-import {
-  Cpu,
-  HardDrive,
-  Clock4,
-  Network,
-  MemoryStick,
-  MapPin,
-  Server,
-} from "lucide-react";
-import {
-  formatBytes,
-  formatPercent,
-  formatSpeed,
-  formatUptime,
-} from "@/lib/utils";
 
 interface ServerCardProps {
   server: ServerStats;
