@@ -44,7 +44,11 @@ export function ServerCard({ server }: ServerCardProps) {
   // React Compiler 会自动优化这些计算
   const memPercent = formatPercent(memUsage, memTotal);
   const diskPercent = formatPercent(diskUsage, diskTotal);
-  const cpuDisplay = cpuUsage.toFixed(1);
+  // 使用 Math.round 确保 SSR 和客户端一致
+  const cpuDisplay = Math.round(cpuUsage * 10) / 10;
+  const load1 = Math.round(server.load_1 * 100) / 100;
+  const load5 = Math.round(server.load_5 * 100) / 100;
+  const load15 = Math.round(server.load_15 * 100) / 100;
 
   return (
     <Card className="min-h-[420px] overflow-hidden transition-all hover:shadow-lg cursor-pointer">
@@ -142,8 +146,7 @@ export function ServerCard({ server }: ServerCardProps) {
             variant={isOnline ? "auto" : "muted"}
           />
           <p className="text-xs text-muted-foreground">
-            负载: {server.load_1.toFixed(2)} / {server.load_5.toFixed(2)} /{" "}
-            {server.load_15.toFixed(2)}
+            负载: {load1} / {load5} / {load15}
           </p>
         </div>
 

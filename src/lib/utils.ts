@@ -20,7 +20,9 @@ export function formatBytes(bytes: number, decimals: number = 2): string {
   const sizes = ["B", "KB", "MB", "GB", "TB", "PB"];
 
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  const size = parseFloat((bytes / Math.pow(k, i)).toFixed(dm));
+  // 使用 Math.round 确保 SSR 和客户端一致
+  const multiplier = Math.pow(10, dm);
+  const size = Math.round((bytes / Math.pow(k, i)) * multiplier) / multiplier;
 
   return `${size} ${sizes[i]}`;
 }
@@ -72,7 +74,10 @@ export function formatPercent(
 ): string {
   if (total === 0) return "0%";
   const percent = (value / total) * 100;
-  return `${percent.toFixed(decimals)}%`;
+  // 使用 Math.round 确保 SSR 和客户端一致
+  const multiplier = Math.pow(10, decimals);
+  const rounded = Math.round(percent * multiplier) / multiplier;
+  return `${rounded}%`;
 }
 
 /**
@@ -100,7 +105,9 @@ export function formatSpeed(bytesPerSecond: number, decimals?: number): string {
     dm = value < 10 ? 1 : 0;
   }
 
-  const speed = parseFloat(value.toFixed(dm));
+  // 使用 Math.round 确保 SSR 和客户端一致
+  const multiplier = Math.pow(10, dm);
+  const speed = Math.round(value * multiplier) / multiplier;
 
   return `${speed} ${sizes[i]}`;
 }

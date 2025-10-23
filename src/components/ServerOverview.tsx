@@ -16,8 +16,11 @@ export function ServerOverview({ servers }: ServerOverviewProps) {
   const onlineServersList = servers.filter((s) => s.online4 || s.online6);
   const avgCpu =
     onlineServersList.length > 0
-      ? onlineServersList.reduce((sum, s) => sum + s.cpu, 0) /
-        onlineServersList.length
+      ? Math.round(
+          (onlineServersList.reduce((sum, s) => sum + s.cpu, 0) /
+            onlineServersList.length) *
+            10
+        ) / 10
       : 0;
 
   // 计算实时网络速率
@@ -54,7 +57,7 @@ export function ServerOverview({ servers }: ServerOverviewProps) {
           <Cpu className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{avgCpu.toFixed(1)}%</div>
+          <div className="text-2xl font-bold">{avgCpu}%</div>
         </CardContent>
       </Card>
 
