@@ -163,3 +163,14 @@ export function formatUptime(uptime: string): string {
   // 无法解析，返回原始字符串
   return uptime;
 }
+
+/**
+ * 从 labels 字符串中提取操作系统
+ * @param labels 标签字符串 (如 "os=debian" 或 "os=ubuntu,version=22.04")
+ * @returns 操作系统名称 (小写)
+ */
+export function extractOS(labels?: string): string | null {
+  if (!labels) return null;
+  const match = labels.match(/os=([^,\s]+)/);
+  return match ? match[1].toLowerCase() : null;
+}
