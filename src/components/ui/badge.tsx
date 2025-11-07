@@ -1,23 +1,61 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import * as React from "react";
-import { cn } from "@/lib/utils";
+import { css, cx } from "../../../styled-system/css";
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  css({
+    display: "inline-flex",
+    alignItems: "center",
+    rounded: "full",
+    border: "1px solid",
+    px: "2.5",
+    py: "0.5",
+    fontSize: "xs",
+    fontWeight: "semibold",
+    transition: "colors",
+    _focus: {
+      outline: "none",
+      ringWidth: "2",
+      ringColor: "ring",
+      ringOffsetWidth: "2",
+    },
+  }),
   {
     variants: {
       variant: {
-        default:
-          "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
-        secondary:
-          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        destructive:
-          "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
-        outline: "text-foreground",
-        success:
-          "border-transparent bg-green-500 text-white hover:bg-green-600",
-        warning:
-          "border-transparent bg-yellow-500 text-white hover:bg-yellow-600",
+        default: css({
+          borderColor: "transparent",
+          bg: "primary",
+          color: "primary.foreground",
+          _hover: { bg: "primary", opacity: "0.8" },
+        }),
+        secondary: css({
+          borderColor: "transparent",
+          bg: "secondary",
+          color: "secondary.foreground",
+          _hover: { bg: "secondary", opacity: "0.8" },
+        }),
+        destructive: css({
+          borderColor: "transparent",
+          bg: "destructive",
+          color: "destructive.foreground",
+          _hover: { bg: "destructive", opacity: "0.8" },
+        }),
+        outline: css({
+          color: "foreground",
+        }),
+        success: css({
+          borderColor: "transparent",
+          bg: "green.500",
+          color: "white",
+          _hover: { bg: "green.600" },
+        }),
+        warning: css({
+          borderColor: "transparent",
+          bg: "yellow.500",
+          color: "white",
+          _hover: { bg: "yellow.600" },
+        }),
       },
     },
     defaultVariants: {
@@ -32,7 +70,7 @@ export interface BadgeProps
 
 function Badge({ className, variant, ...props }: BadgeProps) {
   return (
-    <div className={cn(badgeVariants({ variant }), className)} {...props} />
+    <div className={cx(badgeVariants({ variant }), className)} {...props} />
   );
 }
 

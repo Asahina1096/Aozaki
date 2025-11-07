@@ -1,32 +1,90 @@
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import * as React from "react";
-
-import { cn } from "@/lib/utils";
+import { css, cx } from "../../../styled-system/css";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+  css({
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "2",
+    whiteSpace: "nowrap",
+    rounded: "md",
+    fontSize: "sm",
+    fontWeight: "medium",
+    transition: "all",
+    outline: "none",
+    flexShrink: "0",
+    _disabled: {
+      pointerEvents: "none",
+      opacity: "0.5",
+    },
+    _focusVisible: {
+      borderColor: "ring",
+      ringColor: "ring",
+      ringWidth: "3px",
+      ringOpacity: "0.5",
+    },
+    "& svg": {
+      pointerEvents: "none",
+      flexShrink: "0",
+      width: "4",
+      height: "4",
+    },
+  }),
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        destructive:
-          "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
-        outline:
-          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
-        secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost:
-          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
-        link: "text-primary underline-offset-4 hover:underline",
+        default: css({
+          bg: "primary",
+          color: "primary.foreground",
+          _hover: { bg: "primary", opacity: "0.9" },
+        }),
+        destructive: css({
+          bg: "destructive",
+          color: "white",
+          _hover: { bg: "destructive", opacity: "0.9" },
+          _focusVisible: {
+            ringColor: "destructive",
+            ringOpacity: "0.2",
+          },
+        }),
+        outline: css({
+          border: "1px solid",
+          borderColor: "border",
+          bg: "background",
+          boxShadow: "xs",
+          _hover: {
+            bg: "accent",
+            color: "accent.foreground",
+          },
+        }),
+        secondary: css({
+          bg: "secondary",
+          color: "secondary.foreground",
+          _hover: { bg: "secondary", opacity: "0.8" },
+        }),
+        ghost: css({
+          _hover: {
+            bg: "accent",
+            color: "accent.foreground",
+          },
+        }),
+        link: css({
+          color: "primary",
+          textDecoration: "underline",
+          textUnderlineOffset: "4px",
+          _hover: { textDecoration: "underline" },
+        }),
       },
       size: {
-        default: "h-9 px-4 py-2 has-[>svg]:px-3",
-        sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
-        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
-        icon: "size-9",
-        "icon-sm": "size-8",
-        "icon-lg": "size-10",
+        default: css({ h: "9", px: "4", py: "2" }),
+        sm: css({ h: "8", rounded: "md", gap: "1.5", px: "3" }),
+        lg: css({ h: "10", rounded: "md", px: "6" }),
+        icon: css({ w: "9", h: "9" }),
+        "icon-sm": css({ w: "8", h: "8" }),
+        "icon-lg": css({ w: "10", h: "10" }),
       },
     },
     defaultVariants: {
@@ -51,7 +109,7 @@ function Button({
   return (
     <Comp
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cx(buttonVariants({ variant, size }), className)}
       {...props}
     />
   );

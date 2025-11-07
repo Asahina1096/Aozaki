@@ -1,4 +1,5 @@
 import { useEffect, useOptimistic, useState, useTransition } from "react";
+import { css } from "../../styled-system/css";
 import { getAPIClient } from "@/lib/api";
 import type { ServerStats } from "@/lib/types/serverstatus";
 import { ServerCard } from "./ServerCard";
@@ -77,11 +78,32 @@ export function ServerList({
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <p className="text-lg font-semibold text-destructive">
+      <div
+        className={css({
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          py: "12",
+          textAlign: "center",
+        })}
+      >
+        <p
+          className={css({
+            fontSize: "lg",
+            fontWeight: "semibold",
+            color: "destructive",
+          })}
+        >
           无法加载节点数据
         </p>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p
+          className={css({
+            mt: "2",
+            fontSize: "sm",
+            color: "muted.foreground",
+          })}
+        >
           {error || "请稍后再试。"}
         </p>
       </div>
@@ -90,21 +112,43 @@ export function ServerList({
 
   if (servers.length === 0) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
+      <div
+        className={css({
+          textAlign: "center",
+          py: "12",
+          color: "muted.foreground",
+        })}
+      >
         暂无节点数据
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className={css({ display: "flex", flexDirection: "column", gap: "6" })}>
       <ServerOverview servers={optimisticServers} />
-      <div className="flex items-center">
-        <span className="text-xl md:text-2xl font-bold text-primary">
+      <div className={css({ display: "flex", alignItems: "center" })}>
+        <span
+          className={css({
+            fontSize: "xl",
+            md: { fontSize: "2xl" },
+            fontWeight: "bold",
+            color: "primary",
+          })}
+        >
           节点列表
         </span>
       </div>
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div
+        className={css({
+          display: "grid",
+          gridTemplateColumns: "1",
+          gap: "6",
+          md: { gridTemplateColumns: "2" },
+          lg: { gridTemplateColumns: "3" },
+          xl: { gridTemplateColumns: "4" },
+        })}
+      >
         {sortedServers.map((server) => (
           // 使用 server.name 作为 key：
           // 根据 ServerStatus-Rust 文档，name 字段是唯一标识符（不可重复）

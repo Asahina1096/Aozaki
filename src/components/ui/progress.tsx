@@ -1,5 +1,5 @@
 import * as React from "react";
-import { cn } from "@/lib/utils";
+import { css, cx } from "../../../styled-system/css";
 
 const Progress = React.forwardRef<
   HTMLDivElement,
@@ -15,22 +15,62 @@ const Progress = React.forwardRef<
   const getAutoGradient = () => {
     if (percentage >= 80) {
       // 80-100%: 橙红到红色渐变
-      return "bg-gradient-to-r from-orange-500 via-red-500 to-red-600";
+      return css({
+        bgGradient: "to-r",
+        gradientFrom: "orange.500",
+        gradientVia: "red.500",
+        gradientTo: "red.600",
+      });
     }
     if (percentage >= 60) {
       // 60-80%: 黄色到橙色渐变
-      return "bg-gradient-to-r from-yellow-400 via-yellow-500 to-orange-500";
+      return css({
+        bgGradient: "to-r",
+        gradientFrom: "yellow.400",
+        gradientVia: "yellow.500",
+        gradientTo: "orange.500",
+      });
     }
     // 0-60%: 青绿到绿色渐变
-    return "bg-gradient-to-r from-emerald-400 via-green-500 to-green-600";
+    return css({
+      bgGradient: "to-r",
+      gradientFrom: "emerald.400",
+      gradientVia: "green.500",
+      gradientTo: "green.600",
+    });
   };
 
   const variantClasses = {
-    default: "bg-gradient-to-r from-primary/80 via-primary to-primary/80",
-    success: "bg-gradient-to-r from-emerald-400 via-green-500 to-green-600",
-    warning: "bg-gradient-to-r from-yellow-400 via-yellow-500 to-orange-500",
-    danger: "bg-gradient-to-r from-orange-500 via-red-500 to-red-600",
-    muted: "bg-gradient-to-r from-gray-300 via-gray-400 to-gray-500",
+    default: css({
+      bgGradient: "to-r",
+      gradientFrom: "primary",
+      gradientVia: "primary",
+      gradientTo: "primary",
+    }),
+    success: css({
+      bgGradient: "to-r",
+      gradientFrom: "emerald.400",
+      gradientVia: "green.500",
+      gradientTo: "green.600",
+    }),
+    warning: css({
+      bgGradient: "to-r",
+      gradientFrom: "yellow.400",
+      gradientVia: "yellow.500",
+      gradientTo: "orange.500",
+    }),
+    danger: css({
+      bgGradient: "to-r",
+      gradientFrom: "orange.500",
+      gradientVia: "red.500",
+      gradientTo: "red.600",
+    }),
+    muted: css({
+      bgGradient: "to-r",
+      gradientFrom: "gray.300",
+      gradientVia: "gray.400",
+      gradientTo: "gray.500",
+    }),
     auto: getAutoGradient(),
   };
 
@@ -39,15 +79,28 @@ const Progress = React.forwardRef<
   return (
     <div
       ref={ref}
-      className={cn(
-        "relative h-2 w-full overflow-hidden rounded-full bg-secondary",
+      className={cx(
+        css({
+          position: "relative",
+          h: "2",
+          w: "full",
+          overflow: "hidden",
+          rounded: "full",
+          bg: "secondary",
+        }),
         className
       )}
       {...props}
     >
       <div
-        className={cn(
-          "h-full w-full flex-1 transition-all rounded-full",
+        className={cx(
+          css({
+            h: "full",
+            w: "full",
+            flex: "1",
+            transition: "all",
+            rounded: "full",
+          }),
           variantClasses[actualVariant]
         )}
         style={{ transform: `translateX(-${100 - percentage}%)` }}

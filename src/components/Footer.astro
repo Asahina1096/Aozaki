@@ -1,11 +1,12 @@
 ---
 // Footer.astro - 纯静态组件，无需 JavaScript
+import { css } from "../../styled-system/css";
 ---
 
-<footer class="border-t mt-auto">
-  <div class="container py-8">
-    <div class="flex flex-col items-center justify-center gap-4">
-      <p class="text-sm text-muted-foreground">
+<footer class={css({ borderTop: "1px solid", borderColor: "border", mt: "auto" })}>
+  <div class={css({ maxW: "1400px", mx: "auto", px: "8", py: "8" })}>
+    <div class={css({ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "4" })}>
+      <p class={css({ fontSize: "sm", color: "muted.foreground" })}>
         © 2025 Aozaki. All rights reserved.
       </p>
     </div>

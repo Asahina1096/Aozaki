@@ -1,5 +1,4 @@
 import react from "@astrojs/react";
-import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "astro/config";
 import fs from "fs";
 import path from "path";
@@ -32,7 +31,6 @@ export default defineConfig({
   },
   vite: {
     plugins: [
-      tailwindcss(),
       {
         name: "exclude-preview-png",
         writeBundle() {

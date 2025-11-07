@@ -4,8 +4,9 @@
   "description": "A modern web application framework built with Astro, React, TailwindCSS and shadcn/ui",
   "type": "module",
   "scripts": {
+    "prepare": "panda codegen && panda cssgen --outfile styled-system/styles.css",
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "panda cssgen --outfile styled-system/styles.css && astro build",
     "preview": "astro preview",
     "astro": "astro",
     "lint": "biome lint .",
@@ -24,7 +25,6 @@
     "@astrojs/react": "4.4.1",
     "@iconify/react": "^6.0.2",
     "@radix-ui/react-slot": "^1.2.4",
-    "@tailwindcss/postcss": "^4.1.16",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
     "@vercel/speed-insights": "^1.2.0",
@@ -34,14 +34,11 @@
     "lucide-react": "^0.552.0",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "tailwind-merge": "^3.3.1",
-    "tailwindcss": "^4.1.16",
-    "tailwindcss-animate": "^1.0.7",
     "typescript": "^5.9.3"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.4",
-    "@tailwindcss/vite": "^4.1.16",
+    "@pandacss/dev": "^1.4.3",
     "@types/node": "24.7.2",
     "babel-plugin-react-compiler": "1.0.0"
   },

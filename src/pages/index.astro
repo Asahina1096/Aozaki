@@ -5,6 +5,7 @@ import { ServerList } from "@/components/ServerList";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { getAPIClient } from "@/lib/api";
 import type { ServerStats } from "@/lib/types/serverstatus";
+import { css } from "../../styled-system/css";
 
 // 在服务器端获取初始数据
 let initialServers: ServerStats[] = [];
@@ -21,14 +22,14 @@ try {
 ---
 
 <BaseLayout>
-  <div class="flex min-h-screen flex-col">
+  <div class={css({ display: "flex", minH: "screen", flexDirection: "column" })}>
     <!-- Header 改为静态 Astro 组件，主题切换使用原生 JS -->
     <Header />
 
-    <main class="flex-1">
-      <div class="container py-8">
-        <div class="mb-8 flex items-center">
-          <h2 class="text-2xl md:text-3xl font-bold text-primary">节点状态</h2>
+    <main class={css({ flex: "1" })}>
+      <div class={css({ maxW: "1400px", mx: "auto", px: "8", py: "8" })}>
+        <div class={css({ mb: "8", display: "flex", alignItems: "center" })}>
+          <h2 class={css({ fontSize: "2xl", md: { fontSize: "3xl" }, fontWeight: "bold", color: "primary" })}>节点状态</h2>
         </div>
 
         <!-- ServerList 接收 SSR 初始数据，客户端负责定时刷新 -->

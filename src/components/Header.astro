@@ -1,24 +1,81 @@
 ---
 // 纯静态 Astro 组件，无 React 依赖
 // 使用 SVG 图标代替 lucide-react，减少 JS 包体积
+import { css } from "../../styled-system/css";
+
+const headerClass = css({
+  position: "sticky",
+  top: "0",
+  zIndex: "50",
+  w: "full",
+  borderBottom: "1px solid",
+  borderColor: "border",
+  bg: "background",
+  opacity: "0.95",
+  backdropFilter: "blur(8px)",
+});
+
+const containerClass = css({
+  maxW: "1400px",
+  mx: "auto",
+  px: "8",
+  display: "flex",
+  h: "16",
+  alignItems: "center",
+  justifyContent: "space-between",
+});
+
+const titleClass = css({
+  fontSize: "2xl",
+  fontWeight: "bold",
+  bgGradient: "to-r",
+  gradientFrom: "primary",
+  gradientVia: "primary",
+  gradientTo: "primary",
+  bgClip: "text",
+  color: "transparent",
+});
+
+const buttonClass = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  whiteSpace: "nowrap",
+  rounded: "md",
+  fontSize: "sm",
+  fontWeight: "medium",
+  transition: "colors",
+  h: "10",
+  w: "10",
+  _hover: {
+    bg: "accent",
+    color: "accent.foreground",
+  },
+  _focusVisible: {
+    outline: "none",
+    ringWidth: "2",
+    ringColor: "ring",
+    ringOffsetWidth: "2",
+  },
+  _disabled: {
+    pointerEvents: "none",
+    opacity: "0.5",
+  },
+});
 ---
 
-<header
-  class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60"
->
-  <div class="container flex h-16 items-center justify-between">
-    <div class="flex items-center gap-3">
-      <h1
-        class="text-2xl font-bold bg-gradient-to-r from-primary via-primary/70 to-primary/30 bg-clip-text text-transparent"
-      >
+<header class={headerClass}>
+  <div class={containerClass}>
+    <div class={css({ display: "flex", alignItems: "center", gap: "3" })}>
+      <h1 class={titleClass}>
         Aozaki
       </h1>
     </div>
 
-    <div class="flex items-center gap-2">
+    <div class={css({ display: "flex", alignItems: "center", gap: "2" })}>
       <button
         id="theme-toggle"
-        class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10"
+        class={buttonClass}
         aria-label="切换主题"
       >
         <!-- Sun Icon (visible in light mode) -->
@@ -32,7 +89,7 @@
           stroke-width="2"
           stroke-linecap="round"
           stroke-linejoin="round"
-          class="dark:hidden"
+          class={css({ _dark: { display: "none" } })}
         >
           <circle cx="12" cy="12" r="4"></circle>
           <path d="M12 2v2"></path>
@@ -55,7 +112,7 @@
           stroke-width="2"
           stroke-linecap="round"
           stroke-linejoin="round"
-          class="hidden dark:block"
+          class={css({ display: "none", _dark: { display: "block" } })}
         >
           <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
         </svg>
