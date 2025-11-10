@@ -72,7 +72,7 @@ export function ServerList({
     (_currentServers, optimisticValue: ServerStats[]) => optimisticValue
   );
 
-  // 定时刷新
+  // 定时刷新（仅在初始数据加载完成后启动）
   useEffect(() => {
     if (refreshInterval <= 0) return;
     if (!stats) return; // 如果还没有初始数据，不启动定时刷新
@@ -112,18 +112,13 @@ export function ServerList({
 
     return () => {
       clearInterval(interval);
-    };
-  }, [refreshInterval, stats, setOptimisticServers]);
-
-  // 组件卸载时取消请求
-  useEffect(() => {
-    return () => {
+      // 清理定时器时，如果还有正在进行的请求，也一并取消
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
         abortControllerRef.current = null;
       }
     };
-  }, []);
+  }, [refreshInterval, stats, setOptimisticServers]);
 
   // 开发环境：验证 name 字段的唯一性
   if (import.meta.env.DEV && currentServers.length > 0) {

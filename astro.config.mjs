@@ -20,14 +20,12 @@ export default defineConfig({
   publicDir: "./public",
   // 实验性特性：性能优化
   experimental: {
-    // 启用客户端预渲染以提升页面导航速度
-    clientPrerender: true,
     // 保持脚本和样式的声明顺序
     preserveScriptOrder: true,
   },
-  // Prefetch 配置：配合 clientPrerender 使用
+  // Prefetch 配置：仅对标记的关键路由进行预取
   prefetch: {
-    prefetchAll: true,
+    prefetchAll: false,
     defaultStrategy: "viewport",
   },
   vite: {
@@ -148,8 +146,8 @@ export default defineConfig({
   output: "static",
   build: {
     format: "file",
-    // 性能优化：内联样式以减少请求
-    inlineStylesheets: "always",
+    // 性能优化：根据体积自动决定是否内联样式
+    inlineStylesheets: "auto",
     // 控制 public 目录文件复制
     copyPublicDir: true,
   },

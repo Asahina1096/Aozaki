@@ -47,7 +47,7 @@ export function ServerCard({ server }: ServerCardProps) {
   const load15 = Math.round(server.load_15 * 100) / 100;
 
   return (
-    <Card className="min-h-[420px] overflow-hidden transition-all hover:shadow-lg cursor-pointer">
+    <Card className="min-h-[420px] overflow-hidden hover:shadow-lg cursor-pointer">
       <CardHeader className="pb-0 space-y-1">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">

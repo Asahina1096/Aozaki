@@ -17,10 +17,7 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
         </div>
 
         <!-- ServerListWithSuspense 提供 ErrorBoundary 用于错误处理 -->
-        <ServerListWithSuspense
-          client:load
-          refreshInterval={2000}
-        />
+        <ServerListWithSuspense client:visible refreshInterval={2000} />
       </div>
     </main>
 

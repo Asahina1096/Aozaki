@@ -57,8 +57,8 @@ The project strictly follows Astro's Islands Architecture philosophy:
 <BaseLayout>
   <!-- Static Astro components (no JS) -->
   <Header />
-  <!-- Interactive React islands with client:load -->
-  <ServerList client:load refreshInterval={5000} />
+  <!-- Interactive React islands hydrated when visible -->
+  <ServerList client:visible refreshInterval={5000} />
   <!-- Static footer (Astro component, no JS) -->
   <Footer />
 </BaseLayout>
@@ -137,9 +137,9 @@ PUBLIC_API_URL=https://your-serverstatus-backend.com
 2. Use TypeScript for all props interfaces
 3. Import shadcn/ui components from `./ui/`
 4. Use `@/*` imports for project files
-5. In Astro files, add `client:load` directive when used:
+5. In Astro files, prefer progressive directives such as `client:visible` or `client:idle`:
    ```astro
-   <YourComponent client:load someProp={value} />
+   <YourComponent client:visible someProp={value} />
    ```
 
 ### Working with Server Data
