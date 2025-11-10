@@ -1,24 +1,23 @@
-import { Suspense } from "react";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { ServerList } from "./ServerList";
-import { ServerListSkeleton } from "./ServerListSkeleton";
 
 interface ServerListWithSuspenseProps {
   refreshInterval?: number;
 }
 
 /**
- * ServerList 的包装组件，提供 Suspense 和 ErrorBoundary
- * 使用 React 19 的 use hook 时，需要 Suspense 来处理加载状态
+ * ServerList 的包装组件，提供 ErrorBoundary 用于错误处理
+ *
+ * 注意：由于 ServerList 现在使用传统的 useState + useEffect 方式，
+ * 不再需要 Suspense（因为不再使用 use hook）。
+ * ErrorBoundary 用于捕获渲染时抛出的错误。
  */
 export function ServerListWithSuspense({
   refreshInterval = 5000,
 }: ServerListWithSuspenseProps) {
   return (
     <ErrorBoundary>
-      <Suspense fallback={<ServerListSkeleton />}>
-        <ServerList refreshInterval={refreshInterval} />
-      </Suspense>
+      <ServerList refreshInterval={refreshInterval} />
     </ErrorBoundary>
   );
 }

@@ -1,70 +1,68 @@
-import { useEffect, use, useOptimistic, useRef, useState, useTransition } from "react";
+import { useEffect, useOptimistic, useRef, useState, useTransition } from "react";
 import { getAPIClient } from "@/lib/api";
 import type { ServerStats, StatsResponse } from "@/lib/types/serverstatus";
 import { ServerCard } from "./ServerCard";
 import { ServerOverview } from "./ServerOverview";
+import { ServerListSkeleton } from "./ServerListSkeleton";
 
 interface ServerListProps {
   refreshInterval?: number; // 刷新间隔（毫秒）
-}
-
-/**
- * 创建获取服务器数据的 Promise
- * 包装原始 Promise 以处理 AbortError（不会触发 Error Boundary）
- */
-function createStatsPromise(
-  signal?: AbortSignal,
-  previousData?: StatsResponse
-): Promise<StatsResponse> {
-  const client = getAPIClient();
-  const originalPromise = client.getStats(signal);
-
-  // 包装 Promise 以处理 AbortError
-  // 如果请求被取消，返回之前的数据（如果有）
-  return originalPromise.catch((err) => {
-    // 如果请求被取消，返回之前的数据
-    if (err instanceof Error && err.name === "AbortError") {
-      if (previousData) {
-        return previousData;
-      }
-      // 如果没有之前的数据，重新抛出错误
-      // 这不应该发生在正常流程中，因为首次加载不应该被取消
-      throw err;
-    }
-    // 其他错误继续抛出，由 Error Boundary 处理
-    throw err;
-  });
 }
 
 export function ServerList({
   refreshInterval = 5000,
 }: ServerListProps) {
   const abortControllerRef = useRef<AbortController | null>(null);
-  const previousDataRef = useRef<StatsResponse | undefined>(undefined);
+  const statsRef = useRef<StatsResponse | null>(null);
   const [, startTransition] = useTransition();
 
-  // 使用 useState 存储 Promise，用于 use hook 读取
-  // 初始 Promise 在组件挂载时创建
-  const [statsPromise, setStatsPromise] = useState<Promise<StatsResponse>>(
-    () => {
-      const abortController = new AbortController();
-      abortControllerRef.current = abortController;
-      return createStatsPromise(abortController.signal);
+  // 使用 useState 存储数据
+  const [stats, setStats] = useState<StatsResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  // 获取服务器数据的函数
+  const fetchServers = async (signal?: AbortSignal) => {
+    try {
+      const client = getAPIClient();
+      const data = await client.getStats(signal);
+      setStats(data);
+      statsRef.current = data;
+      setError(null);
+      return data;
+    } catch (err) {
+      // 如果请求被取消，不更新状态
+      if (err instanceof Error && err.name === "AbortError") {
+        return null;
+      }
+      // 其他错误设置错误状态
+      setError(err instanceof Error ? err : new Error("未知错误"));
+      throw err;
     }
-  );
+  };
 
-  // 使用 use hook 读取 Promise
-  // 如果 Promise pending，会触发 Suspense（显示 fallback）
-  // 如果 Promise reject（非 AbortError），会触发 Error Boundary
-  // 如果 Promise resolve，返回数据
-  const stats = use(statsPromise);
-
-  // 保存当前数据到 ref，用于乐观更新和 AbortError 处理
+  // 初始数据加载
   useEffect(() => {
-    if (stats) {
-      previousDataRef.current = stats;
-    }
-  }, [stats]);
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
+    setLoading(true);
+    fetchServers(abortController.signal)
+      .then(() => {
+        setLoading(false);
+      })
+      .catch((err) => {
+        // 只有非 AbortError 才会到达这里
+        setLoading(false);
+        // 错误已经通过 fetchServers 设置到 error 状态
+        // ErrorBoundary 无法捕获异步错误，所以我们需要在渲染时处理
+      });
+
+    return () => {
+      abortController.abort();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // useOptimistic: 提供乐观更新的 UI 反馈
   // 在数据刷新期间保持显示当前数据，避免闪烁
@@ -77,6 +75,7 @@ export function ServerList({
   // 定时刷新
   useEffect(() => {
     if (refreshInterval <= 0) return;
+    if (!stats) return; // 如果还没有初始数据，不启动定时刷新
 
     const interval = setInterval(() => {
       startTransition(() => {
@@ -90,26 +89,31 @@ export function ServerList({
         abortControllerRef.current = abortController;
 
         // 设置乐观状态为当前数据（从 ref 获取最新值）
-        const latestData = previousDataRef.current;
+        const latestData = statsRef.current;
         if (latestData?.servers) {
           setOptimisticServers(latestData.servers);
         }
 
-        // 创建新的 Promise 并更新状态
-        // use hook 会自动读取新的 Promise，如果 pending 会触发 Suspense
-        // 但由于 useTransition，不会阻塞 UI，而且 useOptimistic 会显示旧数据
-        const newPromise = createStatsPromise(
-          abortController.signal,
-          latestData
-        );
-        setStatsPromise(newPromise);
+        // 获取新数据
+        fetchServers(abortController.signal)
+          .then((newData) => {
+            if (newData) {
+              setStats(newData);
+              statsRef.current = newData;
+            }
+          })
+          .catch((err) => {
+            // 只有非 AbortError 才会到达这里
+            // 错误已经通过 fetchServers 设置到 error 状态
+            // 在下次渲染时会抛出错误，触发 ErrorBoundary
+          });
       });
     }, refreshInterval);
 
     return () => {
       clearInterval(interval);
     };
-  }, [refreshInterval, setOptimisticServers]);
+  }, [refreshInterval, stats, setOptimisticServers]);
 
   // 组件卸载时取消请求
   useEffect(() => {
@@ -148,6 +152,18 @@ export function ServerList({
     return (b.weight || 0) - (a.weight || 0);
   });
 
+  // 初始加载时显示骨架屏
+  if (loading) {
+    return <ServerListSkeleton />;
+  }
+
+  // 如果有错误，抛出错误让 ErrorBoundary 处理
+  // 注意：这只能在同步渲染时工作，异步错误需要通过状态处理
+  if (error) {
+    throw error;
+  }
+
+  // 如果没有数据，显示空状态
   if (currentServers.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
