@@ -13,11 +13,13 @@ export class ServerStatusAPI {
 
   /**
    * 获取服务器统计信息
+   * @param signal 可选的 AbortSignal，用于取消请求
    */
-  async getStats(): Promise<StatsResponse> {
+  async getStats(signal?: AbortSignal): Promise<StatsResponse> {
     const url = `${this.baseUrl}/json/stats.json`;
     const response = await fetch(url, {
       cache: "no-store", // 禁用缓存以获取最新数据
+      signal, // 支持请求取消
     });
 
     if (!response.ok) {

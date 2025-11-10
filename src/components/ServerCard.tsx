@@ -1,4 +1,3 @@
-import { Icon } from "@iconify/react";
 import {
   Clock4,
   Cpu,
@@ -10,7 +9,6 @@ import {
 } from "lucide-react";
 import type { ServerStats } from "@/lib/types/serverstatus";
 import {
-  extractOS,
   formatBytes,
   formatPercent,
   formatSpeed,
@@ -33,28 +31,7 @@ interface ServerCardProps {
 const INFO_PILL_CLASS =
   "inline-flex items-center gap-1 rounded-full border border-border/40 bg-muted/60 px-1.5 py-0.5 whitespace-nowrap";
 
-function getOSIcon(os: string | null) {
-  const osMap: Record<string, string> = {
-    debian: "logos:debian",
-    ubuntu: "logos:ubuntu",
-    centos: "logos:centos-icon",
-    fedora: "logos:fedora",
-    alpine: "logos:alpine",
-    arch: "logos:archlinux",
-    windows: "logos:microsoft-windows-icon",
-    macos: "logos:apple",
-    freebsd: "logos:freebsd",
-    openbsd: "devicon:openbsd",
-    redhat: "logos:redhat-icon",
-    rocky: "simple-icons:rockylinux",
-    alma: "simple-icons:almalinux",
-  };
-  return os && osMap[os] ? osMap[os] : "mdi:server";
-}
-
 export function ServerCard({ server }: ServerCardProps) {
-  const os = extractOS(server.labels);
-  const osIcon = getOSIcon(os);
   const isOnline = server.online4 || server.online6;
   const cpuUsage = server.cpu;
   const memUsage = server.memory_used;
@@ -74,7 +51,7 @@ export function ServerCard({ server }: ServerCardProps) {
       <CardHeader className="pb-0 space-y-1">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Icon icon={osIcon} className="h-5 w-5" />
+            <Server className="h-5 w-5" />
             <CardTitle className="text-lg">
               {server.alias || server.name}
             </CardTitle>
