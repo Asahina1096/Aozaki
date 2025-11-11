@@ -8,31 +8,39 @@ interface ServerOverviewProps {
 }
 
 export function ServerOverview({ servers }: ServerOverviewProps) {
+  // 单次遍历计算所有统计数据
+  const stats = servers.reduce(
+    (acc, s) => {
+      const isOnline = s.online4 || s.online6;
+      if (isOnline) {
+        acc.onlineCount++;
+        acc.totalCpu += s.cpu;
+      }
+      acc.totalRealtimeDownload += s.network_rx;
+      acc.totalRealtimeUpload += s.network_tx;
+      acc.totalDataDownloaded += s.network_in;
+      acc.totalDataUploaded += s.network_out;
+      return acc;
+    },
+    {
+      onlineCount: 0,
+      totalCpu: 0,
+      totalRealtimeDownload: 0,
+      totalRealtimeUpload: 0,
+      totalDataDownloaded: 0,
+      totalDataUploaded: 0,
+    }
+  );
+
   const totalServers = servers.length;
-  const onlineServers = servers.filter((s) => s.online4 || s.online6).length;
+  const onlineServers = stats.onlineCount;
   const offlineServers = totalServers - onlineServers;
 
   // 计算平均CPU使用率（仅在线节点）
-  const onlineServersList = servers.filter((s) => s.online4 || s.online6);
   const avgCpu =
-    onlineServersList.length > 0
-      ? Math.round(
-          (onlineServersList.reduce((sum, s) => sum + s.cpu, 0) /
-            onlineServersList.length) *
-            10
-        ) / 10
+    stats.onlineCount > 0
+      ? Math.round((stats.totalCpu / stats.onlineCount) * 10) / 10
       : 0;
-
-  // 计算实时网络速率
-  const totalRealtimeDownload = servers.reduce(
-    (sum, s) => sum + s.network_rx,
-    0
-  );
-  const totalRealtimeUpload = servers.reduce((sum, s) => sum + s.network_tx, 0);
-
-  // 计算累计网络流量
-  const totalDataDownloaded = servers.reduce((sum, s) => sum + s.network_in, 0);
-  const totalDataUploaded = servers.reduce((sum, s) => sum + s.network_out, 0);
 
   return (
     <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -69,11 +77,13 @@ export function ServerOverview({ servers }: ServerOverviewProps) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            {formatSpeed(totalRealtimeUpload + totalRealtimeDownload)}
+            {formatSpeed(
+              stats.totalRealtimeUpload + stats.totalRealtimeDownload
+            )}
           </div>
           <p className="text-xs text-muted-foreground">
-            ↑ 上传 {formatSpeed(totalRealtimeUpload)}· ↓ 下载{" "}
-            {formatSpeed(totalRealtimeDownload)}
+            ↑ 上传 {formatSpeed(stats.totalRealtimeUpload)}· ↓ 下载{" "}
+            {formatSpeed(stats.totalRealtimeDownload)}
           </p>
         </CardContent>
       </Card>
@@ -86,11 +96,11 @@ export function ServerOverview({ servers }: ServerOverviewProps) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            {formatBytes(totalDataUploaded + totalDataDownloaded)}
+            {formatBytes(stats.totalDataUploaded + stats.totalDataDownloaded)}
           </div>
           <p className="text-xs text-muted-foreground">
-            ↑ 上传 {formatBytes(totalDataUploaded)}· ↓ 下载{" "}
-            {formatBytes(totalDataDownloaded)}
+            ↑ 上传 {formatBytes(stats.totalDataUploaded)}· ↓ 下载{" "}
+            {formatBytes(stats.totalDataDownloaded)}
           </p>
         </CardContent>
       </Card>

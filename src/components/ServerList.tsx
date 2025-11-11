@@ -1,5 +1,4 @@
 import {
-  useCallback,
   useEffect,
   useOptimistic,
   useRef,
@@ -27,9 +26,9 @@ export function ServerList({ refreshInterval = 5000 }: ServerListProps) {
   const [error, setError] = useState<Error | null>(null);
 
   // 获取服务器数据的函数
-  // 使用 useCallback 稳定函数引用，避免 useEffect 依赖项警告
-  // setStats、setError 和 statsRef 都是稳定的引用，所以依赖数组可以为空
-  const fetchServers = useCallback(async (signal?: AbortSignal) => {
+  // React Compiler 会自动优化函数引用，无需手动 useCallback
+  // setStats、setError 和 statsRef 都是稳定的引用
+  async function fetchServers(signal?: AbortSignal) {
     try {
       const client = getAPIClient();
       const data = await client.getStats(signal);
@@ -46,7 +45,7 @@ export function ServerList({ refreshInterval = 5000 }: ServerListProps) {
       setError(err instanceof Error ? err : new Error("未知错误"));
       throw err;
     }
-  }, []);
+  }
 
   // 初始数据加载
   useEffect(() => {
@@ -58,7 +57,7 @@ export function ServerList({ refreshInterval = 5000 }: ServerListProps) {
       .then(() => {
         setLoading(false);
       })
-      .catch((err) => {
+      .catch(() => {
         // 只有非 AbortError 才会到达这里
         setLoading(false);
         // 错误已经通过 fetchServers 设置到 error 状态
@@ -108,7 +107,7 @@ export function ServerList({ refreshInterval = 5000 }: ServerListProps) {
               statsRef.current = newData;
             }
           })
-          .catch((err) => {
+          .catch(() => {
             // 只有非 AbortError 才会到达这里
             // 错误已经通过 fetchServers 设置到 error 状态
             // 在下次渲染时会抛出错误，触发 ErrorBoundary
