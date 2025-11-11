@@ -17,7 +17,6 @@ interface ServerListProps {
 
 export function ServerList({ refreshInterval = 5000 }: ServerListProps) {
   const abortControllerRef = useRef<AbortController | null>(null);
-  const statsRef = useRef<StatsResponse | null>(null);
   const [, startTransition] = useTransition();
 
   // 使用 useState 存储数据
@@ -32,7 +31,6 @@ export function ServerList({ refreshInterval = 5000 }: ServerListProps) {
       const client = getAPIClient();
       const data = await client.getStats(signal);
       setStats(data);
-      statsRef.current = data;
       setError(null);
       return data;
     } catch (err) {
@@ -65,7 +63,7 @@ export function ServerList({ refreshInterval = 5000 }: ServerListProps) {
     return () => {
       abortController.abort();
     };
-  }, [fetchServers]);
+  }, []);
 
   // useOptimistic: 提供乐观更新的 UI 反馈
   // 在数据刷新期间保持显示当前数据，避免闪烁
@@ -91,24 +89,16 @@ export function ServerList({ refreshInterval = 5000 }: ServerListProps) {
         const abortController = new AbortController();
         abortControllerRef.current = abortController;
 
-        // 设置乐观状态为当前数据（从 ref 获取最新值）
-        const latestData = statsRef.current;
-        if (latestData?.servers) {
-          setOptimisticServers(latestData.servers);
+        // 设置乐观状态为当前数据
+        if (stats?.servers) {
+          setOptimisticServers(stats.servers);
         }
 
         // 获取新数据
-        fetchServers(abortController.signal)
-          .then((newData) => {
-            if (newData) {
-              setStats(newData);
-              statsRef.current = newData;
-            }
-          })
-          .catch(() => {
-            // 只有非 AbortError 才会到达这里
-            // 错误已经通过 fetchServers 设置到 error 状态
-          });
+        fetchServers(abortController.signal).catch(() => {
+          // 只有非 AbortError 才会到达这里
+          // 错误已经通过 fetchServers 设置到 error 状态
+        });
       });
     }, refreshInterval);
 
@@ -120,7 +110,7 @@ export function ServerList({ refreshInterval = 5000 }: ServerListProps) {
         abortControllerRef.current = null;
       }
     };
-  }, [refreshInterval, stats, setOptimisticServers, fetchServers]);
+  }, [refreshInterval, stats]);
 
   // 开发环境：验证 name 字段的唯一性
   if (import.meta.env.DEV && currentServers.length > 0) {

@@ -59,58 +59,10 @@ export default defineConfig({
           ws: true,
           // 处理重写路径（如果需要）
           rewrite: (path) => path,
-          // 错误处理和调试
+          // 错误处理
           configure: (proxy, _options) => {
             proxy.on("error", (err, _req, _res) => {
-              console.log("🔴 代理错误:", err.message);
-            });
-            proxy.on("proxyReq", (proxyReq, req, _res) => {
-              console.log(
-                "📤 代理请求:",
-                req.method,
-                req.url,
-                "→",
-                proxyReq.getHeader("host")
-              );
-            });
-            proxy.on("proxyRes", (proxyRes, req, _res) => {
-              console.log(
-                "📥 代理响应:",
-                req.method,
-                req.url,
-                "→",
-                proxyRes.statusCode
-              );
-            });
-            // WebSocket 特定事件
-            proxy.on(
-              "proxyReqWs",
-              (_proxyReq, req, _socket, options, _head) => {
-                console.log(
-                  "🔌 WebSocket 代理请求:",
-                  req.url,
-                  "→",
-                  options.target
-                );
-              }
-            );
-            proxy.on("proxyResWs", (proxyRes, req, _socket) => {
-              console.log(
-                "🔌 WebSocket 代理响应:",
-                req.url,
-                "→",
-                proxyRes.statusCode
-              );
-            });
-            proxy.on("error", (err, req, _res) => {
-              if (req.url?.includes("/api/rpc2")) {
-                console.log("🔴 WebSocket/代理错误详情:", {
-                  url: req.url,
-                  method: req.method,
-                  headers: req.headers,
-                  error: err.message,
-                });
-              }
+              console.error("🔴 代理错误:", err.message);
             });
           },
         },
@@ -119,7 +71,6 @@ export default defineConfig({
     // 性能优化配置
     optimizeDeps: {
       include: ["react", "react-dom"],
-      exclude: [],
     },
     build: {
       chunkSizeWarningLimit: 1000,
