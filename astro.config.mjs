@@ -16,6 +16,55 @@ export default defineConfig({
         plugins: ["babel-plugin-react-compiler"],
       },
     }),
+    // 清理未使用文件的集成
+    {
+      name: "cleanup-unused-files",
+      hooks: {
+        "astro:build:done": () => {
+          // 在整个 Astro 构建流程完成后执行清理
+          const filesToRemove = [
+            path.join("./dist", "preview.png"),
+            path.join("./dist", "_astro", "astro"),
+            path.join("./dist", "_astro", "astro.*.js"),
+          ];
+
+          for (const pattern of filesToRemove) {
+            try {
+              // 处理 glob 模式
+              if (pattern.includes("*")) {
+                const dir = path.dirname(pattern);
+                const filePattern = path.basename(pattern);
+                if (fs.existsSync(dir)) {
+                  const files = fs.readdirSync(dir);
+                  const regex = new RegExp(
+                    `^${filePattern.replace(/\*/g, ".*")}$`,
+                  );
+                  for (const file of files) {
+                    if (regex.test(file)) {
+                      const filePath = path.join(dir, file);
+                      fs.unlinkSync(filePath);
+                      console.log(`✅ 已删除未使用文件: ${file}`);
+                    }
+                  }
+                }
+              } else if (fs.existsSync(pattern)) {
+                // 处理目录和文件
+                const stats = fs.statSync(pattern);
+                if (stats.isDirectory()) {
+                  fs.rmSync(pattern, { recursive: true });
+                  console.log(`✅ 已删除未使用目录: ${path.basename(pattern)}/`);
+                } else {
+                  fs.unlinkSync(pattern);
+                  console.log(`✅ 已删除未使用文件: ${path.basename(pattern)}`);
+                }
+              }
+            } catch (error) {
+              console.warn(`⚠️ 无法删除 ${pattern}:`, error.message);
+            }
+          }
+        },
+      },
+    },
   ],
   publicDir: "./public",
   // 实验性特性：性能优化
@@ -29,24 +78,7 @@ export default defineConfig({
     defaultStrategy: "viewport",
   },
   vite: {
-    plugins: [
-      tailwindcss(),
-      {
-        name: "exclude-preview-png",
-        writeBundle() {
-          // 在构建完成后删除 preview.png
-          const previewPath = path.join("./dist", "preview.png");
-          try {
-            if (fs.existsSync(previewPath)) {
-              fs.unlinkSync(previewPath);
-              console.log("✅ 已排除 preview.png 文件");
-            }
-          } catch (error) {
-            console.warn("⚠️ 无法删除 preview.png:", error.message);
-          }
-        },
-      },
-    ],
+    plugins: [tailwindcss()],
     // 开发环境代理配置
     server: {
       proxy: {
