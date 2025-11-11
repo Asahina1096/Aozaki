@@ -65,8 +65,8 @@ export function ServerCard({ server }: ServerCardProps) {
           />
         </div>
         <CardDescription className="flex flex-col gap-1 text-xs text-muted-foreground">
-          {/* 第一行：运行时间 + IPV4 + IPV6 + 地区 */}
-          <div className="flex flex-wrap items-center gap-2">
+          {/* 第一行：运行时间 + 类型 + IPV4 + IPV6 + 地区 */}
+          <div className="flex flex-nowrap items-center gap-1.5 overflow-x-auto whitespace-nowrap">
             {server.uptime ? (
               <span className={INFO_PILL_CLASS}>
                 <Clock4 className="h-3.5 w-3.5" />
@@ -78,6 +78,12 @@ export function ServerCard({ server }: ServerCardProps) {
               <span className={INFO_PILL_CLASS}>
                 <Clock4 className="h-3.5 w-3.5" />
                 <span className="leading-none">--</span>
+              </span>
+            )}
+            {server.type && (
+              <span className={INFO_PILL_CLASS}>
+                <Server className="h-3.5 w-3.5" />
+                <span className="leading-none">{server.type}</span>
               </span>
             )}
             <span className={INFO_PILL_CLASS}>
@@ -112,15 +118,6 @@ export function ServerCard({ server }: ServerCardProps) {
               <span className={INFO_PILL_CLASS}>
                 <MapPin className="h-3.5 w-3.5" />
                 <span className="leading-none">{server.location}</span>
-              </span>
-            )}
-          </div>
-          {/* 第二行：类型 */}
-          <div className="flex flex-wrap items-center gap-2">
-            {server.type && (
-              <span className={INFO_PILL_CLASS}>
-                <Server className="h-3.5 w-3.5" />
-                <span className="leading-none">{server.type}</span>
               </span>
             )}
           </div>

@@ -123,7 +123,10 @@ export function formatUptime(uptime: string): string {
   // 处理中文格式（如 "28 天"）
   if (uptime.includes("天")) {
     const days = parseInt(uptime.replace(/[^\d]/g, ""), 10);
-    return days > 0 ? `${days}天` : uptime;
+    if (Number.isFinite(days) && days > 0) {
+      return `${days}天`;
+    }
+    return uptime;
   }
 
   // 解析 HH:MM:SS 格式
@@ -142,22 +145,18 @@ export function formatUptime(uptime: string): string {
       return `${days}天`;
     }
 
-    // 小于 1 天：显示小时和分钟（不显示秒）
     const hrs = Math.floor((totalSeconds % (24 * 3600)) / 3600);
-    const mins = Math.floor((totalSeconds % 3600) / 60);
-
-    // 如果有小时，显示 "X时X分"
     if (hrs > 0) {
-      return `${hrs}时${mins}分`;
+      return `${hrs}小时`;
     }
 
-    // 如果只有分钟，显示 "X分"
+    const mins = Math.floor((totalSeconds % 3600) / 60);
     if (mins > 0) {
-      return `${mins}分`;
+      return `${mins}分钟`;
     }
 
-    // 小于 1 分钟，显示 "0分"
-    return "0分";
+    // 小于 1 分钟，显示 "1分钟"
+    return "1分钟";
   }
 
   // 无法解析，返回原始字符串
