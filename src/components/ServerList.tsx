@@ -1,17 +1,22 @@
-import { useEffect, useOptimistic, useRef, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useOptimistic,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { getAPIClient } from "@/lib/api";
 import type { ServerStats, StatsResponse } from "@/lib/types/serverstatus";
 import { ServerCard } from "./ServerCard";
-import { ServerOverview } from "./ServerOverview";
 import { ServerListSkeleton } from "./ServerListSkeleton";
+import { ServerOverview } from "./ServerOverview";
 
 interface ServerListProps {
   refreshInterval?: number; // 刷新间隔（毫秒）
 }
 
-export function ServerList({
-  refreshInterval = 5000,
-}: ServerListProps) {
+export function ServerList({ refreshInterval = 5000 }: ServerListProps) {
   const abortControllerRef = useRef<AbortController | null>(null);
   const statsRef = useRef<StatsResponse | null>(null);
   const [, startTransition] = useTransition();
@@ -22,7 +27,9 @@ export function ServerList({
   const [error, setError] = useState<Error | null>(null);
 
   // 获取服务器数据的函数
-  const fetchServers = async (signal?: AbortSignal) => {
+  // 使用 useCallback 稳定函数引用，避免 useEffect 依赖项警告
+  // setStats、setError 和 statsRef 都是稳定的引用，所以依赖数组可以为空
+  const fetchServers = useCallback(async (signal?: AbortSignal) => {
     try {
       const client = getAPIClient();
       const data = await client.getStats(signal);
@@ -39,7 +46,7 @@ export function ServerList({
       setError(err instanceof Error ? err : new Error("未知错误"));
       throw err;
     }
-  };
+  }, []);
 
   // 初始数据加载
   useEffect(() => {
@@ -61,8 +68,7 @@ export function ServerList({
     return () => {
       abortController.abort();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchServers]);
 
   // useOptimistic: 提供乐观更新的 UI 反馈
   // 在数据刷新期间保持显示当前数据，避免闪烁
@@ -118,7 +124,7 @@ export function ServerList({
         abortControllerRef.current = null;
       }
     };
-  }, [refreshInterval, stats, setOptimisticServers]);
+  }, [refreshInterval, stats, setOptimisticServers, fetchServers]);
 
   // 开发环境：验证 name 字段的唯一性
   if (import.meta.env.DEV && currentServers.length > 0) {
