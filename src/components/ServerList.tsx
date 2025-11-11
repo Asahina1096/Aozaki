@@ -27,7 +27,6 @@ export function ServerList({ refreshInterval = 5000 }: ServerListProps) {
 
   // 获取服务器数据的函数
   // React Compiler 会自动优化函数引用，无需手动 useCallback
-  // setStats、setError 和 statsRef 都是稳定的引用
   async function fetchServers(signal?: AbortSignal) {
     try {
       const client = getAPIClient();
@@ -61,7 +60,6 @@ export function ServerList({ refreshInterval = 5000 }: ServerListProps) {
         // 只有非 AbortError 才会到达这里
         setLoading(false);
         // 错误已经通过 fetchServers 设置到 error 状态
-        // ErrorBoundary 无法捕获异步错误，所以我们需要在渲染时处理
       });
 
     return () => {
@@ -110,7 +108,6 @@ export function ServerList({ refreshInterval = 5000 }: ServerListProps) {
           .catch(() => {
             // 只有非 AbortError 才会到达这里
             // 错误已经通过 fetchServers 设置到 error 状态
-            // 在下次渲染时会抛出错误，触发 ErrorBoundary
           });
       });
     }, refreshInterval);
@@ -157,10 +154,24 @@ export function ServerList({ refreshInterval = 5000 }: ServerListProps) {
     return <ServerListSkeleton />;
   }
 
-  // 如果有错误，抛出错误让 ErrorBoundary 处理
-  // 注意：这只能在同步渲染时工作，异步错误需要通过状态处理
+  // 如果有错误，直接显示错误 UI
   if (error) {
-    throw error;
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <p className="text-lg font-semibold text-destructive">
+          无法加载节点数据
+        </p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {error.message || "请稍后再试。"}
+        </p>
+        <button
+          onClick={() => setError(null)}
+          className="mt-4 rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90"
+        >
+          重试
+        </button>
+      </div>
+    );
   }
 
   // 如果没有数据，显示空状态

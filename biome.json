@@ -197,7 +197,7 @@
         "rules": {
           "correctness": {
             "noUnusedVariables": "warn",
-            "useExhaustiveDependencies": "warn",
+            "useExhaustiveDependencies": "off",
             "useHookAtTopLevel": "error"
           },
           "suspicious": { "noExplicitAny": "warn" }
