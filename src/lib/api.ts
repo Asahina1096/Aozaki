@@ -24,11 +24,26 @@ export class ServerStatusAPI {
     const url = `${this.baseUrl}/json/stats.json`;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
+    let detachParentAbort: (() => void) | undefined;
+
+    if (signal) {
+      if (signal.aborted) {
+        controller.abort();
+      } else {
+        const handleAbort = () => {
+          controller.abort();
+        };
+        signal.addEventListener("abort", handleAbort);
+        detachParentAbort = () => {
+          signal.removeEventListener("abort", handleAbort);
+        };
+      }
+    }
 
     try {
       const response = await fetch(url, {
         cache: "no-store", // 禁用缓存以获取最新数据
-        signal: signal || controller.signal, // 支持请求取消
+        signal: controller.signal, // 同时支持外部取消与内部超时
       });
 
       clearTimeout(timeoutId);
@@ -43,6 +58,8 @@ export class ServerStatusAPI {
     } catch (err) {
       clearTimeout(timeoutId);
       throw err;
+    } finally {
+      detachParentAbort?.();
     }
   }
 }

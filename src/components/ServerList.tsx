@@ -23,6 +23,7 @@ export function ServerList({ refreshInterval = 5000 }: ServerListProps) {
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [isRetrying, setIsRetrying] = useState(false);
 
   // 获取服务器数据的函数
   // React Compiler 会自动优化函数引用，无需手动 useCallback
@@ -139,42 +140,71 @@ export function ServerList({ refreshInterval = 5000 }: ServerListProps) {
     return (b.weight || 0) - (a.weight || 0);
   });
 
-  // 初始加载时显示骨架屏
-  if (loading) {
+  const hasServers = currentServers.length > 0;
+
+  function handleRetry() {
+    const abortController = new AbortController();
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = abortController;
+
+    setIsRetrying(true);
+    setLoading(true);
+
+    fetchServers(abortController.signal)
+      .catch(() => {
+        // 错误状态由 fetchServers 负责
+      })
+      .finally(() => {
+        setIsRetrying(false);
+        setLoading(false);
+      });
+  }
+
+  // 初始加载或无数据时显示骨架屏
+  if (loading && !hasServers) {
     return <ServerListSkeleton />;
   }
 
-  // 如果有错误，直接显示错误 UI
-  if (error) {
+  if (!hasServers) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <p className="text-lg font-semibold text-destructive">
-          无法加载节点数据
+        <p className="text-lg font-semibold text-muted-foreground">
+          {error ? "无法加载节点数据" : "暂无节点数据"}
         </p>
         <p className="mt-2 text-sm text-muted-foreground">
-          {error.message || "请稍后再试。"}
+          {error?.message || "请稍后再试。"}
         </p>
-        <button
-          onClick={() => setError(null)}
-          className="mt-4 rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90"
-        >
-          重试
-        </button>
-      </div>
-    );
-  }
-
-  // 如果没有数据，显示空状态
-  if (currentServers.length === 0) {
-    return (
-      <div className="text-center py-12 text-muted-foreground">
-        暂无节点数据
+        {error && (
+          <button
+            type="button"
+            onClick={handleRetry}
+            disabled={isRetrying}
+            className="mt-4 rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-70"
+          >
+            {isRetrying ? "重试中..." : "重试"}
+          </button>
+        )}
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      {error && (
+        <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+          <p>数据刷新失败：{error.message || "请稍后再试。"}</p>
+          <button
+            type="button"
+            onClick={handleRetry}
+            disabled={isRetrying}
+            className="mt-3 inline-flex items-center rounded-md border border-destructive/30 px-3 py-1.5 text-sm font-medium hover:bg-destructive/10 disabled:opacity-70"
+          >
+            {isRetrying ? "重试中..." : "重新获取数据"}
+          </button>
+        </div>
+      )}
       <ServerOverview servers={optimisticServers} />
       <div className="flex items-center">
         <span className="text-xl md:text-2xl font-bold text-primary">

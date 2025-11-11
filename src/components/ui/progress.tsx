@@ -9,7 +9,10 @@ const Progress = React.forwardRef<
     variant?: "default" | "success" | "warning" | "danger" | "muted" | "auto";
   }
 >(({ className, value = 0, max = 100, variant = "default", ...props }, ref) => {
-  const percentage = Math.min(Math.max((value / max) * 100, 0), 100);
+  const safeMax = typeof max === "number" && max > 0 ? max : 0;
+  const safeValue = typeof value === "number" ? value : 0;
+  const percentage =
+    safeMax === 0 ? 0 : Math.min(Math.max((safeValue / safeMax) * 100, 0), 100);
 
   // 自动根据百分比确定渐变色
   const getAutoGradient = () => {

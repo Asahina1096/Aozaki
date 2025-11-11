@@ -37,7 +37,7 @@ export default defineConfig({
                 if (fs.existsSync(dir)) {
                   const files = fs.readdirSync(dir);
                   const regex = new RegExp(
-                    `^${filePattern.replace(/\*/g, ".*")}$`,
+                    `^${filePattern.replace(/\*/g, ".*")}$`
                   );
                   for (const file of files) {
                     if (regex.test(file)) {
@@ -52,7 +52,9 @@ export default defineConfig({
                 const stats = fs.statSync(pattern);
                 if (stats.isDirectory()) {
                   fs.rmSync(pattern, { recursive: true });
-                  console.log(`✅ 已删除未使用目录: ${path.basename(pattern)}/`);
+                  console.log(
+                    `✅ 已删除未使用目录: ${path.basename(pattern)}/`
+                  );
                 } else {
                   fs.unlinkSync(pattern);
                   console.log(`✅ 已删除未使用文件: ${path.basename(pattern)}`);
