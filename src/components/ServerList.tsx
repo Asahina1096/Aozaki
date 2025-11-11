@@ -1,3 +1,4 @@
+import { LayoutGrid, List } from "lucide-react";
 import {
   useEffect,
   useOptimistic,
@@ -10,6 +11,14 @@ import type { ServerStats, StatsResponse } from "@/lib/types/serverstatus";
 import { ServerCard } from "./ServerCard";
 import { ServerListSkeleton } from "./ServerListSkeleton";
 import { ServerOverview } from "./ServerOverview";
+import { ServerTable } from "./ServerTable";
+
+const VIEW_MODE_OPTIONS = [
+  { id: "grid", label: "卡片", icon: LayoutGrid },
+  { id: "list", label: "列表", icon: List },
+] as const;
+
+type ViewMode = (typeof VIEW_MODE_OPTIONS)[number]["id"];
 
 interface ServerListProps {
   refreshInterval?: number; // 刷新间隔（毫秒）
@@ -24,6 +33,7 @@ export function ServerList({ refreshInterval = 5000 }: ServerListProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
   // 获取服务器数据的函数
   // React Compiler 会自动优化函数引用，无需手动 useCallback
@@ -206,19 +216,44 @@ export function ServerList({ refreshInterval = 5000 }: ServerListProps) {
         </div>
       )}
       <ServerOverview servers={optimisticServers} />
-      <div className="flex items-center">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <span className="text-xl md:text-2xl font-bold text-primary">
           节点列表
         </span>
+        <div className="inline-flex items-center rounded-md border bg-muted/60 p-1">
+          {VIEW_MODE_OPTIONS.map(({ id, label, icon: Icon }) => {
+            const active = viewMode === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setViewMode(id)}
+                aria-pressed={active}
+                className={`inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium transition ${
+                  active
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                <span>{label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {sortedServers.map((server) => (
-          // 使用 server.name 作为 key：
-          // 根据 ServerStatus-Rust 文档，name 字段是唯一标识符（不可重复）
-          // 参考：https://github.com/zdz/ServerStatus-Rust
-          <ServerCard key={server.name} server={server} />
-        ))}
-      </div>
+      {viewMode === "grid" ? (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {sortedServers.map((server) => (
+            // 使用 server.name 作为 key：
+            // 根据 ServerStatus-Rust 文档，name 字段是唯一标识符（不可重复）
+            // 参考：https://github.com/zdz/ServerStatus-Rust
+            <ServerCard key={server.name} server={server} />
+          ))}
+        </div>
+      ) : (
+        <ServerTable servers={sortedServers} />
+      )}
     </div>
   );
 }
