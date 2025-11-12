@@ -88,6 +88,25 @@
 </header>
 
 <script>
+  // 类型定义
+  type ThemeMode = "light" | "system" | "dark";
+
+  interface AppearanceAPI {
+    get: () => ThemeMode;
+    set: (mode: ThemeMode) => void;
+  }
+
+  interface ThemeChangeEvent extends Event {
+    detail?: { mode: ThemeMode };
+  }
+
+  declare global {
+    interface Window {
+      __aozakiAppearance?: AppearanceAPI;
+      __aozakiThemeChangeHandler?: (event: Event) => void;
+    }
+  }
+
   // 主题切换逻辑
   function initThemeToggle() {
     const toggle = document.getElementById("theme-toggle");
@@ -96,8 +115,8 @@
     const api = window.__aozakiAppearance;
     if (!api) return;
 
-    const MODE_SEQUENCE = ["light", "system", "dark"];
-    const MODE_LABELS = {
+    const MODE_SEQUENCE: ThemeMode[] = ["light", "system", "dark"];
+    const MODE_LABELS: Record<ThemeMode, string> = {
       light: "浅色模式",
       system: "跟随系统",
       dark: "深色模式",
@@ -109,7 +128,8 @@
       dark: toggle.querySelector('[data-theme-icon="dark"]'),
     };
 
-    function updateButton(mode) {
+    function updateButton(mode: ThemeMode) {
+      if (!toggle) return;
       toggle.dataset.currentMode = mode;
       toggle.setAttribute("aria-label", `主题：${MODE_LABELS[mode]}`);
       Object.entries(iconMap).forEach(([key, element]) => {
@@ -118,21 +138,24 @@
       });
     }
 
-    function getNextMode(current) {
+    function getNextMode(current: ThemeMode): ThemeMode {
       const index = MODE_SEQUENCE.indexOf(current);
       if (index === -1) return MODE_SEQUENCE[0];
       return MODE_SEQUENCE[(index + 1) % MODE_SEQUENCE.length];
     }
 
     function handleClick() {
+      if (!api) return;
       const current = api.get();
       const next = getNextMode(current);
       api.set(next);
     }
 
-    function handleThemeChange(event) {
+    function handleThemeChange(event: Event) {
+      if (!api) return;
+      const themeEvent = event as ThemeChangeEvent;
       const mode =
-        (event?.detail && event.detail.mode) || api.get();
+        (themeEvent?.detail && themeEvent.detail.mode) || api.get();
       updateButton(mode);
     }
 

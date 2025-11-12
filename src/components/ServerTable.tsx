@@ -91,8 +91,8 @@ export function ServerTable({ servers }: ServerTableProps) {
                     {cpuPercent}%
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    负载 {formatLoad(server.load_1)}/
-                    {formatLoad(server.load_5)}/{formatLoad(server.load_15)}
+                    负载 {formatLoad(server.load_1)}/{formatLoad(server.load_5)}
+                    /{formatLoad(server.load_15)}
                   </p>
                 </div>
 
@@ -118,7 +118,8 @@ export function ServerTable({ servers }: ServerTableProps) {
 
                 <div className="text-center">
                   <p className="text-base font-semibold text-foreground">
-                    {formatSpeed(server.network_tx)} ↑ · {formatSpeed(server.network_rx)} ↓
+                    {formatSpeed(server.network_tx)} ↑ ·{" "}
+                    {formatSpeed(server.network_rx)} ↓
                   </p>
                   <p className="text-xs text-muted-foreground">
                     总 {formatBytes(server.network_out)} ↑ /{" "}
