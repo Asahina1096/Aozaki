@@ -12,6 +12,8 @@ const STATUS_PILL_CLASS =
   "inline-flex items-center gap-1 rounded-full border border-border/40 bg-muted/60 px-1.5 py-0.5 whitespace-nowrap";
 const GRID_TEMPLATE_CLASS =
   "grid grid-cols-[minmax(220px,_2fr)_repeat(4,_minmax(140px,_1fr))]";
+const ROW_CONTAINER_CLASS = `${GRID_TEMPLATE_CLASS} items-center gap-4 rounded-2xl border border-border/60 bg-card/90 px-4 py-4 text-sm shadow-xs transition-all hover:shadow-md`;
+const HEADER_CONTAINER_CLASS = `${GRID_TEMPLATE_CLASS} items-center gap-4 rounded-2xl border border-border/60 bg-card/90 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground shadow-xs`;
 
 interface ServerTableProps {
   servers: ServerStats[];
@@ -21,9 +23,7 @@ export function ServerTable({ servers }: ServerTableProps) {
   return (
     <div className="overflow-x-auto">
       <div className="min-w-[820px] space-y-4 p-2">
-        <div
-          className={`${GRID_TEMPLATE_CLASS} items-center gap-4 rounded-2xl bg-muted/60 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground`}
-        >
+        <div className={HEADER_CONTAINER_CLASS}>
           <span className="text-left">节点名</span>
           <span className="text-center">CPU</span>
           <span className="text-center">内存</span>
@@ -46,10 +46,7 @@ export function ServerTable({ servers }: ServerTableProps) {
             );
 
             return (
-              <div
-                key={server.name}
-                className={`${GRID_TEMPLATE_CLASS} items-center gap-4 rounded-2xl border border-border/60 bg-card/90 px-4 py-4 text-sm shadow-xs transition-all hover:shadow-md`}
-              >
+              <div key={server.name} className={ROW_CONTAINER_CLASS}>
                 <div>
                   <div className="flex items-center gap-2">
                     <span

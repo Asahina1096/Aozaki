@@ -250,6 +250,7 @@ export function ServerList({ refreshInterval = 5000 }: ServerListProps) {
                 key={id}
                 type="button"
                 onClick={() => setViewMode(id)}
+                aria-label={label}
                 aria-pressed={active}
                 className={`inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium transition ${
                   active
@@ -258,7 +259,6 @@ export function ServerList({ refreshInterval = 5000 }: ServerListProps) {
                 }`}
               >
                 <Icon className="h-4 w-4" />
-                <span>{label}</span>
               </button>
             );
           })}
