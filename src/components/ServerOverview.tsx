@@ -42,6 +42,9 @@ export function ServerOverview({ servers }: ServerOverviewProps) {
       ? Math.round((stats.totalCpu / stats.onlineCount) * 10) / 10
       : 0;
 
+  const capsuleClass =
+    "inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground";
+
   return (
     <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
       {/* 总节点数 */}
@@ -52,9 +55,10 @@ export function ServerOverview({ servers }: ServerOverviewProps) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{totalServers}</div>
-          <p className="text-xs text-muted-foreground">
-            在线 {onlineServers} · 离线 {offlineServers}
-          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <span className={capsuleClass}>在线 {onlineServers}</span>
+            <span className={capsuleClass}>离线 {offlineServers}</span>
+          </div>
         </CardContent>
       </Card>
 
@@ -81,10 +85,14 @@ export function ServerOverview({ servers }: ServerOverviewProps) {
               stats.totalRealtimeUpload + stats.totalRealtimeDownload
             )}
           </div>
-          <p className="text-xs text-muted-foreground">
-            ↑ 上传 {formatSpeed(stats.totalRealtimeUpload)}· ↓ 下载{" "}
-            {formatSpeed(stats.totalRealtimeDownload)}
-          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <span className={capsuleClass}>
+              ↑ 上传 {formatSpeed(stats.totalRealtimeUpload)}
+            </span>
+            <span className={capsuleClass}>
+              ↓ 下载 {formatSpeed(stats.totalRealtimeDownload)}
+            </span>
+          </div>
         </CardContent>
       </Card>
 
@@ -98,10 +106,14 @@ export function ServerOverview({ servers }: ServerOverviewProps) {
           <div className="text-2xl font-bold">
             {formatBytes(stats.totalDataUploaded + stats.totalDataDownloaded)}
           </div>
-          <p className="text-xs text-muted-foreground">
-            ↑ 上传 {formatBytes(stats.totalDataUploaded)}· ↓ 下载{" "}
-            {formatBytes(stats.totalDataDownloaded)}
-          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <span className={capsuleClass}>
+              ↑ 上传 {formatBytes(stats.totalDataUploaded)}
+            </span>
+            <span className={capsuleClass}>
+              ↓ 下载 {formatBytes(stats.totalDataDownloaded)}
+            </span>
+          </div>
         </CardContent>
       </Card>
     </div>
