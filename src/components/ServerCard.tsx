@@ -29,6 +29,8 @@ interface ServerCardProps {
 }
 
 const INFO_PILL_CLASS =
+  "inline-flex items-center gap-0.5 rounded-full border border-border/40 bg-muted/60 px-1 py-0.5 whitespace-nowrap text-[0.65rem]";
+const NETWORK_PILL_CLASS =
   "inline-flex items-center gap-1 rounded-full border border-border/40 bg-muted/60 px-1.5 py-0.5 whitespace-nowrap";
 
 export function ServerCard({ server }: ServerCardProps) {
@@ -65,30 +67,30 @@ export function ServerCard({ server }: ServerCardProps) {
           />
         </div>
         <CardDescription className="flex flex-col gap-1 text-xs text-muted-foreground">
-          {/* 第一行：运行时间 + 类型 + IPV4 + IPV6 + 地区 */}
-          <div className="flex flex-nowrap items-center gap-1.5 overflow-x-auto whitespace-nowrap">
+          {/* 第一行：运行时间 + 地区 + IPV4 + IPV6 + 类型 */}
+          <div className="flex flex-nowrap items-center gap-1 overflow-x-auto whitespace-nowrap">
             {server.uptime ? (
               <span className={INFO_PILL_CLASS}>
-                <Clock4 className="h-3.5 w-3.5" />
+                <Clock4 className="h-3 w-3" />
                 <span className="leading-none">
                   {formatUptime(server.uptime)}
                 </span>
               </span>
             ) : (
               <span className={INFO_PILL_CLASS}>
-                <Clock4 className="h-3.5 w-3.5" />
+                <Clock4 className="h-3 w-3" />
                 <span className="leading-none">--</span>
               </span>
             )}
-            {server.type && (
+            {server.location && (
               <span className={INFO_PILL_CLASS}>
-                <Server className="h-3.5 w-3.5" />
-                <span className="leading-none">{server.type}</span>
+                <MapPin className="h-3 w-3" />
+                <span className="leading-none">{server.location}</span>
               </span>
             )}
             <span className={INFO_PILL_CLASS}>
               <div
-                className={`h-2 w-2 rounded-full ${
+                className={`h-1.5 w-1.5 rounded-full ${
                   server.online4 ? "bg-green-500" : "bg-gray-400"
                 }`}
               />
@@ -102,7 +104,7 @@ export function ServerCard({ server }: ServerCardProps) {
             </span>
             <span className={INFO_PILL_CLASS}>
               <div
-                className={`h-2 w-2 rounded-full ${
+                className={`h-1.5 w-1.5 rounded-full ${
                   server.online6 ? "bg-green-500" : "bg-gray-400"
                 }`}
               />
@@ -114,10 +116,10 @@ export function ServerCard({ server }: ServerCardProps) {
                 v6
               </span>
             </span>
-            {server.location && (
+            {server.type && (
               <span className={INFO_PILL_CLASS}>
-                <MapPin className="h-3.5 w-3.5" />
-                <span className="leading-none">{server.location}</span>
+                <Server className="h-3 w-3" />
+                <span className="leading-none">{server.type}</span>
               </span>
             )}
           </div>
@@ -195,13 +197,13 @@ export function ServerCard({ server }: ServerCardProps) {
             <span>网络</span>
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className={`${INFO_PILL_CLASS} justify-between`}>
+            <div className={`${NETWORK_PILL_CLASS} justify-between`}>
               <span className="text-muted-foreground">↑ 上传</span>
               <span className="font-medium">
                 {formatSpeed(server.network_tx)}
               </span>
             </div>
-            <div className={`${INFO_PILL_CLASS} justify-between`}>
+            <div className={`${NETWORK_PILL_CLASS} justify-between`}>
               <span className="text-muted-foreground">↓ 下载</span>
               <span className="font-medium">
                 {formatSpeed(server.network_rx)}
@@ -209,13 +211,13 @@ export function ServerCard({ server }: ServerCardProps) {
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className={`${INFO_PILL_CLASS} justify-between`}>
+            <div className={`${NETWORK_PILL_CLASS} justify-between`}>
               <span className="text-muted-foreground">↑ 总上传</span>
               <span className="font-medium">
                 {formatBytes(server.network_out)}
               </span>
             </div>
-            <div className={`${INFO_PILL_CLASS} justify-between`}>
+            <div className={`${NETWORK_PILL_CLASS} justify-between`}>
               <span className="text-muted-foreground">↓ 总下载</span>
               <span className="font-medium">
                 {formatBytes(server.network_in)}

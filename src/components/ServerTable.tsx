@@ -1,3 +1,4 @@
+import { Clock4, MapPin, Server } from "lucide-react";
 import type { ServerStats } from "@/lib/types/serverstatus";
 import {
   formatBytes,
@@ -7,9 +8,9 @@ import {
 } from "@/lib/utils";
 
 const INFO_PILL_CLASS =
-  "inline-flex items-center gap-1 rounded-full border border-border/40 bg-muted/60 px-1.5 py-0.5 whitespace-nowrap";
+  "inline-flex items-center gap-0.5 rounded-full border border-border/40 bg-muted/60 px-1 py-0.5 whitespace-nowrap text-[0.65rem]";
 const STATUS_PILL_CLASS =
-  "inline-flex items-center gap-1 rounded-full border border-border/40 bg-muted/60 px-1.5 py-0.5 whitespace-nowrap";
+  "inline-flex items-center gap-0.5 rounded-full border border-border/40 bg-muted/60 px-1 py-0.5 whitespace-nowrap text-[0.65rem]";
 const GRID_TEMPLATE_CLASS =
   "grid grid-cols-[minmax(220px,_2fr)_repeat(4,_minmax(140px,_1fr))]";
 const ROW_CONTAINER_CLASS = `${GRID_TEMPLATE_CLASS} items-center gap-4 rounded-2xl border border-border/60 bg-card/90 px-4 py-4 text-sm shadow-xs transition-all hover:shadow-md`;
@@ -61,15 +62,27 @@ export function ServerTable({ servers }: ServerTableProps) {
                       {server.alias || server.name}
                     </p>
                   </div>
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  <div className="mt-2 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
                     <span className={INFO_PILL_CLASS}>
-                      {server.uptime ? formatUptime(server.uptime) : "--"}
+                      <Clock4 className="h-3 w-3" />
+                      <span className="leading-none">
+                        {server.uptime ? formatUptime(server.uptime) : "--"}
+                      </span>
                     </span>
                     {server.location && (
-                      <span className={INFO_PILL_CLASS}>{server.location}</span>
+                      <span className={INFO_PILL_CLASS}>
+                        <MapPin className="h-3 w-3" />
+                        <span className="leading-none">{server.location}</span>
+                      </span>
                     )}
                     <StatusPill label="v4" online={ipv4Online} />
                     <StatusPill label="v6" online={ipv6Online} />
+                    {server.type && (
+                      <span className={INFO_PILL_CLASS}>
+                        <Server className="h-3 w-3" />
+                        <span className="leading-none">{server.type}</span>
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -129,7 +142,7 @@ function StatusPill({ label, online }: { label: string; online: boolean }) {
   return (
     <span className={STATUS_PILL_CLASS}>
       <span
-        className={`h-2 w-2 rounded-full ${
+        className={`h-1.5 w-1.5 rounded-full ${
           online ? "bg-green-500" : "bg-gray-400"
         }`}
       />
