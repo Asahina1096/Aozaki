@@ -43,7 +43,7 @@ export function ServerOverview({ servers }: ServerOverviewProps) {
       : 0;
 
   const capsuleClass =
-    "inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground";
+    "inline-flex items-center rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground";
 
   return (
     <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">

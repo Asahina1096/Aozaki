@@ -4,17 +4,18 @@
 > **作者**: Asahina1096
 > **许可证**: GNU GPLv3
 
-一个现代化的 ServerStatus-Rust 前端监控面板，基于 Astro、React、TailwindCSS 和 shadcn/ui 构建。
+一个现代化的 ServerStatus-Rust 前端监控面板，基于 Astro、React 19、TailwindCSS 4 和 shadcn/ui 构建。
 
 ---
 
 ## ✨ 特性
 
 - 🎨 **现代化 UI**: 基于 shadcn/ui 的精美界面设计
-- 🌓 **暗色主题**: 支持明暗主题切换
-- 📊 **实时监控**: 自动刷新服务器状态数据
-- 📱 **响应式布局**: 完美适配各种设备
-- ⚡ **极速加载**: Astro 静态站点生成，部署在 Vercel 边缘网络
+- 🌓 **暗色主题**: 支持明暗主题切换，状态持久化
+- 📊 **实时监控**: 2 秒自动刷新服务器状态数据
+- 📱 **响应式布局**: 完美适配各种设备，支持卡片和表格视图
+- ⚡ **极速加载**: Astro 静态站点生成 + React 19 编译器优化
+- 🔍 **智能视图**: 支持卡片视图和表格视图切换，视图状态持久化
 
 ---
 
@@ -57,7 +58,7 @@ cd aozaki
 
 ### 2. 安装依赖
 
-**推荐使用 Bun** (项目已配置 `packageManager` 为 bun)：
+**推荐使用 Bun** (项目已配置 `packageManager` 为 bun@1.3.2)：
 
 ```bash
 bun install
@@ -74,6 +75,9 @@ cp .env.example .env
 编辑 `.env` 文件：
 
 ```env
+# 开发环境：留空使用 /api 代理（开发服务器会代理到默认后端）
+# 生产环境：填写完整的后端 URL
+# 注意：不要以斜杠结尾
 PUBLIC_API_URL=https://your-serverstatus-backend.com
 ```
 
@@ -90,6 +94,8 @@ bun run dev
 ```bash
 bun run build
 ```
+
+构建产物会生成在 `dist/` 目录。
 
 ---
 
@@ -118,7 +124,7 @@ vercel
 2. 连接你的 Git 仓库
 3. 配置环境变量:
    - 变量名: `PUBLIC_API_URL`
-   - 值: 你的 ServerStatus-Rust 后端地址
+   - 值: 你的 ServerStatus-Rust 后端地址（不要以斜杠结尾）
 4. 点击 Deploy
 
 ### 方式三: 一键部署
@@ -135,14 +141,29 @@ vercel
 | -------------- | -------------------------- | ---- | -------------------------- |
 | PUBLIC_API_URL | ServerStatus-Rust API 地址 | 是   | https://status.example.com |
 
+**注意事项**:
+- 开发环境可以留空，使用开发代理（配置在 `astro.config.mjs`）
+- 生产环境必须填写完整的后端 URL
+- URL 不要以斜杠结尾
+
 ### 刷新间隔
 
 在 `src/pages/index.astro` 中可以修改刷新间隔：
 
 ```astro
-<ServerList client:visible refreshInterval={5000} />
-<!-- 5000 = 5秒，单位为毫秒 -->
+<ServerList client:visible refreshInterval={2000} />
+<!-- 2000 = 2秒，单位为毫秒 -->
 ```
+
+默认配置为 2 秒（2000ms）自动刷新。
+
+### 开发代理
+
+开发环境中，`astro.config.mjs` 配置了 API 代理：
+
+- 代理路径: `/api`
+- 默认后端: `https://lovejk.cc`
+- 可通过 `VITE_API_BASE_URL` 环境变量覆盖
 
 ---
 
@@ -153,37 +174,45 @@ vercel
 ```
 aozaki/
 ├── src/
-│   ├── components/        # React & Astro 组件
-│   │   ├── ServerCard.tsx # 服务器卡片 (React)
-│   │   ├── ServerList.tsx # 服务器列表 (React)
+│   ├── components/          # React & Astro 组件
+│   │   ├── ServerCard.tsx   # 服务器卡片 (React)
+│   │   ├── ServerList.tsx   # 服务器列表 (React)
+│   │   ├── ServerTable.tsx  # 服务器表格 (React)
 │   │   ├── ServerOverview.tsx # 服务器概览 (React)
-│   │   ├── Header.astro   # 页头 (Astro 静态组件)
-│   │   ├── Footer.astro   # 页脚 (Astro 静态组件)
-│   │   └── ui/            # shadcn/ui 基础组件
-│   ├── layouts/           # Astro 布局
-│   ├── lib/               # 工具库
-│   │   ├── api.ts         # API 客户端
-│   │   ├── types/         # TypeScript 类型定义
-│   │   └── utils.ts       # 工具函数
-│   ├── pages/             # Astro 页面
-│   └── styles/            # 全局样式
-├── public/                # 静态资源
-├── .env.example           # 环境变量示例
-├── astro.config.mjs       # Astro 配置
-├── biome.json             # Biome 配置
-├── vercel.json            # Vercel 配置
-└── package.json           # 项目配置
+│   │   ├── Header.astro     # 页头 (Astro 静态组件)
+│   │   ├── Footer.astro     # 页脚 (Astro 静态组件)
+│   │   └── ui/              # shadcn/ui 基础组件
+│   ├── layouts/             # Astro 布局
+│   │   └── BaseLayout.astro # 基础布局
+│   ├── lib/                 # 工具库
+│   │   ├── api.ts           # API 客户端 (单例模式)
+│   │   ├── types/           # TypeScript 类型定义
+│   │   └── utils.ts         # 工具函数
+│   ├── pages/               # Astro 页面
+│   │   └── index.astro      # 主页
+│   └── styles/              # 全局样式
+├── public/                  # 静态资源
+├── .env.example             # 环境变量示例
+├── astro.config.mjs         # Astro 配置
+├── biome.json               # Biome 配置
+├── vercel.json              # Vercel 配置
+├── CLAUDE.md                # Claude Code 项目指南
+└── package.json             # 项目配置
 ```
 
 ### 可用命令
 
+#### 开发命令
+
 ```bash
-# 开发
-bun run dev              # 启动开发服务器
+bun run dev              # 启动开发服务器 (http://localhost:4321)
 bun run build            # 构建生产版本
 bun run preview          # 预览生产构建
+```
 
-# 代码质量
+#### 代码质量
+
+```bash
 bun run check            # Astro 类型检查 + 清理缓存
 bun run check:all        # 运行所有检查 (类型 + lint + 格式)
 bun run biome:check      # Biome lint 和格式检查
@@ -192,23 +221,71 @@ bun run lint             # 仅 lint 检查
 bun run lint:fix         # 自动修复 lint 问题
 bun run format           # 代码格式化
 bun run format:check     # 检查代码格式
+```
 
-# 清理
-bun run clean            # 清理构建文件
+#### 清理命令
+
+```bash
+bun run clean            # 清理构建文件 (dist、.astro、cache、*.zip)
 bun run clean:all        # 清理所有文件 (包括 node_modules)
+```
+
+### 架构说明
+
+#### 混合渲染策略
+
+- **静态组件** (Astro): Header、Footer、BaseLayout - 构建时渲染
+- **交互组件** (React): ServerList、ServerCard、ServerTable、ServerOverview - 客户端水合
+- React 组件使用 `client:visible` 指令，视口可见时加载
+- React 19 配合 babel-plugin-react-compiler 实现自动优化
+
+#### 数据流
+
+1. `ServerList.tsx` 通过 `getAPIClient()` 从 ServerStatus-Rust API 获取数据
+2. API 客户端 (`src/lib/api.ts`) 处理请求，支持超时和中止信号
+3. 数据符合 `StatsResponse` 类型 (`src/lib/types/serverstatus.ts`)
+4. `ServerList` 将数据传递给 `ServerOverview` (统计信息) 和 `ServerCard` (服务器列表)
+5. 自动刷新由 `refreshInterval` 属性控制 (默认: 2000ms)
+
+#### 性能优化
+
+- React 代码分块 (`astro.config.mjs`)
+- 基于视口的预取策略
+- 内联样式表优化
+- 自动移除 preview.png (通过自定义 Vite 插件)
+
+---
+
+## 🎨 代码风格
+
+### Biome 配置
+
+- **格式化**: 2 空格缩进，80 字符行宽，LF 换行，双引号
+- **Linter**: 严格规则，`noExplicitAny` 为错误级别
+- **TypeScript**: `noUnusedVariables` 为错误级别
+- **Astro**: 前端脚本中 `noUnusedVariables` 被禁用
+
+### 导入别名
+
+使用 `@/` 作为 src 目录的别名：
+
+```typescript
+import { ServerList } from "@/components/ServerList";
+import { getAPIClient } from "@/lib/api";
 ```
 
 ---
 
 ## 🔗 相关链接
 
-- [ServerStatus-Rust](https://github.com/zdz/ServerStatus-Rust)
-- [Astro 官方文档](https://docs.astro.build/)
-- [shadcn/ui 文档](https://ui.shadcn.com/)
-- [TailwindCSS 文档](https://tailwindcss.com/)
-- [Biome 文档](https://biomejs.dev/)
-- [Bun 文档](https://bun.sh/docs)
-- [Vercel 文档](https://vercel.com/docs)
+- [ServerStatus-Rust](https://github.com/zdz/ServerStatus-Rust) - 后端服务
+- [Astro 官方文档](https://docs.astro.build/) - 静态站点生成器
+- [shadcn/ui 文档](https://ui.shadcn.com/) - UI 组件库
+- [TailwindCSS 文档](https://tailwindcss.com/) - CSS 框架
+- [React 19 文档](https://react.dev/) - React 官方文档
+- [Biome 文档](https://biomejs.dev/) - 代码工具
+- [Bun 文档](https://bun.sh/docs) - JavaScript 运行时
+- [Vercel 文档](https://vercel.com/docs) - 部署平台
 
 ---
 
@@ -221,3 +298,17 @@ bun run clean:all        # 清理所有文件 (包括 node_modules)
 ## 🤝 贡献
 
 欢迎提交 Issue 和 Pull Request！
+
+在提交代码前，请确保：
+
+1. 运行 `bun run check:all` 确保代码质量
+2. 遵循项目的代码风格 (Biome 配置)
+3. 更新相关文档
+
+---
+
+## 💡 致谢
+
+- [ServerStatus-Rust](https://github.com/zdz/ServerStatus-Rust) - 提供后端监控服务
+- [shadcn/ui](https://ui.shadcn.com/) - 提供精美的 UI 组件
+- [Astro](https://astro.build/) - 提供强大的静态站点生成能力

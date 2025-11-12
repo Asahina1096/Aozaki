@@ -37,43 +37,58 @@ bun run clean:all        # Remove everything including node_modules
 
 ### Hybrid Rendering Strategy
 - **Static components** (Astro): Header, Footer, BaseLayout - rendered at build time
-- **Interactive components** (React): ServerList, ServerCard, ServerOverview - hydrated client-side with `client:visible`
-- React components use React 19 with babel-plugin-react-compiler for automatic optimization
+- **Interactive components** (React): ServerList, ServerCard, ServerTable, ServerOverview - hydrated client-side with `client:visible`
+- React components use React 19 with babel-plugin-react-compiler for automatic optimization (no need for manual useCallback/useMemo)
 
 ### Data Flow
 1. `ServerList.tsx` fetches data from ServerStatus-Rust API via `getAPIClient()`
 2. API client (`src/lib/api.ts`) handles requests with timeout and abort signal support
 3. Data conforms to `StatsResponse` type from `src/lib/types/serverstatus.ts`
-4. `ServerList` passes data to `ServerOverview` (statistics) and `ServerCard` (individual servers)
+4. `ServerList` passes data to `ServerOverview` (statistics) and `ServerCard`/`ServerTable` (individual servers)
 5. Auto-refresh controlled by `refreshInterval` prop (default: 2000ms in index.astro:19)
+
+### State Management
+- `ServerList` uses React 19's `useOptimistic` hook for smooth UI updates during data refreshes
+- View mode (grid/list) persists to localStorage via `VIEW_MODE_STORAGE_KEY`
+- AbortController pattern with refs for request cancellation on component unmount or re-fetch
+- React Compiler automatically optimizes function references and derived state - avoid manual memoization
 
 ### API Configuration
 - Backend URL configured via `PUBLIC_API_URL` environment variable
-- Dev proxy in astro.config.mjs:51-68 forwards `/api` to backend (default: https://lovejk.cc)
+- Dev proxy in astro.config.mjs:88-103 forwards `/api` to backend (default: https://lovejk.cc)
 - API endpoint: `/json/stats.json`
 - Client caching: Singleton pattern per baseUrl in `getAPIClient()`
+- Requests use `cache: "no-store"` to ensure fresh data
 
 ### Performance Optimizations
-- React chunk splitting (astro.config.mjs:84-86)
-- Viewport-based prefetching (astro.config.mjs:27-30)
-- Inline stylesheets set to "auto" (astro.config.mjs:101)
-- Custom Vite plugin removes preview.png from dist (astro.config.mjs:34-48)
+- React chunk splitting (astro.config.mjs:119-120)
+- Viewport-based prefetching (astro.config.mjs:78-81)
+- Inline stylesheets set to "auto" (astro.config.mjs:135)
+- Custom Astro integration removes unused files from dist (astro.config.mjs:20-69)
+- esbuild minification and optimized chunk naming (astro.config.mjs:112-125)
 
 ## Code Style
 
 ### Biome Configuration
 - **Formatter**: 2 spaces, 80 char line width, LF endings, double quotes
 - **Linter**: Strict rules with `noExplicitAny` as error (warn in JS/TS files)
-- **TypeScript**: `noUnusedVariables` is error, `useExhaustiveDependencies` disabled
+- **TypeScript**: `noUnusedVariables` is error, `useExhaustiveDependencies` disabled (React Compiler handles deps)
 - **Astro files**: `noUnusedVariables` disabled for frontmatter
 
 ### Import Aliases
 Use `@/` for src imports (e.g., `import { ServerList } from "@/components/ServerList"`)
 
+### React Patterns
+- Use React 19 features: `useOptimistic`, `useTransition`
+- React Compiler is enabled - do NOT manually wrap with `useCallback` or `useMemo`
+- Server keys use `server.name` (unique identifier per ServerStatus-Rust spec)
+- Dev environment validates name uniqueness (ServerList.tsx:149-164)
+
 ## Key Files
 
-- `src/lib/api.ts` - ServerStatusAPI client with singleton pattern
+- `src/lib/api.ts` - ServerStatusAPI client with singleton pattern and abort signal support
 - `src/lib/types/serverstatus.ts` - Complete type definitions for API responses
+- `src/components/ServerList.tsx` - Main data fetching component with optimistic updates
 - `astro.config.mjs` - Astro config with React integration, proxy, and performance settings
 - `src/pages/index.astro` - Main page with ServerList component
 
@@ -87,7 +102,8 @@ Optional (dev only):
 
 ## Notes
 
-- Package manager: Bun 1.3.0 (enforced via packageManager field)
+- Package manager: Bun 1.3.2 (enforced via packageManager field)
 - ServerStatus-Rust expects `/json/stats.json` endpoint
 - Refresh interval can be modified in src/pages/index.astro:19
-- Build output excludes preview.png automatically
+- Build output excludes preview.png automatically via custom Astro integration
+- Server sorting: online servers first, then by weight (descending)
