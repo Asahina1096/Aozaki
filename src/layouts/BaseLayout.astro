@@ -28,46 +28,74 @@ const {
       is:inline 指令确保脚本在 HTML 解析前同步执行，防止主题闪烁
     -->
     <script is:inline>
-      // 立即执行，无需等待 DOM 加载
-      (function() {
-        const stored = localStorage.getItem("appearance");
-        const theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      (function () {
+        const STORAGE_KEY = "appearance";
+        const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+        const root = document.documentElement;
 
-        // 在 HTML 解析时立即应用主题，避免闪烁
-        if (theme === "dark") {
-          document.documentElement.classList.add("dark");
+        const isValid = (value) =>
+          value === "light" || value === "dark" || value === "system";
+
+        function getStoredMode() {
+          const stored = localStorage.getItem(STORAGE_KEY);
+          return isValid(stored) ? stored : "system";
         }
+
+        function resolveMode(mode) {
+          return mode === "system"
+            ? mediaQuery.matches
+              ? "dark"
+              : "light"
+            : mode;
+        }
+
+        function dispatch(mode) {
+          window.dispatchEvent(
+            new CustomEvent("aozaki-theme-change", {
+              detail: { mode, resolved: resolveMode(mode) },
+            })
+          );
+        }
+
+        function apply(mode) {
+          const resolved = resolveMode(mode);
+          root.dataset.appearance = mode;
+          if (resolved === "dark") {
+            root.classList.add("dark");
+          } else {
+            root.classList.remove("dark");
+          }
+          dispatch(mode);
+        }
+
+        function set(mode) {
+          const next = isValid(mode) ? mode : "system";
+          localStorage.setItem(STORAGE_KEY, next);
+          apply(next);
+        }
+
+        window.__aozakiAppearance = {
+          get: getStoredMode,
+          set,
+          apply,
+        };
+
+        mediaQuery.addEventListener("change", () => {
+          if (getStoredMode() === "system") {
+            apply("system");
+          }
+        });
+
+        document.addEventListener("astro:after-swap", () => {
+          apply(getStoredMode());
+        });
+
+        apply(getStoredMode());
       })();
     </script>
   </head>
   <body>
     <slot />
     <SpeedInsights />
-
-    <!-- 主题持久化脚本：监听主题变化并保存到 localStorage -->
-    <script is:inline>
-      // MutationObserver 用于监听主题切换并保存偏好
-      const observer = new MutationObserver(() => {
-        const isDark = document.documentElement.classList.contains("dark");
-        localStorage.setItem("appearance", isDark ? "dark" : "light");
-      });
-
-      observer.observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: ["class"],
-      });
-
-      // 支持 Astro View Transitions 的页面切换
-      document.addEventListener("astro:after-swap", () => {
-        const stored = localStorage.getItem("appearance");
-        const theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-
-        if (theme === "dark") {
-          document.documentElement.classList.add("dark");
-        } else {
-          document.documentElement.classList.remove("dark");
-        }
-      });
-    </script>
   </body>
 </html>

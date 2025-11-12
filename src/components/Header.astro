@@ -18,47 +18,70 @@
     <div class="flex items-center gap-2">
       <button
         id="theme-toggle"
-        class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10"
+        class="inline-flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background hover:text-foreground"
         aria-label="切换主题"
+        data-current-mode="system"
       >
-        <!-- Sun Icon (visible in light mode) -->
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="dark:hidden"
-        >
-          <circle cx="12" cy="12" r="4"></circle>
-          <path d="M12 2v2"></path>
-          <path d="M12 20v2"></path>
-          <path d="m4.93 4.93 1.41 1.41"></path>
-          <path d="m17.66 17.66 1.41 1.41"></path>
-          <path d="M2 12h2"></path>
-          <path d="M20 12h2"></path>
-          <path d="m6.34 17.66-1.41 1.41"></path>
-          <path d="m19.07 4.93-1.41 1.41"></path>
-        </svg>
-        <!-- Moon Icon (visible in dark mode) -->
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="hidden dark:block"
-        >
-          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
-        </svg>
+        <span class="sr-only">切换主题</span>
+        <span data-theme-icon="light" class="theme-icon">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2"></path>
+            <path d="M12 20v2"></path>
+            <path d="m4.93 4.93 1.41 1.41"></path>
+            <path d="m17.66 17.66 1.41 1.41"></path>
+            <path d="M2 12h2"></path>
+            <path d="M20 12h2"></path>
+            <path d="m6.34 17.66-1.41 1.41"></path>
+            <path d="m19.07 4.93-1.41 1.41"></path>
+          </svg>
+        </span>
+        <span data-theme-icon="system" class="theme-icon hidden">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M12 2v2" />
+            <path
+              d="M14.837 16.385a6 6 0 1 1-7.223-7.222c.624-.147.97.66.715 1.248a4 4 0 0 0 5.26 5.259c.589-.255 1.396.09 1.248.715"
+            />
+            <path d="M16 12a4 4 0 0 0-4-4" />
+            <path d="m19 5-1.256 1.256" />
+            <path d="M20 12h2" />
+          </svg>
+        </span>
+        <span data-theme-icon="dark" class="theme-icon hidden">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+          </svg>
+        </span>
       </button>
     </div>
   </div>
@@ -68,14 +91,65 @@
   // 主题切换逻辑
   function initThemeToggle() {
     const toggle = document.getElementById("theme-toggle");
-    if (!toggle) return;
+    if (!toggle || toggle.dataset.bound === "true") return;
 
-    toggle.addEventListener("click", () => {
-      document.documentElement.classList.toggle("dark");
-    });
+    const api = window.__aozakiAppearance;
+    if (!api) return;
+
+    const MODE_SEQUENCE = ["light", "system", "dark"];
+    const MODE_LABELS = {
+      light: "浅色模式",
+      system: "跟随系统",
+      dark: "深色模式",
+    };
+
+    const iconMap = {
+      light: toggle.querySelector('[data-theme-icon="light"]'),
+      system: toggle.querySelector('[data-theme-icon="system"]'),
+      dark: toggle.querySelector('[data-theme-icon="dark"]'),
+    };
+
+    function updateButton(mode) {
+      toggle.dataset.currentMode = mode;
+      toggle.setAttribute("aria-label", `主题：${MODE_LABELS[mode]}`);
+      Object.entries(iconMap).forEach(([key, element]) => {
+        if (!element) return;
+        element.classList.toggle("hidden", key !== mode);
+      });
+    }
+
+    function getNextMode(current) {
+      const index = MODE_SEQUENCE.indexOf(current);
+      if (index === -1) return MODE_SEQUENCE[0];
+      return MODE_SEQUENCE[(index + 1) % MODE_SEQUENCE.length];
+    }
+
+    function handleClick() {
+      const current = api.get();
+      const next = getNextMode(current);
+      api.set(next);
+    }
+
+    function handleThemeChange(event) {
+      const mode =
+        (event?.detail && event.detail.mode) || api.get();
+      updateButton(mode);
+    }
+
+    toggle.addEventListener("click", handleClick);
+    if (window.__aozakiThemeChangeHandler) {
+      window.removeEventListener(
+        "aozaki-theme-change",
+        window.__aozakiThemeChangeHandler
+      );
+    }
+    window.__aozakiThemeChangeHandler = handleThemeChange;
+    window.addEventListener("aozaki-theme-change", handleThemeChange);
+    toggle.dataset.bound = "true";
+
+    updateButton(api.get());
   }
 
-  // 初始化
   initThemeToggle();
 
   // 支持 Astro View Transitions

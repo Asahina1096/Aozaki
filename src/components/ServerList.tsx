@@ -18,6 +18,8 @@ const VIEW_MODE_OPTIONS = [
   { id: "list", label: "列表", icon: List },
 ] as const;
 
+const VIEW_MODE_STORAGE_KEY = "aozaki-server-view-mode";
+
 type ViewMode = (typeof VIEW_MODE_OPTIONS)[number]["id"];
 
 interface ServerListProps {
@@ -34,6 +36,7 @@ export function ServerList({ refreshInterval = 5000 }: ServerListProps) {
   const [error, setError] = useState<Error | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const isFirstViewModeRender = useRef(true);
 
   // 获取服务器数据的函数
   // React Compiler 会自动优化函数引用，无需手动 useCallback
@@ -122,6 +125,25 @@ export function ServerList({ refreshInterval = 5000 }: ServerListProps) {
       }
     };
   }, [refreshInterval, stats]);
+
+  // 在客户端读取本地偏好
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const stored = window.localStorage.getItem(VIEW_MODE_STORAGE_KEY);
+    if (stored === "grid" || stored === "list") {
+      setViewMode(stored);
+    }
+  }, []);
+
+  // 持久化视图偏好
+  useEffect(() => {
+    if (isFirstViewModeRender.current) {
+      isFirstViewModeRender.current = false;
+      return;
+    }
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(VIEW_MODE_STORAGE_KEY, viewMode);
+  }, [viewMode]);
 
   // 开发环境：验证 name 字段的唯一性
   if (import.meta.env.DEV && currentServers.length > 0) {
