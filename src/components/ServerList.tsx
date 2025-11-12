@@ -220,7 +220,7 @@ export function ServerList({ refreshInterval = 5000 }: ServerListProps) {
         <span className="text-xl md:text-2xl font-bold text-primary">
           节点列表
         </span>
-        <div className="inline-flex items-center rounded-md border bg-muted/60 p-1">
+        <div className="hidden md:inline-flex items-center rounded-md border bg-muted/60 p-1">
           {VIEW_MODE_OPTIONS.map(({ id, label, icon: Icon }) => {
             const active = viewMode === id;
             return (
