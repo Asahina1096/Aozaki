@@ -76,12 +76,21 @@ const {
 
           // 检查是否支持 View Transition API 且不是首次加载
           if (
-            document.startViewTransition &&
+            "startViewTransition" in document &&
             !root.dataset.initialLoad &&
             !window.matchMedia("(prefers-reduced-motion: reduce)").matches
           ) {
-            document.startViewTransition(updateDOM);
+            // 使用 View Transition API 实现整页快照过渡
+            const transition = document.startViewTransition(() => {
+              updateDOM();
+            });
+
+            // 可选：捕获错误以确保在不支持的环境中仍能正常工作
+            transition.ready.catch(() => {
+              updateDOM();
+            });
           } else {
+            // 直接更新 DOM（首次加载或不支持 View Transition）
             updateDOM();
           }
 
