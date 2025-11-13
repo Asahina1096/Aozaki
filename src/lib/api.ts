@@ -26,31 +26,53 @@ export class ServerStatusAPI {
     signal?: AbortSignal,
     timeout = DEFAULT_API_TIMEOUT
   ): Promise<ProcessedStatsResponse> {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
-    let detachParentAbort: (() => void) | undefined;
+    // 使用现代 AbortSignal API 简化超时处理
+    // 如果浏览器不支持 AbortSignal.timeout，回退到传统方法
+    let timeoutSignal: AbortSignal;
+    let timeoutId: NodeJS.Timeout | undefined;
 
+    if (typeof AbortSignal.timeout === "function") {
+      // 现代浏览器：使用 AbortSignal.timeout (Chrome 103+, Firefox 115+)
+      timeoutSignal = AbortSignal.timeout(timeout);
+    } else {
+      // 回退方案：使用 AbortController + setTimeout
+      const controller = new AbortController();
+      timeoutSignal = controller.signal;
+      timeoutId = setTimeout(() => controller.abort(), timeout);
+    }
+
+    // 合并外部信号和超时信号
+    let combinedSignal: AbortSignal;
     if (signal) {
-      if (signal.aborted) {
-        controller.abort();
+      if (typeof AbortSignal.any === "function") {
+        // 现代浏览器：使用 AbortSignal.any (Chrome 116+, Firefox 124+)
+        combinedSignal = AbortSignal.any([signal, timeoutSignal]);
       } else {
-        const handleAbort = () => {
+        // 回退方案：手动处理信号合并
+        const controller = new AbortController();
+        combinedSignal = controller.signal;
+
+        const handleAbort = () => controller.abort();
+        if (signal.aborted) {
           controller.abort();
-        };
-        signal.addEventListener("abort", handleAbort);
-        detachParentAbort = () => {
-          signal.removeEventListener("abort", handleAbort);
-        };
+        } else {
+          signal.addEventListener("abort", handleAbort, { once: true });
+        }
+        if (timeoutSignal.aborted) {
+          controller.abort();
+        } else {
+          timeoutSignal.addEventListener("abort", handleAbort, { once: true });
+        }
       }
+    } else {
+      combinedSignal = timeoutSignal;
     }
 
     try {
       const response = await fetch(this.apiEndpoint, {
         cache: "no-store", // 禁用缓存以获取最新数据
-        signal: controller.signal, // 同时支持外部取消与内部超时
+        signal: combinedSignal,
       });
-
-      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error(
@@ -59,11 +81,11 @@ export class ServerStatusAPI {
       }
 
       return response.json();
-    } catch (err) {
-      clearTimeout(timeoutId);
-      throw err;
     } finally {
-      detachParentAbort?.();
+      // 清理回退方案的 timeout
+      if (timeoutId !== undefined) {
+        clearTimeout(timeoutId);
+      }
     }
   }
 }

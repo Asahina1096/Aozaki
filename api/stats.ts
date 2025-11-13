@@ -4,82 +4,18 @@
  * It also processes data (sorting, statistics) to reduce client-side computation
  */
 
+import type {
+  ProcessedStatsResponse,
+  ServerStats,
+  StatsOverview,
+  StatsResponse,
+} from "../src/lib/types/serverstatus";
+
 /**
  * 缓存配置
  */
 const CACHE_TTL = 2000; // 2秒缓存时间（毫秒）
 const UPSTREAM_TIMEOUT = 10000; // 上游请求超时时间（毫秒）
-
-/**
- * ServerStatus-Rust 类型定义
- */
-interface ServerStats {
-  name: string;
-  alias?: string;
-  type?: string;
-  location?: string;
-  online4: boolean;
-  online6: boolean;
-  uptime: string;
-  load_1: number;
-  load_5: number;
-  load_15: number;
-  cpu: number;
-  memory_total: number;
-  memory_used: number;
-  swap_total: number;
-  swap_used: number;
-  hdd_total: number;
-  hdd_used: number;
-  network_rx: number;
-  network_tx: number;
-  network_in: number;
-  network_out: number;
-  last_network_in?: number;
-  last_network_out?: number;
-  monthstart?: number;
-  labels?: string;
-  custom?: string;
-  gid?: string;
-  weight?: number;
-  disabled?: boolean;
-  latest_ts?: number;
-  si?: boolean;
-  notify?: boolean;
-  vnstat?: boolean;
-  ping_10010?: number;
-  ping_189?: number;
-  ping_10086?: number;
-  time_10010?: number;
-  time_189?: number;
-  time_10086?: number;
-  tcp_count?: number;
-  udp_count?: number;
-  process_count?: number;
-  thread_count?: number;
-}
-
-interface StatsResponse {
-  updated: number;
-  servers: ServerStats[];
-}
-
-interface StatsOverview {
-  totalServers: number;
-  onlineServers: number;
-  offlineServers: number;
-  avgCpu: number;
-  totalRealtimeUpload: number;
-  totalRealtimeDownload: number;
-  totalDataUploaded: number;
-  totalDataDownloaded: number;
-}
-
-interface ProcessedStatsResponse {
-  updated: number;
-  servers: ServerStats[];
-  overview: StatsOverview;
-}
 
 /**
  * 从上游 ServerStatus-Rust 获取并处理数据
@@ -245,12 +181,16 @@ export default async function handler(request: Request): Promise<Response> {
       JSON.stringify({
         error: "Failed to fetch server statistics",
         message: error instanceof Error ? error.message : "Unknown error",
+        code: "UPSTREAM_ERROR",
+        retryAfter: 5, // 建议客户端 5 秒后重试
+        timestamp: Date.now(),
       }),
       {
         status: 502,
         headers: {
           "Content-Type": "application/json",
           "Cache-Control": "no-store",
+          "Retry-After": "5", // 标准 HTTP 重试头
         },
       }
     );

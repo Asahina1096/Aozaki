@@ -8,6 +8,7 @@ import {
   Network,
   Server,
 } from "lucide-react";
+import { memo } from "react";
 import { PILL_STYLES } from "@/lib/constants";
 import type { ServerStats } from "@/lib/types/serverstatus";
 import {
@@ -32,7 +33,9 @@ interface ServerCardProps {
   server: ServerStats;
 }
 
-export function ServerCard({ server }: ServerCardProps) {
+export const ServerCard = memo(function ServerCard({
+  server,
+}: ServerCardProps) {
   const isOnline = server.online4 || server.online6;
   const cpuUsage = server.cpu;
   const memUsage = server.memory_used;
@@ -48,7 +51,10 @@ export function ServerCard({ server }: ServerCardProps) {
   const load15 = formatLoad(server.load_15);
 
   return (
-    <Card className="overflow-hidden transition-all duration-200 ease-out hover:shadow-lg hover:-translate-y-1 hover:border-border/30">
+    <Card
+      className="overflow-hidden transition-all duration-200 ease-out hover:shadow-lg hover:-translate-y-1 hover:border-border/30"
+      style={{ contain: "layout style paint" }}
+    >
       <CardHeader className="p-4 pb-2 space-y-0.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 ml-1">
@@ -194,4 +200,4 @@ export function ServerCard({ server }: ServerCardProps) {
       </CardContent>
     </Card>
   );
-}
+});

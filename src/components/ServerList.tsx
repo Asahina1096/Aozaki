@@ -1,12 +1,12 @@
 import {
   useCallback,
   useEffect,
-  useMemo,
   useOptimistic,
   useRef,
   useState,
   useTransition,
 } from "react";
+import { preconnect, prefetchDNS } from "react-dom";
 import { getAPIClient } from "@/lib/api";
 import type {
   ProcessedStatsResponse,
@@ -97,19 +97,31 @@ export function ServerList({
 
   // 观察所有卡片元素
   const cardRef = useCallback((element: HTMLDivElement | null) => {
-    if (element) {
-      const serverName = element.getAttribute("data-server-name");
-      if (serverName && observerRef.current) {
-        // 如果该服务器已有观察的元素且不是同一个，先取消观察旧元素
-        const existingElement = observedElements.current.get(serverName);
-        if (existingElement && existingElement !== element) {
-          observerRef.current.unobserve(existingElement);
-        }
-        // 观察新元素
-        observerRef.current.observe(element);
-        observedElements.current.set(serverName, element);
-      }
+    if (!element) {
+      // 元素被卸载，清理可能是必要的，但通常由 useEffect 清理处理
+      return;
     }
+
+    const serverName = element.getAttribute("data-server-name");
+    if (!serverName || !observerRef.current) return;
+
+    // 如果该服务器已有观察的元素且不是同一个，先取消观察旧元素
+    const existingElement = observedElements.current.get(serverName);
+    if (existingElement && existingElement !== element) {
+      observerRef.current.unobserve(existingElement);
+    }
+
+    // 观察新元素
+    observerRef.current.observe(element);
+    observedElements.current.set(serverName, element);
+  }, []);
+
+  // React 19 性能优化：预加载 API 资源
+  useEffect(() => {
+    // 预解析 DNS 和预连接到 API 服务器，减少首次请求延迟
+    const apiOrigin = window.location.origin;
+    prefetchDNS(apiOrigin);
+    preconnect(apiOrigin);
   }, []);
 
   // 获取服务器数据的函数
@@ -197,23 +209,19 @@ export function ServerList({
 
   // useOptimistic: 提供乐观更新的 UI 反馈
   // 在数据刷新期间保持显示当前数据，避免闪烁
-  // 使用 useMemo 保持引用相等性，防止 useOptimistic 意外重置
-  const currentServers = useMemo(() => stats?.servers || [], [stats?.servers]);
+  // React Compiler 会自动优化引用相等性，无需手动 useMemo
+  const currentServers = stats?.servers || [];
 
-  const currentOverview = useMemo(
-    () =>
-      stats?.overview || {
-        totalServers: 0,
-        onlineServers: 0,
-        offlineServers: 0,
-        avgCpu: 0,
-        totalRealtimeUpload: 0,
-        totalRealtimeDownload: 0,
-        totalDataUploaded: 0,
-        totalDataDownloaded: 0,
-      },
-    [stats?.overview]
-  );
+  const currentOverview = stats?.overview || {
+    totalServers: 0,
+    onlineServers: 0,
+    offlineServers: 0,
+    avgCpu: 0,
+    totalRealtimeUpload: 0,
+    totalRealtimeDownload: 0,
+    totalDataUploaded: 0,
+    totalDataDownloaded: 0,
+  };
 
   const [optimisticServers, setOptimisticServers] = useOptimistic(
     currentServers,

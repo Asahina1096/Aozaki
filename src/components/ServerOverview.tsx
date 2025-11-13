@@ -14,7 +14,10 @@ export function ServerOverview({ overview }: ServerOverviewProps) {
   return (
     <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
       {/* 总节点数 */}
-      <Card className="hover:shadow-md hover:-translate-y-0.5 hover:border-border/30">
+      <Card
+        className="hover:shadow-md hover:-translate-y-0.5 hover:border-border/30"
+        style={{ contain: "layout style paint" }}
+      >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">节点总数</CardTitle>
           <Server className="h-4 w-4 text-muted-foreground" />
@@ -29,7 +32,10 @@ export function ServerOverview({ overview }: ServerOverviewProps) {
       </Card>
 
       {/* 平均CPU使用率 */}
-      <Card className="hover:shadow-md hover:-translate-y-0.5 hover:border-border/30">
+      <Card
+        className="hover:shadow-md hover:-translate-y-0.5 hover:border-border/30"
+        style={{ contain: "layout style paint" }}
+      >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">平均CPU使用率</CardTitle>
           <Cpu className="h-4 w-4 text-muted-foreground" />
@@ -40,7 +46,10 @@ export function ServerOverview({ overview }: ServerOverviewProps) {
       </Card>
 
       {/* 实时网络速率 */}
-      <Card className="hover:shadow-md hover:-translate-y-0.5 hover:border-border/30">
+      <Card
+        className="hover:shadow-md hover:-translate-y-0.5 hover:border-border/30"
+        style={{ contain: "layout style paint" }}
+      >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">实时网络速率</CardTitle>
           <Network className="h-4 w-4 text-muted-foreground" />
@@ -63,7 +72,10 @@ export function ServerOverview({ overview }: ServerOverviewProps) {
       </Card>
 
       {/* 流量统计 */}
-      <Card className="hover:shadow-md hover:-translate-y-0.5 hover:border-border/30">
+      <Card
+        className="hover:shadow-md hover:-translate-y-0.5 hover:border-border/30"
+        style={{ contain: "layout style paint" }}
+      >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">流量统计</CardTitle>
           <ArrowUpDown className="h-4 w-4 text-muted-foreground" />

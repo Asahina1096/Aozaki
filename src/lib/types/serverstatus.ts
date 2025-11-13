@@ -192,3 +192,19 @@ export interface ProcessedStatsResponse {
   /** 统计概览数据 */
   overview: StatsOverview;
 }
+
+/**
+ * API 错误响应
+ */
+export interface APIErrorResponse {
+  /** 错误类型 */
+  error: string;
+  /** 错误详细信息 */
+  message: string;
+  /** 错误代码 */
+  code: string;
+  /** 建议重试延迟（秒） */
+  retryAfter: number;
+  /** 错误时间戳 */
+  timestamp: number;
+}
