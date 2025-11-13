@@ -23,7 +23,7 @@
 
 | 技术        | 版本 | 用途                           |
 | ----------- | ---- | ------------------------------ |
-| Astro       | 5.x  | 服务器渲染框架 + API Routes    |
+| Astro       | 5.x  | 静态站点生成器                 |
 | React       | 19   | 客户端组件库                   |
 | TailwindCSS | 4.x  | CSS 框架                       |
 | shadcn/ui   | -    | UI 组件库                      |
@@ -163,7 +163,7 @@ vercel
 
 ### 服务端缓存
 
-API route (`src/pages/api/stats.ts`) 实现了服务端缓存，默认 TTL 为 5 秒。可以修改 `CACHE_TTL` 常量来调整缓存时间：
+Edge Function (`api/stats.ts`) 实现了服务端缓存，默认 TTL 为 5 秒。可以修改 `CACHE_TTL` 常量来调整缓存时间：
 
 ```typescript
 const CACHE_TTL = 5000; // 5秒缓存时间（毫秒）
@@ -177,6 +177,8 @@ const CACHE_TTL = 5000; // 5秒缓存时间（毫秒）
 
 ```
 aozaki/
+├── api/                     # Vercel Edge Functions
+│   └── stats.ts             # API 代理 + 缓存
 ├── src/
 │   ├── components/          # React & Astro 组件
 │   │   ├── ServerCard.tsx   # 服务器卡片 (React)
@@ -193,9 +195,7 @@ aozaki/
 │   │   ├── types/           # TypeScript 类型定义
 │   │   └── utils.ts         # 工具函数
 │   ├── pages/               # Astro 页面
-│   │   ├── index.astro      # 主页
-│   │   └── api/
-│   │       └── stats.ts     # Vercel Edge Function (代理 + 缓存)
+│   │   └── index.astro      # 主页
 │   └── styles/              # 全局样式
 ├── public/                  # 静态资源
 ├── .env.example             # 环境变量示例
@@ -238,11 +238,11 @@ bun run clean:all        # 清理所有文件 (包括 node_modules)
 
 ### 架构说明
 
-#### 服务器渲染 + Edge Functions
+#### 静态站点 + Edge Functions
 
-- **静态组件** (Astro): Header、Footer、BaseLayout - 构建时渲染
+- **静态组件** (Astro): Header、Footer、BaseLayout - 构建时渲染为静态 HTML
 - **交互组件** (React): ServerList、ServerCard、ServerTable、ServerOverview - 客户端水合
-- **API Routes**: `/api/stats` - Vercel Edge Function，实现数据代理和缓存
+- **API 代理**: `/api/stats` - Vercel Edge Function（原生，位于 `api/` 目录）
 - React 组件使用 `client:visible` 指令，视口可见时加载
 - React 19 配合 babel-plugin-react-compiler 实现自动优化
 
@@ -262,6 +262,7 @@ bun run clean:all        # 清理所有文件 (包括 node_modules)
 - **服务端缓存**: Edge Function 5 秒缓存减少后端请求
 - **CDN 缓存**: Vercel CDN 额外缓存层
 - **Edge Runtime**: 更快的冷启动和更低的延迟
+- **静态站点**: 主页面预渲染为静态 HTML，极快加载速度
 - React 代码分块 (`astro.config.mjs`)
 - 基于视口的预取策略
 - 内联样式表优化

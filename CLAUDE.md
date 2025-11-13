@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Aozaki is a modern ServerStatus-Rust frontend monitoring dashboard built with Astro, React 19, TailwindCSS 4, and shadcn/ui. It uses Astro's server rendering mode with Vercel adapter for serverless API routes.
+Aozaki is a modern ServerStatus-Rust frontend monitoring dashboard built with Astro, React 19, TailwindCSS 4, and shadcn/ui. It uses Astro's static site generation with Vercel Edge Functions for API proxying.
 
 ## Commands
 
@@ -42,7 +42,7 @@ bun run clean:all        # Remove everything including node_modules
 
 - **Static components** (Astro): Header, Footer, BaseLayout - rendered at build time
 - **Interactive components** (React): ServerList, ServerCard, ServerOverview - hydrated client-side with `client:visible`
-- **Serverless API Routes**: `/api/stats` - Vercel Edge Function for proxying and caching backend requests
+- **API Proxy**: `/api/stats` - Vercel Edge Function (native, not through Astro adapter)
 - React components use React 19 with babel-plugin-react-compiler for automatic optimization (no need for manual useCallback/useMemo except critical cases)
 
 ### Data Flow
@@ -108,11 +108,11 @@ Use `@/` for src imports (e.g., `import { ServerList } from "@/components/Server
 
 ## Key Files
 
-- `src/pages/api/stats.ts` - Vercel Edge Function for proxying and caching backend requests
+- `api/stats.ts` - Vercel Edge Function for proxying and caching backend requests
 - `src/lib/api.ts` - ServerStatusAPI client with singleton pattern and abort signal support
 - `src/lib/types/serverstatus.ts` - Complete type definitions for API responses
 - `src/components/ServerList.tsx` - Main data fetching component with optimistic updates
-- `astro.config.mjs` - Astro config with server mode, Vercel adapter, React integration, and performance settings
+- `astro.config.mjs` - Astro config with static mode, React integration, and performance settings
 - `src/pages/index.astro` - Main page with ServerList component
 
 ## Environment Variables
@@ -126,9 +126,9 @@ Required:
 ## Notes
 
 - Package manager: Bun 1.3.2 (enforced via packageManager field)
-- Astro output mode: `server` with Vercel adapter
-- API routes run on Vercel Edge Runtime for optimal performance
-- Server-side cache TTL: 5 seconds (configurable in `src/pages/api/stats.ts`)
+- Astro output mode: `static` (static site generation)
+- API routes: Vercel Edge Functions (native, in `api/` directory)
+- Server-side cache TTL: 5 seconds (configurable in `api/stats.ts`)
 - ServerStatus-Rust backend accessed via `/json/stats.json` endpoint
 - Client refresh interval can be modified in src/pages/index.astro:19
 - Build output excludes preview.png automatically via custom Astro integration

@@ -1,5 +1,7 @@
-import type { APIRoute } from "astro";
-import type { StatsResponse } from "@/lib/types/serverstatus";
+/**
+ * Vercel Edge Function for proxying ServerStatus-Rust API
+ * This function caches responses server-side and protects the backend URL
+ */
 
 /**
  * 缓存配置
@@ -11,7 +13,7 @@ const UPSTREAM_TIMEOUT = 10000; // 上游请求超时时间（毫秒）
  * 缓存存储
  */
 interface CacheEntry {
-  data: StatsResponse;
+  data: string; // JSON string
   timestamp: number;
 }
 
@@ -20,8 +22,8 @@ let cache: CacheEntry | null = null;
 /**
  * 从上游 ServerStatus-Rust 获取数据
  */
-async function fetchUpstreamStats(): Promise<StatsResponse> {
-  const upstreamUrl = import.meta.env.PUBLIC_API_URL;
+async function fetchUpstreamStats(): Promise<string> {
+  const upstreamUrl = process.env.PUBLIC_API_URL;
 
   if (!upstreamUrl) {
     throw new Error(
@@ -46,7 +48,7 @@ async function fetchUpstreamStats(): Promise<StatsResponse> {
       );
     }
 
-    return await response.json();
+    return await response.text();
   } finally {
     clearTimeout(timeoutId);
   }
@@ -55,7 +57,7 @@ async function fetchUpstreamStats(): Promise<StatsResponse> {
 /**
  * 获取缓存的数据（如果未过期）或从上游获取新数据
  */
-async function getStats(): Promise<StatsResponse> {
+async function getStats(): Promise<string> {
   const now = Date.now();
 
   // 检查缓存是否有效
@@ -76,14 +78,25 @@ async function getStats(): Promise<StatsResponse> {
 }
 
 /**
- * API Route Handler
+ * Vercel Edge Function Handler
  * GET /api/stats - 获取服务器统计信息
  */
-export const GET: APIRoute = async () => {
+export default async function handler(request: Request): Promise<Response> {
+  // 只允许 GET 请求
+  if (request.method !== "GET") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-store",
+      },
+    });
+  }
+
   try {
     const stats = await getStats();
 
-    return new Response(JSON.stringify(stats), {
+    return new Response(stats, {
       status: 200,
       headers: {
         "Content-Type": "application/json",
@@ -110,10 +123,9 @@ export const GET: APIRoute = async () => {
       }
     );
   }
-};
+}
 
-// 配置 Vercel 云函数
+// 配置为 Edge Runtime
 export const config = {
-  // 使用 Edge Runtime 以获得更快的冷启动和更低的延迟
   runtime: "edge",
 };

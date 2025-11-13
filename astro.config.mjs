@@ -1,5 +1,4 @@
 import react from "@astrojs/react";
-import vercel from "@astrojs/vercel";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "astro/config";
 import fs from "fs";
@@ -7,10 +6,6 @@ import path from "path";
 
 // https://astro.build/config
 export default defineConfig({
-  output: "server",
-  adapter: vercel({
-    edgeMiddleware: true,
-  }),
   integrations: [
     react({
       babel: {
@@ -108,4 +103,13 @@ export default defineConfig({
     // 性能优化：减少日志输出
     logLevel: "warn",
   },
+  output: "static",
+  build: {
+    format: "file",
+    // 性能优化：根据体积自动决定是否内联样式
+    inlineStylesheets: "auto",
+    // 控制 public 目录文件复制
+    copyPublicDir: true,
+  },
+  outDir: "./dist",
 });
