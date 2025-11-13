@@ -150,6 +150,8 @@
     -moz-osx-font-smoothing: grayscale;
     /* 防止字体大小调整导致的布局偏移 */
     text-size-adjust: 100%;
+    /* 性能优化：帮助浏览器隔离渲染 */
+    contain: layout style paint;
   }
 
   /* 防止图片和媒体导致的 CLS */
@@ -188,45 +190,7 @@
   outline: none !important;
 }
 
-/* View Transition API 优化 - 整页快照式交叉淡入淡出 */
-@supports (view-transition-name: none) {
-  /* 关键：为 root 元素设置默认的交叉淡入淡出效果 */
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
-    animation-duration: 0.2s;
-    animation-timing-function: cubic-bezier(0.2, 0, 0.2, 1);
-    /* 确保两个快照完全重叠，实现交叉淡入淡出 */
-    mix-blend-mode: normal;
-  }
-
-  ::view-transition-old(root) {
-    animation-name: fade-out;
-  }
-
-  ::view-transition-new(root) {
-    animation-name: fade-in;
-  }
-
-  @keyframes fade-out {
-    to {
-      opacity: 0;
-    }
-  }
-
-  @keyframes fade-in {
-    from {
-      opacity: 0;
-    }
-  }
-
-  /* 尊重用户的动画偏好 */
-  @media (prefers-reduced-motion: reduce) {
-    ::view-transition-old(root),
-    ::view-transition-new(root) {
-      animation-duration: 0.01s;
-    }
-  }
-}
+/* 主题切换无动画 - 即时切换避免卡顿 */
 /*
   ---break---
 */

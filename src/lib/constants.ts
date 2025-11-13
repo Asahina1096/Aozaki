@@ -3,11 +3,11 @@
  */
 
 export const PILL_STYLES = {
-  info: "inline-flex items-center gap-0.5 rounded-full border border-border/15 bg-muted/70 backdrop-blur-sm px-1 py-0.5 whitespace-nowrap text-[0.65rem] transition-colors duration-150",
+  info: "inline-flex items-center gap-0.5 rounded-full border border-border/15 bg-muted/70 backdrop-blur-sm px-1 py-0.5 whitespace-nowrap text-[0.65rem]",
   status:
-    "inline-flex items-center gap-0.5 rounded-full border border-border/15 bg-muted/70 backdrop-blur-sm px-1 py-0.5 whitespace-nowrap text-[0.65rem] transition-colors duration-150",
+    "inline-flex items-center gap-0.5 rounded-full border border-border/15 bg-muted/70 backdrop-blur-sm px-1 py-0.5 whitespace-nowrap text-[0.65rem]",
   network:
-    "inline-flex items-center gap-1 rounded-full border border-border/15 bg-muted/70 backdrop-blur-sm px-1.5 py-0.5 whitespace-nowrap transition-colors duration-150",
+    "inline-flex items-center gap-1 rounded-full border border-border/15 bg-muted/70 backdrop-blur-sm px-1.5 py-0.5 whitespace-nowrap",
 } as const;
 
 export const GRID_STYLES = {

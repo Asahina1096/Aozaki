@@ -65,33 +65,11 @@ const {
           // 更新 color-scheme
           root.style.colorScheme = resolved;
 
-          // 使用 View Transition API 实现平滑切换（如果支持）
-          const updateDOM = () => {
-            if (resolved === "dark") {
-              root.classList.add("dark");
-            } else {
-              root.classList.remove("dark");
-            }
-          };
-
-          // 检查是否支持 View Transition API 且不是首次加载
-          if (
-            "startViewTransition" in document &&
-            !root.dataset.initialLoad &&
-            !window.matchMedia("(prefers-reduced-motion: reduce)").matches
-          ) {
-            // 使用 View Transition API 实现整页快照过渡
-            const transition = document.startViewTransition(() => {
-              updateDOM();
-            });
-
-            // 可选：捕获错误以确保在不支持的环境中仍能正常工作
-            transition.ready.catch(() => {
-              updateDOM();
-            });
+          // 直接更新 DOM class，CSS transition 会自动处理动画
+          if (resolved === "dark") {
+            root.classList.add("dark");
           } else {
-            // 直接更新 DOM（首次加载或不支持 View Transition）
-            updateDOM();
+            root.classList.remove("dark");
           }
 
           dispatch(mode);
@@ -119,14 +97,8 @@ const {
           apply(getStoredMode());
         });
 
-        // 初始化时标记为首次加载，避免闪烁
-        root.dataset.initialLoad = "true";
+        // 初始化应用主题
         apply(getStoredMode());
-
-        // 移除首次加载标记
-        requestAnimationFrame(() => {
-          delete root.dataset.initialLoad;
-        });
       })();
     </script>
   </head>

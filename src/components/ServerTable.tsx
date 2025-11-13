@@ -10,7 +10,7 @@ import {
 } from "@/lib/utils";
 import { StatusPill } from "./ui/status-pill";
 
-const ROW_CONTAINER_CLASS = `${GRID_STYLES.template} items-center gap-4 rounded-2xl border border-border/20 bg-card/95 backdrop-blur-sm px-4 py-4 text-sm shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 hover:border-border/30`;
+const ROW_CONTAINER_CLASS = `${GRID_STYLES.template} items-center gap-4 rounded-2xl border border-border/20 bg-card/95 backdrop-blur-sm px-4 py-4 text-sm shadow-sm`;
 const HEADER_CONTAINER_CLASS = `${GRID_STYLES.template} items-center gap-4 rounded-2xl border border-border/20 bg-card/95 backdrop-blur-sm px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground shadow-sm`;
 
 interface ServerTableProps {
