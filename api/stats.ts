@@ -1,6 +1,7 @@
 /**
  * Vercel Edge Function for proxying ServerStatus-Rust API
  * This function caches responses server-side and protects the backend URL
+ * It also processes data (sorting, statistics) to reduce client-side computation
  */
 
 /**
@@ -10,19 +11,166 @@ const CACHE_TTL = 5000; // 5秒缓存时间（毫秒）
 const UPSTREAM_TIMEOUT = 10000; // 上游请求超时时间（毫秒）
 
 /**
+ * ServerStatus-Rust 类型定义
+ */
+interface ServerStats {
+  name: string;
+  alias?: string;
+  type?: string;
+  location?: string;
+  online4: boolean;
+  online6: boolean;
+  uptime: string;
+  load_1: number;
+  load_5: number;
+  load_15: number;
+  cpu: number;
+  memory_total: number;
+  memory_used: number;
+  swap_total: number;
+  swap_used: number;
+  hdd_total: number;
+  hdd_used: number;
+  network_rx: number;
+  network_tx: number;
+  network_in: number;
+  network_out: number;
+  last_network_in?: number;
+  last_network_out?: number;
+  monthstart?: number;
+  labels?: string;
+  custom?: string;
+  gid?: string;
+  weight?: number;
+  disabled?: boolean;
+  latest_ts?: number;
+  si?: boolean;
+  notify?: boolean;
+  vnstat?: boolean;
+  ping_10010?: number;
+  ping_189?: number;
+  ping_10086?: number;
+  time_10010?: number;
+  time_189?: number;
+  time_10086?: number;
+  tcp_count?: number;
+  udp_count?: number;
+  process_count?: number;
+  thread_count?: number;
+}
+
+interface StatsResponse {
+  updated: number;
+  servers: ServerStats[];
+}
+
+interface StatsOverview {
+  totalServers: number;
+  onlineServers: number;
+  offlineServers: number;
+  avgCpu: number;
+  totalRealtimeUpload: number;
+  totalRealtimeDownload: number;
+  totalDataUploaded: number;
+  totalDataDownloaded: number;
+}
+
+interface ProcessedStatsResponse {
+  updated: number;
+  servers: ServerStats[];
+  overview: StatsOverview;
+}
+
+/**
  * 缓存存储
  */
 interface CacheEntry {
-  data: string; // JSON string
+  data: string; // JSON string of ProcessedStatsResponse
   timestamp: number;
 }
 
 let cache: CacheEntry | null = null;
 
 /**
+ * 排序服务器：在线优先，然后按权重排序
+ */
+function sortServers(servers: ServerStats[]): ServerStats[] {
+  return [...servers].sort((a, b) => {
+    const aOnline = a.online4 || a.online6 ? 1 : 0;
+    const bOnline = b.online4 || b.online6 ? 1 : 0;
+    if (aOnline !== bOnline) return bOnline - aOnline;
+    return (b.weight || 0) - (a.weight || 0);
+  });
+}
+
+/**
+ * 计算统计概览数据
+ */
+function calculateOverview(servers: ServerStats[]): StatsOverview {
+  const stats = servers.reduce(
+    (acc, s) => {
+      const isOnline = s.online4 || s.online6;
+      if (isOnline) {
+        acc.onlineCount++;
+        acc.totalCpu += s.cpu;
+      }
+      // 保持与原 ServerOverview 相同的映射关系，确保向后兼容
+      acc.totalRealtimeDownload += s.network_rx;
+      acc.totalRealtimeUpload += s.network_tx;
+      acc.totalDataDownloaded += s.network_in;
+      acc.totalDataUploaded += s.network_out;
+      return acc;
+    },
+    {
+      onlineCount: 0,
+      totalCpu: 0,
+      totalRealtimeDownload: 0,
+      totalRealtimeUpload: 0,
+      totalDataDownloaded: 0,
+      totalDataUploaded: 0,
+    }
+  );
+
+  const totalServers = servers.length;
+  const onlineServers = stats.onlineCount;
+  const offlineServers = totalServers - onlineServers;
+
+  // 计算平均CPU使用率（仅在线节点）
+  const avgCpu =
+    stats.onlineCount > 0
+      ? Math.round((stats.totalCpu / stats.onlineCount) * 10) / 10
+      : 0;
+
+  return {
+    totalServers,
+    onlineServers,
+    offlineServers,
+    avgCpu,
+    totalRealtimeUpload: stats.totalRealtimeUpload,
+    totalRealtimeDownload: stats.totalRealtimeDownload,
+    totalDataUploaded: stats.totalDataUploaded,
+    totalDataDownloaded: stats.totalDataDownloaded,
+  };
+}
+
+/**
+ * 处理原始数据：排序 + 计算统计
+ */
+function processStatsData(rawData: StatsResponse): ProcessedStatsResponse {
+  const sortedServers = sortServers(rawData.servers);
+  const overview = calculateOverview(rawData.servers);
+
+  return {
+    updated: rawData.updated,
+    servers: sortedServers,
+    overview,
+  };
+}
+
+/**
  * 从上游 ServerStatus-Rust 获取数据
  */
-async function fetchUpstreamStats(): Promise<string> {
+async function fetchUpstreamStats(): Promise<StatsResponse> {
   const upstreamUrl = process.env.PUBLIC_API_URL;
 
   if (!upstreamUrl) {
@@ -48,7 +196,7 @@ async function fetchUpstreamStats(): Promise<string> {
       );
     }
 
-    return await response.text();
+    return await response.json();
   } finally {
     clearTimeout(timeoutId);
   }
@@ -66,15 +214,21 @@ async function getStats(): Promise<string> {
   }
 
   // 缓存过期或不存在，从上游获取新数据
-  const data = await fetchUpstreamStats();
+  const rawData = await fetchUpstreamStats();
+
+  // 处理数据：排序 + 计算统计
+  const processedData = processStatsData(rawData);
+
+  // 序列化为 JSON 字符串
+  const dataString = JSON.stringify(processedData);
 
   // 更新缓存
   cache = {
-    data,
+    data: dataString,
     timestamp: now,
   };
 
-  return data;
+  return dataString;
 }
 
 /**

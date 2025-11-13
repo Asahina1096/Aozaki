@@ -158,3 +158,37 @@ export interface DetailedStatsResponse {
   /** 节点列表 */
   servers: DetailedServerStats[];
 }
+
+/**
+ * 统计概览数据
+ */
+export interface StatsOverview {
+  /** 节点总数 */
+  totalServers: number;
+  /** 在线节点数 */
+  onlineServers: number;
+  /** 离线节点数 */
+  offlineServers: number;
+  /** 平均 CPU 使用率 (仅在线节点) */
+  avgCpu: number;
+  /** 实时上传速率总和 (字节/秒) */
+  totalRealtimeUpload: number;
+  /** 实时下载速率总和 (字节/秒) */
+  totalRealtimeDownload: number;
+  /** 累计上传流量 (字节) */
+  totalDataUploaded: number;
+  /** 累计下载流量 (字节) */
+  totalDataDownloaded: number;
+}
+
+/**
+ * 云端处理后的统计数据响应
+ */
+export interface ProcessedStatsResponse {
+  /** 更新时间戳 */
+  updated: number;
+  /** 已排序的节点列表 (在线优先，按权重排序) */
+  servers: ServerStats[];
+  /** 统计概览数据 */
+  overview: StatsOverview;
+}

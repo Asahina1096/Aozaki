@@ -1,4 +1,4 @@
-import type { StatsResponse } from "./types/serverstatus";
+import type { ProcessedStatsResponse } from "./types/serverstatus";
 
 /**
  * API 默认超时时间（毫秒）
@@ -7,6 +7,7 @@ const DEFAULT_API_TIMEOUT = 10000; // 10秒
 
 /**
  * ServerStatus API 客户端（通过 Vercel 云函数）
+ * 返回云端处理后的数据（已排序 + 统计信息）
  */
 export class ServerStatusAPI {
   private apiEndpoint: string;
@@ -17,14 +18,14 @@ export class ServerStatusAPI {
   }
 
   /**
-   * 获取服务器统计信息
+   * 获取服务器统计信息（云端处理后）
    * @param signal 可选的 AbortSignal，用于取消请求
    * @param timeout 请求超时时间（毫秒），默认 10 秒
    */
   async getStats(
     signal?: AbortSignal,
     timeout = DEFAULT_API_TIMEOUT
-  ): Promise<StatsResponse> {
+  ): Promise<ProcessedStatsResponse> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
     let detachParentAbort: (() => void) | undefined;

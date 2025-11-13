@@ -1,13 +1,16 @@
 import {
   useEffect,
-  useMemo,
   useOptimistic,
   useRef,
   useState,
   useTransition,
 } from "react";
 import { getAPIClient } from "@/lib/api";
-import type { ServerStats, StatsResponse } from "@/lib/types/serverstatus";
+import type {
+  ProcessedStatsResponse,
+  ServerStats,
+  StatsOverview,
+} from "@/lib/types/serverstatus";
 import { ServerCard } from "./ServerCard";
 import { ServerListSkeleton } from "./ServerListSkeleton";
 import { ServerOverview } from "./ServerOverview";
@@ -25,13 +28,19 @@ export function ServerList({
   const [, startTransition] = useTransition();
 
   // 使用 useState 存储数据
-  const [stats, setStats] = useState<StatsResponse | null>(null);
+  const [stats, setStats] = useState<ProcessedStatsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
   const [isPageVisible, setIsPageVisible] = useState(
     typeof document !== "undefined" ? !document.hidden : true
   );
+
+  // 使用 ref 跟踪最新的 stats，避免闭包陷阱
+  const statsRef = useRef<ProcessedStatsResponse | null>(stats);
+  useEffect(() => {
+    statsRef.current = stats;
+  }, [stats]);
 
   // 获取服务器数据的函数
   // React Compiler 会自动优化函数引用，无需手动 useCallback
@@ -102,15 +111,31 @@ export function ServerList({
   // useOptimistic: 提供乐观更新的 UI 反馈
   // 在数据刷新期间保持显示当前数据，避免闪烁
   const currentServers = stats?.servers || [];
+  const currentOverview = stats?.overview || {
+    totalServers: 0,
+    onlineServers: 0,
+    offlineServers: 0,
+    avgCpu: 0,
+    totalRealtimeUpload: 0,
+    totalRealtimeDownload: 0,
+    totalDataUploaded: 0,
+    totalDataDownloaded: 0,
+  };
+
   const [optimisticServers, setOptimisticServers] = useOptimistic(
     currentServers,
     (_currentServers, optimisticValue: ServerStats[]) => optimisticValue
   );
 
+  const [optimisticOverview, setOptimisticOverview] = useOptimistic(
+    currentOverview,
+    (_currentOverview, optimisticValue: StatsOverview) => optimisticValue
+  );
+
   // 定时刷新（仅在初始数据加载完成后启动，且页面可见时才刷新）
   useEffect(() => {
     if (refreshInterval <= 0) return;
-    if (!stats) return; // 如果还没有初始数据，不启动定时刷新
+    if (loading) return; // 如果还在初始加载，不启动定时刷新
     if (!isPageVisible) return; // 页面不可见时不刷新
 
     const interval = setInterval(() => {
@@ -124,9 +149,13 @@ export function ServerList({
         const abortController = new AbortController();
         abortControllerRef.current = abortController;
 
-        // 设置乐观状态为当前数据
-        if (stats?.servers) {
-          setOptimisticServers(stats.servers);
+        // 设置乐观状态为当前数据（使用 ref 访问最新值，避免闭包陷阱）
+        const currentStats = statsRef.current;
+        if (currentStats?.servers) {
+          setOptimisticServers(currentStats.servers);
+        }
+        if (currentStats?.overview) {
+          setOptimisticOverview(currentStats.overview);
         }
 
         // 获取新数据
@@ -145,7 +174,7 @@ export function ServerList({
         abortControllerRef.current = null;
       }
     };
-  }, [refreshInterval, stats, isPageVisible]);
+  }, [refreshInterval, loading, isPageVisible]);
 
   // 开发环境：验证 name 字段的唯一性
   if (import.meta.env.DEV && currentServers.length > 0) {
@@ -164,17 +193,6 @@ export function ServerList({
       );
     }
   }
-
-  // 排序：在线优先，然后按权重排序
-  // 使用 useMemo 缓存排序结果，避免每次渲染都重新计算
-  const sortedServers = useMemo(() => {
-    return [...optimisticServers].sort((a, b) => {
-      const aOnline = a.online4 || a.online6 ? 1 : 0;
-      const bOnline = b.online4 || b.online6 ? 1 : 0;
-      if (aOnline !== bOnline) return bOnline - aOnline;
-      return (b.weight || 0) - (a.weight || 0);
-    });
-  }, [optimisticServers]);
 
   const hasServers = currentServers.length > 0;
 
@@ -241,14 +259,14 @@ export function ServerList({
           </button>
         </div>
       )}
-      <ServerOverview servers={optimisticServers} />
+      <ServerOverview overview={optimisticOverview} />
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <span className="text-xl md:text-2xl font-bold text-primary">
           节点列表
         </span>
       </div>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {sortedServers.map((server) => (
+        {optimisticServers.map((server) => (
           <ServerCard key={server.name} server={server} />
         ))}
       </div>
