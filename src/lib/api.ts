@@ -1,15 +1,27 @@
 import type { StatsResponse } from "./types/serverstatus";
 
 /**
+ * API 默认超时时间（毫秒）
+ */
+const DEFAULT_API_TIMEOUT = 10000; // 10秒
+
+/**
  * ServerStatus-Rust API 客户端
  */
 export class ServerStatusAPI {
   private baseUrl: string;
 
   constructor(baseUrl?: string) {
-    // 优先使用传入的 baseUrl，否则使用环境变量，最后回退到 /api（开发代理）
-    this.baseUrl =
-      baseUrl || import.meta.env.PUBLIC_API_URL?.replace(/\/+$/, "") || "/api";
+    // 优先使用传入的 baseUrl，否则使用环境变量
+    const url = baseUrl || import.meta.env.PUBLIC_API_URL?.replace(/\/+$/, "");
+
+    if (!url) {
+      throw new Error(
+        "API URL is not configured. Please set PUBLIC_API_URL environment variable."
+      );
+    }
+
+    this.baseUrl = url;
   }
 
   /**
@@ -19,7 +31,7 @@ export class ServerStatusAPI {
    */
   async getStats(
     signal?: AbortSignal,
-    timeout = 10000
+    timeout = DEFAULT_API_TIMEOUT
   ): Promise<StatsResponse> {
     const url = `${this.baseUrl}/json/stats.json`;
     const controller = new AbortController();
@@ -71,12 +83,17 @@ export class ServerStatusAPI {
 const clientCache = new Map<string, ServerStatusAPI>();
 
 export function getAPIClient(baseUrl?: string): ServerStatusAPI {
-  const key =
-    baseUrl || import.meta.env.PUBLIC_API_URL?.replace(/\/+$/, "") || "/api";
+  const url = baseUrl || import.meta.env.PUBLIC_API_URL?.replace(/\/+$/, "");
 
-  if (!clientCache.has(key)) {
-    clientCache.set(key, new ServerStatusAPI(baseUrl));
+  if (!url) {
+    throw new Error(
+      "API URL is not configured. Please set PUBLIC_API_URL environment variable."
+    );
   }
 
-  return clientCache.get(key)!;
+  if (!clientCache.has(url)) {
+    clientCache.set(url, new ServerStatusAPI(baseUrl));
+  }
+
+  return clientCache.get(url)!;
 }

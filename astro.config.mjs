@@ -3,10 +3,6 @@ import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "astro/config";
 import fs from "fs";
 import path from "path";
-import { loadEnv } from "vite";
-
-// 加载环境变量
-const env = loadEnv("development", process.cwd(), "");
 
 // https://astro.build/config
 export default defineConfig({
@@ -81,27 +77,6 @@ export default defineConfig({
   },
   vite: {
     plugins: [tailwindcss()],
-    // 开发环境代理配置
-    server: {
-      proxy: {
-        // 将 /api 请求代理到远程后端
-        "/api": {
-          target: env.VITE_API_BASE_URL || "https://lovejk.cc",
-          changeOrigin: true,
-          secure: true,
-          // 支持 WebSocket 代理
-          ws: true,
-          // 处理重写路径（如果需要）
-          rewrite: (path) => path,
-          // 错误处理
-          configure: (proxy, _options) => {
-            proxy.on("error", (err, _req, _res) => {
-              console.error("🔴 代理错误:", err.message);
-            });
-          },
-        },
-      },
-    },
     // 性能优化配置
     optimizeDeps: {
       include: ["react", "react-dom"],

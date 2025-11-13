@@ -19,6 +19,7 @@ const VIEW_MODE_OPTIONS = [
 ] as const;
 
 const VIEW_MODE_STORAGE_KEY = "aozaki-server-view-mode";
+const DEFAULT_REFRESH_INTERVAL = 2000; // 默认刷新间隔（毫秒）
 
 type ViewMode = (typeof VIEW_MODE_OPTIONS)[number]["id"];
 
@@ -26,7 +27,9 @@ interface ServerListProps {
   refreshInterval?: number; // 刷新间隔（毫秒）
 }
 
-export function ServerList({ refreshInterval = 5000 }: ServerListProps) {
+export function ServerList({
+  refreshInterval = DEFAULT_REFRESH_INTERVAL,
+}: ServerListProps) {
   const abortControllerRef = useRef<AbortController | null>(null);
   const [, startTransition] = useTransition();
 

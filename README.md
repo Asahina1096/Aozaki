@@ -142,6 +142,7 @@ vercel
 | PUBLIC_API_URL | ServerStatus-Rust API 地址 | 是   | https://status.example.com |
 
 **注意事项**:
+
 - 开发环境可以留空，使用开发代理（配置在 `astro.config.mjs`）
 - 生产环境必须填写完整的后端 URL
 - URL 不要以斜杠结尾
@@ -162,7 +163,6 @@ vercel
 开发环境中，`astro.config.mjs` 配置了 API 代理：
 
 - 代理路径: `/api`
-- 默认后端: `https://lovejk.cc`
 - 可通过 `VITE_API_BASE_URL` 环境变量覆盖
 
 ---
