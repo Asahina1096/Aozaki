@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Aozaki is a modern ServerStatus-Rust frontend monitoring dashboard built with Astro, React 19, TailwindCSS 4, and shadcn/ui. It's a static site that fetches server statistics from a ServerStatus-Rust backend API and displays them in real-time.
+Aozaki is a modern ServerStatus-Rust frontend monitoring dashboard built with Astro, React 19, TailwindCSS 4, and shadcn/ui. It uses Astro's server rendering mode with Vercel adapter for serverless API routes.
 
 ## Commands
 
@@ -42,16 +42,19 @@ bun run clean:all        # Remove everything including node_modules
 
 - **Static components** (Astro): Header, Footer, BaseLayout - rendered at build time
 - **Interactive components** (React): ServerList, ServerCard, ServerOverview - hydrated client-side with `client:visible`
+- **Serverless API Routes**: `/api/stats` - Vercel Edge Function for proxying and caching backend requests
 - React components use React 19 with babel-plugin-react-compiler for automatic optimization (no need for manual useCallback/useMemo except critical cases)
 
 ### Data Flow
 
-1. `ServerList.tsx` fetches data from ServerStatus-Rust API via `getAPIClient()`
-2. API client (`src/lib/api.ts`) handles requests with timeout and abort signal support
-3. Data conforms to `StatsResponse` type from `src/lib/types/serverstatus.ts`
-4. `ServerList` passes data to `ServerOverview` (statistics) and `ServerCard` (individual servers in grid layout)
-5. Auto-refresh controlled by `refreshInterval` prop (default: 2000ms in index.astro:19)
-6. Page Visibility API pauses refresh when tab is hidden to save resources
+1. `ServerList.tsx` fetches data from `/api/stats` endpoint via `getAPIClient()`
+2. `/api/stats` (Vercel Edge Function) proxies requests to ServerStatus-Rust backend
+3. API route implements 5-second server-side cache to reduce backend load
+4. API client (`src/lib/api.ts`) handles requests with timeout and abort signal support
+5. Data conforms to `StatsResponse` type from `src/lib/types/serverstatus.ts`
+6. `ServerList` passes data to `ServerOverview` (statistics) and `ServerCard` (individual servers in grid layout)
+7. Auto-refresh controlled by `refreshInterval` prop (default: 2000ms in index.astro:19)
+8. Page Visibility API pauses refresh when tab is hidden to save resources
 
 ### State Management
 
@@ -62,16 +65,21 @@ bun run clean:all        # Remove everything including node_modules
 
 ### API Configuration
 
-- Backend URL configured via `PUBLIC_API_URL` environment variable
-- API endpoint: `/json/stats.json`
-- Client caching: Singleton pattern per baseUrl in `getAPIClient()`
-- Requests use `cache: "no-store"` to ensure fresh data
+- **Client-side**: Fetches from `/api/stats` endpoint (no direct backend access)
+- **Server-side**: Backend URL configured via `PUBLIC_API_URL` environment variable (not exposed to client bundle)
+- **Caching**: 5-second server-side cache in Edge Function + Vercel CDN caching
+- **Endpoint**: API route proxies to `${PUBLIC_API_URL}/json/stats.json`
+- **Client caching**: Singleton pattern per endpoint in `getAPIClient()`
+- **Requests**: Client uses `cache: "no-store"` to always fetch fresh data from API route
 
 ### Performance Optimizations
 
+- **Server-side caching**: 5-second cache in Vercel Edge Function reduces backend load
+- **CDN caching**: Vercel CDN caches API responses for additional performance
 - **Page Visibility API**: Auto-pause data refresh when tab is hidden, resume when visible
 - **Sorting optimization**: `useMemo` caches server sorting to avoid unnecessary recalculation
 - **Smooth transitions**: Progress bars and hover effects use optimized CSS transitions
+- **Edge Runtime**: API routes use Vercel Edge Runtime for faster cold starts and lower latency
 - React chunk splitting (astro.config.mjs:98-99)
 - Viewport-based prefetching (astro.config.mjs:78-81)
 - Inline stylesheets set to "auto" (astro.config.mjs:114)
@@ -100,10 +108,11 @@ Use `@/` for src imports (e.g., `import { ServerList } from "@/components/Server
 
 ## Key Files
 
+- `src/pages/api/stats.ts` - Vercel Edge Function for proxying and caching backend requests
 - `src/lib/api.ts` - ServerStatusAPI client with singleton pattern and abort signal support
 - `src/lib/types/serverstatus.ts` - Complete type definitions for API responses
 - `src/components/ServerList.tsx` - Main data fetching component with optimistic updates
-- `astro.config.mjs` - Astro config with React integration and performance settings
+- `astro.config.mjs` - Astro config with server mode, Vercel adapter, React integration, and performance settings
 - `src/pages/index.astro` - Main page with ServerList component
 
 ## Environment Variables
@@ -111,11 +120,16 @@ Use `@/` for src imports (e.g., `import { ServerList } from "@/components/Server
 Required:
 
 - `PUBLIC_API_URL` - ServerStatus-Rust backend URL (e.g., https://status.example.com)
+  - Used in Vercel Edge Functions and is not exposed to the client bundle
+  - Configure in Vercel dashboard or `.env` file for local development
 
 ## Notes
 
 - Package manager: Bun 1.3.2 (enforced via packageManager field)
-- ServerStatus-Rust expects `/json/stats.json` endpoint
-- Refresh interval can be modified in src/pages/index.astro:19
+- Astro output mode: `server` with Vercel adapter
+- API routes run on Vercel Edge Runtime for optimal performance
+- Server-side cache TTL: 5 seconds (configurable in `src/pages/api/stats.ts`)
+- ServerStatus-Rust backend accessed via `/json/stats.json` endpoint
+- Client refresh interval can be modified in src/pages/index.astro:19
 - Build output excludes preview.png automatically via custom Astro integration
 - Server sorting: online servers first, then by weight (descending)
