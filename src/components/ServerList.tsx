@@ -8,9 +8,9 @@ import {
 } from "react";
 import { getAPIClient } from "@/lib/api";
 import type { ServerStats, StatsResponse } from "@/lib/types/serverstatus";
-import { ServerCard } from "./ServerCard";
 import { ServerListSkeleton } from "./ServerListSkeleton";
 import { ServerOverview } from "./ServerOverview";
+import { VirtualizedServerGrid } from "./VirtualizedServerGrid";
 
 const DEFAULT_REFRESH_INTERVAL = 2000; // 默认刷新间隔（毫秒）
 
@@ -247,11 +247,7 @@ export function ServerList({
           节点列表
         </span>
       </div>
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {sortedServers.map((server) => (
-          <ServerCard key={server.name} server={server} />
-        ))}
-      </div>
+      <VirtualizedServerGrid servers={sortedServers} />
     </div>
   );
 }
