@@ -48,10 +48,10 @@ export function ServerCard({ server }: ServerCardProps) {
   const load15 = formatLoad(server.load_15);
 
   return (
-    <Card className="min-h-[420px] overflow-hidden hover:shadow-lg hover:-translate-y-1 hover:border-border/30">
-      <CardHeader className="pb-0 space-y-1">
+    <Card className="overflow-hidden hover:shadow-lg hover:-translate-y-1 hover:border-border/30">
+      <CardHeader className="p-4 pb-2 space-y-0.5">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 ml-1">
             <Server className="h-5 w-5" />
             <CardTitle className="text-lg">
               {server.alias || server.name}
@@ -91,10 +91,10 @@ export function ServerCard({ server }: ServerCardProps) {
           </div>
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-3 pt-1">
+      <CardContent className="p-4 pt-2 space-y-2">
         {/* CPU */}
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-sm">
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-sm ml-1">
             <div className="flex items-center gap-2">
               <Cpu className="h-4 w-4" />
               <span>CPU</span>
@@ -111,11 +111,11 @@ export function ServerCard({ server }: ServerCardProps) {
           </p>
         </div>
 
-        <Separator className="my-2" />
+        <Separator className="my-1" />
 
         {/* 内存 */}
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-sm">
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-sm ml-1">
             <div className="flex items-center gap-2">
               <MemoryStick className="h-4 w-4" />
               <span>内存</span>
@@ -132,11 +132,11 @@ export function ServerCard({ server }: ServerCardProps) {
           </p>
         </div>
 
-        <Separator className="my-2" />
+        <Separator className="my-1" />
 
         {/* 磁盘 */}
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-sm">
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-sm ml-1">
             <div className="flex items-center gap-2">
               <HardDrive className="h-4 w-4" />
               <span>磁盘</span>
@@ -154,11 +154,11 @@ export function ServerCard({ server }: ServerCardProps) {
           </p>
         </div>
 
-        <Separator className="my-2" />
+        <Separator className="my-1" />
 
         {/* 网络 */}
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2 text-sm">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-sm ml-1">
             <Network className="h-4 w-4" />
             <span>网络</span>
           </div>
