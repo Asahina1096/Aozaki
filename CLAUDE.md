@@ -70,21 +70,20 @@ bun run clean:all        # Remove everything including node_modules
 
 - **Client-side**: Fetches from `/api/stats` endpoint (no direct backend access)
 - **Server-side**: Backend URL configured via `PUBLIC_API_URL` environment variable (not exposed to client bundle)
-- **Caching**: 2-second server-side cache in Edge Function + Vercel CDN caching
-- **Request deduplication**: Concurrent API requests share same upstream fetch to prevent duplicate backend calls (api/stats.ts:98-253)
+- **Caching**: Only CDN-level caching (2 seconds), no browser caching for real-time data
 - **Endpoint**: API route proxies to `${PUBLIC_API_URL}/json/stats.json`
 - **Client caching**: Singleton pattern per endpoint in `getAPIClient()`
 - **Requests**: Client uses `cache: "no-store"` to always fetch fresh data from API route
 
 ### Performance Optimizations
 
-- **Request deduplication**: Multiple concurrent requests share a single upstream fetch to prevent backend overload (api/stats.ts:98-253)
-- **Server-side caching**: 2-second cache in Vercel Edge Function reduces backend load
-- **CDN caching**: Vercel CDN caches API responses for additional performance
-- **Server-side data processing**: Sorting and statistics calculated in Edge Function to reduce client-side computation (api/stats.ts:103-174)
+- **CDN caching**: Vercel CDN caches responses for 2 seconds across all Edge nodes, protecting the backend
+- **No browser caching**: Ensures users always get fresh data from CDN without stale local cache
+- **Server-side data processing**: Sorting and statistics calculated in Edge Function to reduce client-side computation (api/stats.ts:100-164)
 - **Page Visibility API**: Auto-pause data refresh when tab is hidden, auto-resume when visible (ServerList.tsx:96-136)
   - Saves bandwidth and CPU when user switches tabs
   - Immediately refreshes data when tab becomes visible again
+- **Intersection Observer**: Cards animate only when scrolling into viewport, reducing initial render cost (ServerList.tsx:84-113)
 - **Smooth transitions**: Progress bars and hover effects use optimized CSS transitions
 - **Edge Runtime**: API routes use Vercel Edge Runtime for faster cold starts and lower latency
 - React chunk splitting (astro.config.mjs:93-95)
@@ -119,7 +118,7 @@ Use `@/` for src imports (e.g., `import { ServerList } from "@/components/Server
 
 ## Key Files
 
-- `api/stats.ts` - Vercel Edge Function for proxying, caching, request deduplication, and server-side data processing
+- `api/stats.ts` - Vercel Edge Function for proxying and server-side data processing (sorting, statistics)
 - `src/lib/api.ts` - ServerStatusAPI client with singleton pattern and abort signal support
 - `src/lib/types/serverstatus.ts` - Complete type definitions for API responses (includes ServerStats, StatsResponse, ProcessedStatsResponse, StatsOverview)
 - `src/components/ServerList.tsx` - Main data fetching component with React 19 optimistic updates, Page Visibility API, and auto-refresh

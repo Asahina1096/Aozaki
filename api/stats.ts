@@ -82,20 +82,20 @@ interface ProcessedStatsResponse {
 }
 
 /**
- * 缓存存储
+ * 从上游 ServerStatus-Rust 获取并处理数据
+ * 注意：HTTP 级别的缓存通过 Cache-Control 响应头实现
+ * Vercel CDN 和浏览器会缓存响应，无需模块级缓存
  */
-interface CacheEntry {
-  data: string; // JSON string of ProcessedStatsResponse
-  timestamp: number;
+async function fetchAndProcessStats(): Promise<string> {
+  // 从上游获取数据
+  const rawData = await fetchUpstreamStats();
+
+  // 处理数据：排序 + 计算统计
+  const processedData = processStatsData(rawData);
+
+  // 序列化为 JSON 字符串
+  return JSON.stringify(processedData);
 }
-
-let cache: CacheEntry | null = null;
-
-/**
- * 正在进行的请求（用于请求去重）
- * 防止并发请求时多次调用上游 API
- */
-let inflightRequest: Promise<string> | null = null;
 
 /**
  * 排序服务器：在线优先，然后按权重排序
@@ -209,51 +209,6 @@ async function fetchUpstreamStats(): Promise<StatsResponse> {
 }
 
 /**
- * 获取缓存的数据（如果未过期）或从上游获取新数据
- * 实现请求去重：并发请求共享同一个上游请求
- */
-async function getStats(): Promise<string> {
-  const now = Date.now();
-
-  // 检查缓存是否有效
-  if (cache && now - cache.timestamp < CACHE_TTL) {
-    return cache.data;
-  }
-
-  // 如果已有正在进行的请求，等待并返回其结果（请求去重）
-  if (inflightRequest) {
-    return inflightRequest;
-  }
-
-  // 开始新的上游请求，并跟踪它
-  inflightRequest = (async () => {
-    try {
-      // 缓存过期或不存在，从上游获取新数据
-      const rawData = await fetchUpstreamStats();
-
-      // 处理数据：排序 + 计算统计
-      const processedData = processStatsData(rawData);
-
-      // 序列化为 JSON 字符串
-      const dataString = JSON.stringify(processedData);
-
-      // 更新缓存（使用当前时间戳）
-      cache = {
-        data: dataString,
-        timestamp: Date.now(),
-      };
-
-      return dataString;
-    } finally {
-      // 请求完成后清除 in-flight 标记
-      inflightRequest = null;
-    }
-  })();
-
-  return inflightRequest;
-}
-
-/**
  * Vercel Edge Function Handler
  * GET /api/stats - 获取服务器统计信息
  */
@@ -270,15 +225,16 @@ export default async function handler(request: Request): Promise<Response> {
   }
 
   try {
-    const stats = await getStats();
+    const stats = await fetchAndProcessStats();
 
     return new Response(stats, {
       status: 200,
       headers: {
         "Content-Type": "application/json",
-        // 告诉浏览器可以缓存，但必须重新验证
-        "Cache-Control": "public, max-age=0, must-revalidate",
-        // Vercel Edge Cache: 缓存 5 秒
+        // 禁用浏览器缓存，确保始终从 CDN 获取最新数据
+        "Cache-Control": "no-store",
+        // Vercel CDN 缓存：所有 Edge 节点共享，缓存 2 秒
+        // 这是唯一的缓存层，保护上游服务器
         "CDN-Cache-Control": `public, s-maxage=${Math.floor(CACHE_TTL / 1000)}`,
       },
     });
