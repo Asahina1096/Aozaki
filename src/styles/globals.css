@@ -177,10 +177,11 @@
     0%,
     100% {
       opacity: 1;
-      /* 移除 box-shadow 以大幅降低 GPU 负担 */
+      box-shadow: 0 0 4px currentColor; /* 轻量级发光 */
     }
     50% {
-      opacity: 0.5;
+      opacity: 0.6;
+      box-shadow: 0 0 6px 1px currentColor; /* 轻量级扩散 */
     }
   }
 }

@@ -9,7 +9,7 @@ import type {
   ServerStats,
   StatsOverview,
   StatsResponse,
-} from "../src/lib/types/serverstatus";
+} from "../src/lib/types/serverstatus.js";
 
 /**
  * 缓存配置
