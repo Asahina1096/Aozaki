@@ -1,18 +1,7 @@
-import {
-  useCallback,
-  useEffect,
-  useOptimistic,
-  useRef,
-  useState,
-  useTransition,
-} from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { preconnect, prefetchDNS } from "react-dom";
 import { getAPIClient } from "@/lib/api";
-import type {
-  ProcessedStatsResponse,
-  ServerStats,
-  StatsOverview,
-} from "@/lib/types/serverstatus";
+import type { ProcessedStatsResponse } from "@/lib/types/serverstatus";
 import { ServerCard } from "./ServerCard";
 import { ServerListSkeleton } from "./ServerListSkeleton";
 import { ServerOverview } from "./ServerOverview";
@@ -43,12 +32,6 @@ export function ServerList({
   const observerRef = useRef<IntersectionObserver | null>(null);
   // 跟踪已观察的元素，用于清理
   const observedElements = useRef<Map<string, HTMLDivElement>>(new Map());
-
-  // 使用 ref 跟踪最新的 stats，避免闭包陷阱
-  const statsRef = useRef<ProcessedStatsResponse | null>(stats);
-  useEffect(() => {
-    statsRef.current = stats;
-  }, [stats]);
 
   // 组件挂载时触发淡入动画
   useEffect(() => {
@@ -171,7 +154,7 @@ export function ServerList({
       const visible = !document.hidden;
       setIsPageVisible(visible);
 
-      // 页面重新可见时平滑刷新数据
+      // 页面重新可见时立即刷新数据
       if (visible && stats) {
         // 使用 transition 实现平滑过渡
         startTransition(() => {
@@ -183,15 +166,6 @@ export function ServerList({
           // 创建新的 AbortController
           const abortController = new AbortController();
           abortControllerRef.current = abortController;
-
-          // 设置乐观状态为当前数据（使用 ref 访问最新值）
-          const currentStats = statsRef.current;
-          if (currentStats?.servers) {
-            setOptimisticServers(currentStats.servers);
-          }
-          if (currentStats?.overview) {
-            setOptimisticOverview(currentStats.overview);
-          }
 
           // 获取新数据
           fetchServers(abortController.signal).catch(() => {
@@ -207,11 +181,9 @@ export function ServerList({
     };
   }, [stats]);
 
-  // useOptimistic: 提供乐观更新的 UI 反馈
-  // 在数据刷新期间保持显示当前数据，避免闪烁
-  // React Compiler 会自动优化引用相等性，无需手动 useMemo
+  // React 19 性能优化：使用 useTransition 标记数据刷新为非紧急更新
+  // 这样浏览器可以优先处理用户交互，避免界面卡顿
   const currentServers = stats?.servers || [];
-
   const currentOverview = stats?.overview || {
     totalServers: 0,
     onlineServers: 0,
@@ -223,19 +195,9 @@ export function ServerList({
     totalDataDownloaded: 0,
   };
 
-  const [optimisticServers, setOptimisticServers] = useOptimistic(
-    currentServers,
-    (_currentServers, optimisticValue: ServerStats[]) => optimisticValue
-  );
-
-  const [optimisticOverview, setOptimisticOverview] = useOptimistic(
-    currentOverview,
-    (_currentOverview, optimisticValue: StatsOverview) => optimisticValue
-  );
-
   // 清理不再存在的服务器的观察（防止内存泄漏）
   useEffect(() => {
-    const currentServerNames = new Set(optimisticServers.map((s) => s.name));
+    const currentServerNames = new Set(currentServers.map((s) => s.name));
 
     for (const [serverName, element] of observedElements.current.entries()) {
       if (!currentServerNames.has(serverName) && observerRef.current) {
@@ -243,7 +205,7 @@ export function ServerList({
         observedElements.current.delete(serverName);
       }
     }
-  }, [optimisticServers]);
+  }, [currentServers]);
 
   // 定时刷新（仅在初始数据加载完成后启动，且页面可见时才刷新）
   useEffect(() => {
@@ -252,6 +214,8 @@ export function ServerList({
     if (!isPageVisible) return; // 页面不可见时不刷新
 
     const interval = setInterval(() => {
+      // 使用 startTransition 将数据更新标记为非紧急
+      // 这样用户交互（如滚动、点击）会优先处理
       startTransition(() => {
         // 取消之前的请求
         if (abortControllerRef.current) {
@@ -262,18 +226,8 @@ export function ServerList({
         const abortController = new AbortController();
         abortControllerRef.current = abortController;
 
-        // 设置乐观状态为当前数据（使用 ref 访问最新值，避免闭包陷阱）
-        const currentStats = statsRef.current;
-        if (currentStats?.servers) {
-          setOptimisticServers(currentStats.servers);
-        }
-        if (currentStats?.overview) {
-          setOptimisticOverview(currentStats.overview);
-        }
-
-        // 获取新数据
+        // 直接获取新数据，React Compiler 会优化渲染
         fetchServers(abortController.signal).catch(() => {
-          // 只有非 AbortError 才会到达这里
           // 错误已经通过 fetchServers 设置到 error 状态
         });
       });
@@ -376,14 +330,14 @@ export function ServerList({
           </button>
         </div>
       )}
-      <ServerOverview overview={optimisticOverview} />
+      <ServerOverview overview={currentOverview} />
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <span className="text-xl md:text-2xl font-bold text-primary">
           节点列表
         </span>
       </div>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {optimisticServers.map((server, index) => {
+        {currentServers.map((server, index) => {
           const isVisible = visibleCards.has(server.name);
           // 前8个卡片（大约两行）使用固定延迟以展示初始加载效果
           // 其他卡片在滚动进入视口时立即显示
