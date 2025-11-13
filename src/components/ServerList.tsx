@@ -216,7 +216,7 @@ export function ServerList({
             type="button"
             onClick={handleRetry}
             disabled={isRetrying}
-            className="mt-4 rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-70"
+            className="mt-4 rounded-lg bg-primary px-4 py-2 text-primary-foreground shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-md disabled:opacity-70"
           >
             {isRetrying ? "重试中..." : "重试"}
           </button>
@@ -228,13 +228,13 @@ export function ServerList({
   return (
     <div className="space-y-6">
       {error && (
-        <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+        <div className="rounded-2xl border border-destructive/20 bg-destructive/10 backdrop-blur-sm p-4 text-sm text-destructive shadow-sm">
           <p>数据刷新失败：{error.message || "请稍后再试。"}</p>
           <button
             type="button"
             onClick={handleRetry}
             disabled={isRetrying}
-            className="mt-3 inline-flex items-center rounded-md border border-destructive/30 px-3 py-1.5 text-sm font-medium hover:bg-destructive/10 disabled:opacity-70"
+            className="mt-3 inline-flex items-center rounded-lg border border-destructive/20 backdrop-blur-sm px-3 py-1.5 text-sm font-medium transition-all duration-200 hover:bg-destructive/15 hover:shadow-sm disabled:opacity-70"
           >
             {isRetrying ? "重试中..." : "重新获取数据"}
           </button>
@@ -245,7 +245,7 @@ export function ServerList({
         <span className="text-xl md:text-2xl font-bold text-primary">
           节点列表
         </span>
-        <div className="hidden md:inline-flex items-center rounded-md border bg-muted/60 p-1">
+        <div className="hidden md:inline-flex items-center rounded-lg border border-border/20 bg-muted/70 backdrop-blur-sm p-1 shadow-sm">
           {VIEW_MODE_OPTIONS.map(({ id, label, icon: Icon }) => {
             const active = viewMode === id;
             return (
@@ -255,10 +255,10 @@ export function ServerList({
                 onClick={() => setViewMode(id)}
                 aria-label={label}
                 aria-pressed={active}
-                className={`inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium transition ${
+                className={`inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-200 ${
                   active
                     ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                 }`}
               >
                 <Icon className="h-4 w-4" />

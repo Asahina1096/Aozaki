@@ -48,7 +48,7 @@ export function ServerCard({ server }: ServerCardProps) {
   const load15 = formatLoad(server.load_15);
 
   return (
-    <Card className="min-h-[420px] overflow-hidden hover:shadow-lg">
+    <Card className="min-h-[420px] overflow-hidden hover:shadow-lg hover:-translate-y-1 hover:border-border/30">
       <CardHeader className="pb-0 space-y-1">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">

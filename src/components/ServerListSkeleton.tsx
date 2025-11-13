@@ -13,7 +13,7 @@ export function ServerListSkeleton() {
         {Array.from({ length: OVERVIEW_SKELETON_COUNT }, (_, i) => (
           <div
             key={i}
-            className="h-24 animate-pulse rounded-lg border bg-muted"
+            className="h-24 animate-pulse rounded-2xl border border-border/20 bg-muted/60 backdrop-blur-sm shadow-sm"
           />
         ))}
       </div>
@@ -28,7 +28,7 @@ export function ServerListSkeleton() {
         {Array.from({ length: SERVER_SKELETON_COUNT }, (_, i) => (
           <div
             key={i}
-            className="h-[420px] animate-pulse rounded-lg border bg-muted"
+            className="h-[420px] animate-pulse rounded-2xl border border-border/20 bg-muted/60 backdrop-blur-sm shadow-sm"
           />
         ))}
       </div>
