@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useMemo,
   useOptimistic,
@@ -37,6 +38,11 @@ export function ServerList({
     typeof document !== "undefined" ? !document.hidden : true
   );
   const [isMounted, setIsMounted] = useState(false);
+  // 跟踪哪些服务器卡片已经可见过（用于动画）
+  const [visibleCards, setVisibleCards] = useState<Set<string>>(new Set());
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  // 跟踪已观察的元素，用于清理
+  const observedElements = useRef<Map<string, HTMLDivElement>>(new Map());
 
   // 使用 ref 跟踪最新的 stats，避免闭包陷阱
   const statsRef = useRef<ProcessedStatsResponse | null>(stats);
@@ -50,6 +56,60 @@ export function ServerList({
     requestAnimationFrame(() => {
       setIsMounted(true);
     });
+  }, []);
+
+  // Intersection Observer 回调函数
+  // 使用函数式更新避免依赖 visibleCards 状态，防止观察器重复创建
+  const handleIntersection = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      setVisibleCards((prevVisibleCards) => {
+        const newVisibleCards = new Set(prevVisibleCards);
+        let hasChanges = false;
+
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const cardName = entry.target.getAttribute("data-server-name");
+            if (cardName && !newVisibleCards.has(cardName)) {
+              newVisibleCards.add(cardName);
+              hasChanges = true;
+            }
+          }
+        }
+
+        return hasChanges ? newVisibleCards : prevVisibleCards;
+      });
+    },
+    [] // 无依赖，回调函数永不重建
+  );
+
+  // 设置 Intersection Observer
+  useEffect(() => {
+    // 使用较宽松的阈值，提前触发动画
+    observerRef.current = new IntersectionObserver(handleIntersection, {
+      rootMargin: "50px", // 提前50px触发
+      threshold: 0.1, // 10% 可见即触发
+    });
+
+    return () => {
+      observerRef.current?.disconnect();
+    };
+  }, [handleIntersection]);
+
+  // 观察所有卡片元素
+  const cardRef = useCallback((element: HTMLDivElement | null) => {
+    if (element) {
+      const serverName = element.getAttribute("data-server-name");
+      if (serverName && observerRef.current) {
+        // 如果该服务器已有观察的元素且不是同一个，先取消观察旧元素
+        const existingElement = observedElements.current.get(serverName);
+        if (existingElement && existingElement !== element) {
+          observerRef.current.unobserve(existingElement);
+        }
+        // 观察新元素
+        observerRef.current.observe(element);
+        observedElements.current.set(serverName, element);
+      }
+    }
   }, []);
 
   // 获取服务器数据的函数
@@ -99,15 +159,32 @@ export function ServerList({
       const visible = !document.hidden;
       setIsPageVisible(visible);
 
-      // 页面重新可见时立即刷新一次数据
+      // 页面重新可见时平滑刷新数据
       if (visible && stats) {
-        const abortController = new AbortController();
-        if (abortControllerRef.current) {
-          abortControllerRef.current.abort();
-        }
-        abortControllerRef.current = abortController;
-        fetchServers(abortController.signal).catch(() => {
-          // 错误已由 fetchServers 处理
+        // 使用 transition 实现平滑过渡
+        startTransition(() => {
+          // 取消之前的请求
+          if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+          }
+
+          // 创建新的 AbortController
+          const abortController = new AbortController();
+          abortControllerRef.current = abortController;
+
+          // 设置乐观状态为当前数据（使用 ref 访问最新值）
+          const currentStats = statsRef.current;
+          if (currentStats?.servers) {
+            setOptimisticServers(currentStats.servers);
+          }
+          if (currentStats?.overview) {
+            setOptimisticOverview(currentStats.overview);
+          }
+
+          // 获取新数据
+          fetchServers(abortController.signal).catch(() => {
+            // 错误已由 fetchServers 处理
+          });
         });
       }
     };
@@ -147,6 +224,18 @@ export function ServerList({
     currentOverview,
     (_currentOverview, optimisticValue: StatsOverview) => optimisticValue
   );
+
+  // 清理不再存在的服务器的观察（防止内存泄漏）
+  useEffect(() => {
+    const currentServerNames = new Set(optimisticServers.map((s) => s.name));
+
+    for (const [serverName, element] of observedElements.current.entries()) {
+      if (!currentServerNames.has(serverName) && observerRef.current) {
+        observerRef.current.unobserve(element);
+        observedElements.current.delete(serverName);
+      }
+    }
+  }, [optimisticServers]);
 
   // 定时刷新（仅在初始数据加载完成后启动，且页面可见时才刷新）
   useEffect(() => {
@@ -286,19 +375,30 @@ export function ServerList({
         </span>
       </div>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {optimisticServers.map((server, index) => (
-          <div
-            key={server.name}
-            className="animate-fade-in-up"
-            style={{
-              animationDelay: `${Math.min(index * 50, 1000)}ms`,
-              opacity: 0,
-              animationFillMode: "forwards",
-            }}
-          >
-            <ServerCard server={server} />
-          </div>
-        ))}
+        {optimisticServers.map((server, index) => {
+          const isVisible = visibleCards.has(server.name);
+          // 前8个卡片（大约两行）使用固定延迟以展示初始加载效果
+          // 其他卡片在滚动进入视口时立即显示
+          const isInitialBatch = index < 8;
+          const animationDelay = isInitialBatch ? `${index * 50}ms` : "0ms";
+
+          return (
+            <div
+              key={server.name}
+              ref={cardRef}
+              data-server-name={server.name}
+              className={`transition-all duration-500 ${
+                isVisible ? "animate-fade-in-up" : "opacity-0"
+              }`}
+              style={{
+                animationDelay: isVisible ? animationDelay : "0ms",
+                animationFillMode: "forwards",
+              }}
+            >
+              <ServerCard server={server} />
+            </div>
+          );
+        })}
       </div>
     </div>
   );

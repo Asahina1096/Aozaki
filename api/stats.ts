@@ -7,7 +7,7 @@
 /**
  * 缓存配置
  */
-const CACHE_TTL = 5000; // 5秒缓存时间（毫秒）
+const CACHE_TTL = 2000; // 2秒缓存时间（毫秒）
 const UPSTREAM_TIMEOUT = 10000; // 上游请求超时时间（毫秒）
 
 /**

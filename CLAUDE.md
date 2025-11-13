@@ -58,33 +58,40 @@ bun run clean:all        # Remove everything including node_modules
 
 ### State Management
 
-- `ServerList` uses React 19's `useOptimistic` hook for smooth UI updates during data refreshes
+- `ServerList` uses React 19's `useOptimistic` hook for smooth UI updates during data refreshes (ServerList.tsx:141-149)
+  - Prevents UI flicker by showing current data while new data loads
+  - Two optimistic states: `optimisticServers` (server list) and `optimisticOverview` (statistics)
+- `useTransition` wraps data fetches to mark them as non-urgent updates (ServerList.tsx:158)
 - AbortController pattern with refs for request cancellation on component unmount or re-fetch
-- Server sorting uses `useMemo` for performance optimization (online first, then by weight descending)
+- Server sorting happens server-side in Edge Function (api/stats.ts:103-110) - online first, then by weight descending
 - React Compiler automatically optimizes most function references and derived state
 
 ### API Configuration
 
 - **Client-side**: Fetches from `/api/stats` endpoint (no direct backend access)
 - **Server-side**: Backend URL configured via `PUBLIC_API_URL` environment variable (not exposed to client bundle)
-- **Caching**: 5-second server-side cache in Edge Function + Vercel CDN caching
+- **Caching**: 2-second server-side cache in Edge Function + Vercel CDN caching
+- **Request deduplication**: Concurrent API requests share same upstream fetch to prevent duplicate backend calls (api/stats.ts:98-253)
 - **Endpoint**: API route proxies to `${PUBLIC_API_URL}/json/stats.json`
 - **Client caching**: Singleton pattern per endpoint in `getAPIClient()`
 - **Requests**: Client uses `cache: "no-store"` to always fetch fresh data from API route
 
 ### Performance Optimizations
 
-- **Server-side caching**: 5-second cache in Vercel Edge Function reduces backend load
+- **Request deduplication**: Multiple concurrent requests share a single upstream fetch to prevent backend overload (api/stats.ts:98-253)
+- **Server-side caching**: 2-second cache in Vercel Edge Function reduces backend load
 - **CDN caching**: Vercel CDN caches API responses for additional performance
-- **Page Visibility API**: Auto-pause data refresh when tab is hidden, resume when visible
-- **Sorting optimization**: `useMemo` caches server sorting to avoid unnecessary recalculation
+- **Server-side data processing**: Sorting and statistics calculated in Edge Function to reduce client-side computation (api/stats.ts:103-174)
+- **Page Visibility API**: Auto-pause data refresh when tab is hidden, auto-resume when visible (ServerList.tsx:96-136)
+  - Saves bandwidth and CPU when user switches tabs
+  - Immediately refreshes data when tab becomes visible again
 - **Smooth transitions**: Progress bars and hover effects use optimized CSS transitions
 - **Edge Runtime**: API routes use Vercel Edge Runtime for faster cold starts and lower latency
-- React chunk splitting (astro.config.mjs:98-99)
-- Viewport-based prefetching (astro.config.mjs:78-81)
-- Inline stylesheets set to "auto" (astro.config.mjs:114)
-- Custom Astro integration removes unused files from dist (astro.config.mjs:20-69)
-- esbuild minification and optimized chunk naming (astro.config.mjs:91-104)
+- React chunk splitting (astro.config.mjs:93-95)
+- Viewport-based prefetching (astro.config.mjs:74-77)
+- Inline stylesheets set to "auto" (astro.config.mjs:110)
+- Custom Astro integration removes unused files from dist (astro.config.mjs:16-65)
+- esbuild minification and optimized chunk naming (astro.config.mjs:87-100)
 
 ## Code Style
 
@@ -102,18 +109,24 @@ Use `@/` for src imports (e.g., `import { ServerList } from "@/components/Server
 ### React Patterns
 
 - Use React 19 features: `useOptimistic`, `useTransition`
-- React Compiler is enabled - avoid manual `useCallback`/`useMemo` except for critical performance cases (e.g., expensive sorting)
+  - `useOptimistic`: For showing current data during refreshes to prevent flickering
+  - `useTransition`: For marking data fetches as non-urgent background updates
+- React Compiler is enabled - avoid manual `useCallback`/`useMemo` except for critical performance cases
+  - Exception: Use `useMemo` for maintaining reference equality (e.g., ServerList.tsx:124-139)
 - Server keys use `server.name` (unique identifier per ServerStatus-Rust spec)
-- Dev environment validates name uniqueness (ServerList.tsx)
+- Dev environment validates name uniqueness (ServerList.tsx:196-211)
+- AbortController pattern for request cancellation - always store in refs and clean up on unmount
 
 ## Key Files
 
-- `api/stats.ts` - Vercel Edge Function for proxying and caching backend requests
+- `api/stats.ts` - Vercel Edge Function for proxying, caching, request deduplication, and server-side data processing
 - `src/lib/api.ts` - ServerStatusAPI client with singleton pattern and abort signal support
-- `src/lib/types/serverstatus.ts` - Complete type definitions for API responses
-- `src/components/ServerList.tsx` - Main data fetching component with optimistic updates
+- `src/lib/types/serverstatus.ts` - Complete type definitions for API responses (includes ServerStats, StatsResponse, ProcessedStatsResponse, StatsOverview)
+- `src/components/ServerList.tsx` - Main data fetching component with React 19 optimistic updates, Page Visibility API, and auto-refresh
+- `src/components/ServerCard.tsx` - Individual server card component with hover effects and status indicators
+- `src/components/ServerOverview.tsx` - Statistics overview component displaying aggregated metrics
 - `astro.config.mjs` - Astro config with static mode, React integration, and performance settings
-- `src/pages/index.astro` - Main page with ServerList component
+- `src/pages/index.astro` - Main page with ServerList component (refreshInterval configurable on line 19)
 
 ## Environment Variables
 
@@ -128,7 +141,7 @@ Required:
 - Package manager: Bun 1.3.2 (enforced via packageManager field)
 - Astro output mode: `static` (static site generation)
 - API routes: Vercel Edge Functions (native, in `api/` directory)
-- Server-side cache TTL: 5 seconds (configurable in `api/stats.ts`)
+- Server-side cache TTL: 2 seconds (configurable in `api/stats.ts`)
 - ServerStatus-Rust backend accessed via `/json/stats.json` endpoint
 - Client refresh interval can be modified in src/pages/index.astro:19
 - Build output excludes preview.png automatically via custom Astro integration
