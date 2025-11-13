@@ -19,6 +19,7 @@ const {
     <meta charset="UTF-8" />
     <meta name="description" content={description} />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/site.webmanifest" />
@@ -60,11 +61,30 @@ const {
         function apply(mode) {
           const resolved = resolveMode(mode);
           root.dataset.appearance = mode;
-          if (resolved === "dark") {
-            root.classList.add("dark");
+
+          // 更新 color-scheme
+          root.style.colorScheme = resolved;
+
+          // 使用 View Transition API 实现平滑切换（如果支持）
+          const updateDOM = () => {
+            if (resolved === "dark") {
+              root.classList.add("dark");
+            } else {
+              root.classList.remove("dark");
+            }
+          };
+
+          // 检查是否支持 View Transition API 且不是首次加载
+          if (
+            document.startViewTransition &&
+            !root.dataset.initialLoad &&
+            !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ) {
+            document.startViewTransition(updateDOM);
           } else {
-            root.classList.remove("dark");
+            updateDOM();
           }
+
           dispatch(mode);
         }
 
@@ -90,7 +110,14 @@ const {
           apply(getStoredMode());
         });
 
+        // 初始化时标记为首次加载，避免闪烁
+        root.dataset.initialLoad = "true";
         apply(getStoredMode());
+
+        // 移除首次加载标记
+        requestAnimationFrame(() => {
+          delete root.dataset.initialLoad;
+        });
       })();
     </script>
   </head>

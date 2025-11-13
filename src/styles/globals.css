@@ -112,6 +112,26 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
+
+    /* 优化：为主题切换添加过渡效果（仅在不是通过 View Transition API 的情况下） */
+    color-scheme: light;
+  }
+
+  /* 优化：为主题切换添加硬件加速提示 */
+  :root,
+  .dark {
+    transition:
+      color 0.2s ease-in-out,
+      background-color 0.2s ease-in-out;
+  }
+
+  /* 优化：对于不支持 View Transition 的浏览器，添加备用过渡 */
+  @media (prefers-reduced-motion: no-preference) {
+    :root:not([data-initial-load]) {
+      transition:
+        color 0.15s ease-out,
+        background-color 0.15s ease-out;
+    }
   }
 
   .dark {
@@ -134,6 +154,9 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.3% 48%;
+
+    /* 优化：在深色模式下设置 color-scheme */
+    color-scheme: dark;
   }
 }
 
@@ -184,6 +207,81 @@
 .recharts-wrapper,
 .recharts-surface {
   outline: none !important;
+}
+
+/* 优化：View Transition API 自定义动画 */
+@supports (view-transition-name: none) {
+  /* 为主题切换添加淡入淡出效果 */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.2s;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* 减少动画卡顿：使用 GPU 加速 */
+  ::view-transition-old(root) {
+    animation-name: theme-fade-out;
+  }
+
+  ::view-transition-new(root) {
+    animation-name: theme-fade-in;
+  }
+
+  @keyframes theme-fade-out {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes theme-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* 为喜欢动画的用户提供更丰富的体验 */
+  @media (prefers-reduced-motion: no-preference) {
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+      animation-duration: 0.25s;
+    }
+
+    ::view-transition-old(root) {
+      animation-name: theme-fade-scale-out;
+    }
+
+    ::view-transition-new(root) {
+      animation-name: theme-fade-scale-in;
+    }
+
+    @keyframes theme-fade-scale-out {
+      from {
+        opacity: 1;
+        transform: scale(1);
+      }
+      to {
+        opacity: 0;
+        transform: scale(0.98);
+      }
+    }
+
+    @keyframes theme-fade-scale-in {
+      from {
+        opacity: 0;
+        transform: scale(1.02);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+  }
 }
 /*
   ---break---
