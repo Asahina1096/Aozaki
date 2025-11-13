@@ -25,6 +25,7 @@
     "@astrojs/react": "4.4.2",
     "@radix-ui/react-slot": "^1.2.4",
     "@tailwindcss/postcss": "^4.1.17",
+    "@tanstack/react-virtual": "^3.13.12",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
     "@vercel/speed-insights": "^1.2.0",

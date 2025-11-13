@@ -1,6 +1,7 @@
 import { LayoutGrid, List } from "lucide-react";
 import {
   useEffect,
+  useMemo,
   useOptimistic,
   useRef,
   useState,
@@ -40,6 +41,9 @@ export function ServerList({
   const [isRetrying, setIsRetrying] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const isFirstViewModeRender = useRef(true);
+  const [isPageVisible, setIsPageVisible] = useState(
+    typeof document !== "undefined" ? !document.hidden : true
+  );
 
   // 获取服务器数据的函数
   // React Compiler 会自动优化函数引用，无需手动 useCallback
@@ -82,6 +86,31 @@ export function ServerList({
     };
   }, []);
 
+  // 监听页面可见性变化
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      const visible = !document.hidden;
+      setIsPageVisible(visible);
+
+      // 页面重新可见时立即刷新一次数据
+      if (visible && stats) {
+        const abortController = new AbortController();
+        if (abortControllerRef.current) {
+          abortControllerRef.current.abort();
+        }
+        abortControllerRef.current = abortController;
+        fetchServers(abortController.signal).catch(() => {
+          // 错误已由 fetchServers 处理
+        });
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [stats]);
+
   // useOptimistic: 提供乐观更新的 UI 反馈
   // 在数据刷新期间保持显示当前数据，避免闪烁
   const currentServers = stats?.servers || [];
@@ -90,10 +119,11 @@ export function ServerList({
     (_currentServers, optimisticValue: ServerStats[]) => optimisticValue
   );
 
-  // 定时刷新（仅在初始数据加载完成后启动）
+  // 定时刷新（仅在初始数据加载完成后启动，且页面可见时才刷新）
   useEffect(() => {
     if (refreshInterval <= 0) return;
     if (!stats) return; // 如果还没有初始数据，不启动定时刷新
+    if (!isPageVisible) return; // 页面不可见时不刷新
 
     const interval = setInterval(() => {
       startTransition(() => {
@@ -127,7 +157,7 @@ export function ServerList({
         abortControllerRef.current = null;
       }
     };
-  }, [refreshInterval, stats]);
+  }, [refreshInterval, stats, isPageVisible]);
 
   // 在客户端读取本地偏好
   useEffect(() => {
@@ -167,13 +197,15 @@ export function ServerList({
   }
 
   // 排序：在线优先，然后按权重排序
-  // React Compiler 会自动优化，无需 useMemo
-  const sortedServers = [...optimisticServers].sort((a, b) => {
-    const aOnline = a.online4 || a.online6 ? 1 : 0;
-    const bOnline = b.online4 || b.online6 ? 1 : 0;
-    if (aOnline !== bOnline) return bOnline - aOnline;
-    return (b.weight || 0) - (a.weight || 0);
-  });
+  // 使用 useMemo 缓存排序结果，避免每次渲染都重新计算
+  const sortedServers = useMemo(() => {
+    return [...optimisticServers].sort((a, b) => {
+      const aOnline = a.online4 || a.online6 ? 1 : 0;
+      const bOnline = b.online4 || b.online6 ? 1 : 0;
+      if (aOnline !== bOnline) return bOnline - aOnline;
+      return (b.weight || 0) - (a.weight || 0);
+    });
+  }, [optimisticServers]);
 
   const hasServers = currentServers.length > 0;
 
@@ -270,9 +302,6 @@ export function ServerList({
       {viewMode === "grid" ? (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {sortedServers.map((server) => (
-            // 使用 server.name 作为 key：
-            // 根据 ServerStatus-Rust 文档，name 字段是唯一标识符（不可重复）
-            // 参考：https://github.com/zdz/ServerStatus-Rust
             <ServerCard key={server.name} server={server} />
           ))}
         </div>
