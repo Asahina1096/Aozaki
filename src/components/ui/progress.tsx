@@ -50,7 +50,7 @@ const Progress = React.forwardRef<
     >
       <div
         className={cn(
-          "h-full w-full flex-1 rounded-full shadow-sm",
+          "h-full w-full flex-1 rounded-full shadow-sm transition-transform duration-300 ease-out",
           variantClasses[actualVariant]
         )}
         style={{ transform: `translateX(-${100 - percentage}%)` }}

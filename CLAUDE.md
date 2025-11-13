@@ -41,23 +41,24 @@ bun run clean:all        # Remove everything including node_modules
 ### Hybrid Rendering Strategy
 
 - **Static components** (Astro): Header, Footer, BaseLayout - rendered at build time
-- **Interactive components** (React): ServerList, ServerCard, ServerTable, ServerOverview - hydrated client-side with `client:visible`
-- React components use React 19 with babel-plugin-react-compiler for automatic optimization (no need for manual useCallback/useMemo)
+- **Interactive components** (React): ServerList, ServerCard, ServerOverview - hydrated client-side with `client:visible`
+- React components use React 19 with babel-plugin-react-compiler for automatic optimization (no need for manual useCallback/useMemo except critical cases)
 
 ### Data Flow
 
 1. `ServerList.tsx` fetches data from ServerStatus-Rust API via `getAPIClient()`
 2. API client (`src/lib/api.ts`) handles requests with timeout and abort signal support
 3. Data conforms to `StatsResponse` type from `src/lib/types/serverstatus.ts`
-4. `ServerList` passes data to `ServerOverview` (statistics) and `ServerCard`/`ServerTable` (individual servers)
+4. `ServerList` passes data to `ServerOverview` (statistics) and `ServerCard` (individual servers in grid layout)
 5. Auto-refresh controlled by `refreshInterval` prop (default: 2000ms in index.astro:19)
+6. Page Visibility API pauses refresh when tab is hidden to save resources
 
 ### State Management
 
 - `ServerList` uses React 19's `useOptimistic` hook for smooth UI updates during data refreshes
-- View mode (grid/list) persists to localStorage via `VIEW_MODE_STORAGE_KEY`
 - AbortController pattern with refs for request cancellation on component unmount or re-fetch
-- React Compiler automatically optimizes function references and derived state - avoid manual memoization
+- Server sorting uses `useMemo` for performance optimization (online first, then by weight descending)
+- React Compiler automatically optimizes most function references and derived state
 
 ### API Configuration
 
@@ -68,6 +69,9 @@ bun run clean:all        # Remove everything including node_modules
 
 ### Performance Optimizations
 
+- **Page Visibility API**: Auto-pause data refresh when tab is hidden, resume when visible
+- **Sorting optimization**: `useMemo` caches server sorting to avoid unnecessary recalculation
+- **Smooth transitions**: Progress bars and hover effects use optimized CSS transitions
 - React chunk splitting (astro.config.mjs:98-99)
 - Viewport-based prefetching (astro.config.mjs:78-81)
 - Inline stylesheets set to "auto" (astro.config.mjs:114)
@@ -90,9 +94,9 @@ Use `@/` for src imports (e.g., `import { ServerList } from "@/components/Server
 ### React Patterns
 
 - Use React 19 features: `useOptimistic`, `useTransition`
-- React Compiler is enabled - do NOT manually wrap with `useCallback` or `useMemo`
+- React Compiler is enabled - avoid manual `useCallback`/`useMemo` except for critical performance cases (e.g., expensive sorting)
 - Server keys use `server.name` (unique identifier per ServerStatus-Rust spec)
-- Dev environment validates name uniqueness (ServerList.tsx:149-164)
+- Dev environment validates name uniqueness (ServerList.tsx)
 
 ## Key Files
 

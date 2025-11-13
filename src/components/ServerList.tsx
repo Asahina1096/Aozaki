@@ -1,4 +1,3 @@
-import { LayoutGrid, List } from "lucide-react";
 import {
   useEffect,
   useMemo,
@@ -12,17 +11,8 @@ import type { ServerStats, StatsResponse } from "@/lib/types/serverstatus";
 import { ServerCard } from "./ServerCard";
 import { ServerListSkeleton } from "./ServerListSkeleton";
 import { ServerOverview } from "./ServerOverview";
-import { ServerTable } from "./ServerTable";
 
-const VIEW_MODE_OPTIONS = [
-  { id: "grid", label: "卡片", icon: LayoutGrid },
-  { id: "list", label: "列表", icon: List },
-] as const;
-
-const VIEW_MODE_STORAGE_KEY = "aozaki-server-view-mode";
 const DEFAULT_REFRESH_INTERVAL = 2000; // 默认刷新间隔（毫秒）
-
-type ViewMode = (typeof VIEW_MODE_OPTIONS)[number]["id"];
 
 interface ServerListProps {
   refreshInterval?: number; // 刷新间隔（毫秒）
@@ -39,8 +29,6 @@ export function ServerList({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
-  const isFirstViewModeRender = useRef(true);
   const [isPageVisible, setIsPageVisible] = useState(
     typeof document !== "undefined" ? !document.hidden : true
   );
@@ -159,25 +147,6 @@ export function ServerList({
     };
   }, [refreshInterval, stats, isPageVisible]);
 
-  // 在客户端读取本地偏好
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const stored = window.localStorage.getItem(VIEW_MODE_STORAGE_KEY);
-    if (stored === "grid" || stored === "list") {
-      setViewMode(stored);
-    }
-  }, []);
-
-  // 持久化视图偏好
-  useEffect(() => {
-    if (isFirstViewModeRender.current) {
-      isFirstViewModeRender.current = false;
-      return;
-    }
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(VIEW_MODE_STORAGE_KEY, viewMode);
-  }, [viewMode]);
-
   // 开发环境：验证 name 字段的唯一性
   if (import.meta.env.DEV && currentServers.length > 0) {
     const names = currentServers.map((s) => s.name);
@@ -277,37 +246,12 @@ export function ServerList({
         <span className="text-xl md:text-2xl font-bold text-primary">
           节点列表
         </span>
-        <div className="hidden md:inline-flex items-center rounded-lg border border-border/20 bg-muted/70 backdrop-blur-sm p-1 shadow-sm">
-          {VIEW_MODE_OPTIONS.map(({ id, label, icon: Icon }) => {
-            const active = viewMode === id;
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setViewMode(id)}
-                aria-label={label}
-                aria-pressed={active}
-                className={`inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium ${
-                  active
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                }`}
-              >
-                <Icon className="h-4 w-4" />
-              </button>
-            );
-          })}
-        </div>
       </div>
-      {viewMode === "grid" ? (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {sortedServers.map((server) => (
-            <ServerCard key={server.name} server={server} />
-          ))}
-        </div>
-      ) : (
-        <ServerTable servers={sortedServers} />
-      )}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {sortedServers.map((server) => (
+          <ServerCard key={server.name} server={server} />
+        ))}
+      </div>
     </div>
   );
 }
