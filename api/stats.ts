@@ -92,6 +92,12 @@ interface CacheEntry {
 let cache: CacheEntry | null = null;
 
 /**
+ * 正在进行的请求（用于请求去重）
+ * 防止并发请求时多次调用上游 API
+ */
+let inflightRequest: Promise<string> | null = null;
+
+/**
  * 排序服务器：在线优先，然后按权重排序
  */
 function sortServers(servers: ServerStats[]): ServerStats[] {
@@ -204,6 +210,7 @@ async function fetchUpstreamStats(): Promise<StatsResponse> {
 
 /**
  * 获取缓存的数据（如果未过期）或从上游获取新数据
+ * 实现请求去重：并发请求共享同一个上游请求
  */
 async function getStats(): Promise<string> {
   const now = Date.now();
@@ -213,22 +220,37 @@ async function getStats(): Promise<string> {
     return cache.data;
   }
 
-  // 缓存过期或不存在，从上游获取新数据
-  const rawData = await fetchUpstreamStats();
+  // 如果已有正在进行的请求，等待并返回其结果（请求去重）
+  if (inflightRequest) {
+    return inflightRequest;
+  }
 
-  // 处理数据：排序 + 计算统计
-  const processedData = processStatsData(rawData);
+  // 开始新的上游请求，并跟踪它
+  inflightRequest = (async () => {
+    try {
+      // 缓存过期或不存在，从上游获取新数据
+      const rawData = await fetchUpstreamStats();
 
-  // 序列化为 JSON 字符串
-  const dataString = JSON.stringify(processedData);
+      // 处理数据：排序 + 计算统计
+      const processedData = processStatsData(rawData);
 
-  // 更新缓存
-  cache = {
-    data: dataString,
-    timestamp: now,
-  };
+      // 序列化为 JSON 字符串
+      const dataString = JSON.stringify(processedData);
 
-  return dataString;
+      // 更新缓存（使用当前时间戳）
+      cache = {
+        data: dataString,
+        timestamp: Date.now(),
+      };
+
+      return dataString;
+    } finally {
+      // 请求完成后清除 in-flight 标记
+      inflightRequest = null;
+    }
+  })();
+
+  return inflightRequest;
 }
 
 /**

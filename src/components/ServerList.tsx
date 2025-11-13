@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useMemo,
   useOptimistic,
   useRef,
   useState,
@@ -35,12 +36,21 @@ export function ServerList({
   const [isPageVisible, setIsPageVisible] = useState(
     typeof document !== "undefined" ? !document.hidden : true
   );
+  const [isMounted, setIsMounted] = useState(false);
 
   // 使用 ref 跟踪最新的 stats，避免闭包陷阱
   const statsRef = useRef<ProcessedStatsResponse | null>(stats);
   useEffect(() => {
     statsRef.current = stats;
   }, [stats]);
+
+  // 组件挂载时触发淡入动画
+  useEffect(() => {
+    // 使用 requestAnimationFrame 确保 DOM 已渲染
+    requestAnimationFrame(() => {
+      setIsMounted(true);
+    });
+  }, []);
 
   // 获取服务器数据的函数
   // React Compiler 会自动优化函数引用，无需手动 useCallback
@@ -110,17 +120,23 @@ export function ServerList({
 
   // useOptimistic: 提供乐观更新的 UI 反馈
   // 在数据刷新期间保持显示当前数据，避免闪烁
-  const currentServers = stats?.servers || [];
-  const currentOverview = stats?.overview || {
-    totalServers: 0,
-    onlineServers: 0,
-    offlineServers: 0,
-    avgCpu: 0,
-    totalRealtimeUpload: 0,
-    totalRealtimeDownload: 0,
-    totalDataUploaded: 0,
-    totalDataDownloaded: 0,
-  };
+  // 使用 useMemo 保持引用相等性，防止 useOptimistic 意外重置
+  const currentServers = useMemo(() => stats?.servers || [], [stats?.servers]);
+
+  const currentOverview = useMemo(
+    () =>
+      stats?.overview || {
+        totalServers: 0,
+        onlineServers: 0,
+        offlineServers: 0,
+        avgCpu: 0,
+        totalRealtimeUpload: 0,
+        totalRealtimeDownload: 0,
+        totalDataUploaded: 0,
+        totalDataDownloaded: 0,
+      },
+    [stats?.overview]
+  );
 
   const [optimisticServers, setOptimisticServers] = useOptimistic(
     currentServers,
@@ -245,7 +261,11 @@ export function ServerList({
   }
 
   return (
-    <div className="space-y-6">
+    <div
+      className={`space-y-6 transition-opacity duration-700 ease-out ${
+        isMounted ? "opacity-100" : "opacity-0"
+      }`}
+    >
       {error && (
         <div className="rounded-2xl border border-destructive/20 bg-destructive/10 backdrop-blur-sm p-4 text-sm text-destructive shadow-sm">
           <p>数据刷新失败：{error.message || "请稍后再试。"}</p>
@@ -266,8 +286,18 @@ export function ServerList({
         </span>
       </div>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {optimisticServers.map((server) => (
-          <ServerCard key={server.name} server={server} />
+        {optimisticServers.map((server, index) => (
+          <div
+            key={server.name}
+            className="animate-fade-in-up"
+            style={{
+              animationDelay: `${Math.min(index * 50, 1000)}ms`,
+              opacity: 0,
+              animationFillMode: "forwards",
+            }}
+          >
+            <ServerCard server={server} />
+          </div>
         ))}
       </div>
     </div>

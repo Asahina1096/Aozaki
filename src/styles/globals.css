@@ -315,3 +315,19 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* 淡入上升动画 - 用于 ServerCard 错开加载效果 */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@utility animate-fade-in-up {
+  animation: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
