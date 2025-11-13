@@ -113,6 +113,15 @@ export function formatSpeed(bytesPerSecond: number, decimals?: number): string {
 }
 
 /**
+ * 格式化负载值
+ * @param value - 负载值
+ * @returns 格式化后的负载值（保留2位小数）
+ */
+export function formatLoad(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+/**
  * 美化 uptime 显示
  * @param uptime - uptime 字符串（如 "05:45:24" 或 "28 天"）
  * @returns 格式化后的 uptime 字符串（如 "5时45分" 或 "28天"）

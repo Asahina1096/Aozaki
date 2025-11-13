@@ -2,14 +2,17 @@ import {
   Clock4,
   Cpu,
   HardDrive,
+  Layers,
   MapPin,
   MemoryStick,
   Network,
   Server,
 } from "lucide-react";
+import { PILL_STYLES } from "@/lib/constants";
 import type { ServerStats } from "@/lib/types/serverstatus";
 import {
   formatBytes,
+  formatLoad,
   formatPercent,
   formatSpeed,
   formatUptime,
@@ -23,15 +26,11 @@ import {
 } from "./ui/card";
 import { Progress } from "./ui/progress";
 import { Separator } from "./ui/separator";
+import { StatusPill } from "./ui/status-pill";
 
 interface ServerCardProps {
   server: ServerStats;
 }
-
-const INFO_PILL_CLASS =
-  "inline-flex items-center gap-0.5 rounded-full border border-border/40 bg-muted/60 px-1 py-0.5 whitespace-nowrap text-[0.65rem]";
-const NETWORK_PILL_CLASS =
-  "inline-flex items-center gap-1 rounded-full border border-border/40 bg-muted/60 px-1.5 py-0.5 whitespace-nowrap";
 
 export function ServerCard({ server }: ServerCardProps) {
   const isOnline = server.online4 || server.online6;
@@ -44,9 +43,9 @@ export function ServerCard({ server }: ServerCardProps) {
   const memPercent = formatPercent(memUsage, memTotal);
   const diskPercent = formatPercent(diskUsage, diskTotal);
   const cpuDisplay = Math.round(cpuUsage * 10) / 10;
-  const load1 = Math.round(server.load_1 * 100) / 100;
-  const load5 = Math.round(server.load_5 * 100) / 100;
-  const load15 = Math.round(server.load_15 * 100) / 100;
+  const load1 = formatLoad(server.load_1);
+  const load5 = formatLoad(server.load_5);
+  const load15 = formatLoad(server.load_15);
 
   return (
     <Card className="min-h-[420px] overflow-hidden hover:shadow-lg">
@@ -69,56 +68,23 @@ export function ServerCard({ server }: ServerCardProps) {
         <CardDescription className="flex flex-col gap-1 text-xs text-muted-foreground">
           {/* 第一行：运行时间 + 地区 + IPV4 + IPV6 + 类型 */}
           <div className="flex flex-nowrap items-center gap-1 overflow-x-auto whitespace-nowrap">
-            {server.uptime ? (
-              <span className={INFO_PILL_CLASS}>
-                <Clock4 className="h-3 w-3" />
-                <span className="leading-none">
-                  {formatUptime(server.uptime)}
-                </span>
+            <span className={PILL_STYLES.info}>
+              <Clock4 className="h-3 w-3" />
+              <span className="leading-none">
+                {server.uptime ? formatUptime(server.uptime) : "--"}
               </span>
-            ) : (
-              <span className={INFO_PILL_CLASS}>
-                <Clock4 className="h-3 w-3" />
-                <span className="leading-none">--</span>
-              </span>
-            )}
+            </span>
             {server.location && (
-              <span className={INFO_PILL_CLASS}>
+              <span className={PILL_STYLES.info}>
                 <MapPin className="h-3 w-3" />
                 <span className="leading-none">{server.location}</span>
               </span>
             )}
-            <span className={INFO_PILL_CLASS}>
-              <div
-                className={`h-1.5 w-1.5 rounded-full ${
-                  server.online4 ? "bg-green-500" : "bg-gray-400"
-                }`}
-              />
-              <span
-                className={`leading-none ${
-                  server.online4 ? "text-foreground" : "text-muted-foreground"
-                }`}
-              >
-                v4
-              </span>
-            </span>
-            <span className={INFO_PILL_CLASS}>
-              <div
-                className={`h-1.5 w-1.5 rounded-full ${
-                  server.online6 ? "bg-green-500" : "bg-gray-400"
-                }`}
-              />
-              <span
-                className={`leading-none ${
-                  server.online6 ? "text-foreground" : "text-muted-foreground"
-                }`}
-              >
-                v6
-              </span>
-            </span>
+            <StatusPill label="v4" online={server.online4} />
+            <StatusPill label="v6" online={server.online6} />
             {server.type && (
-              <span className={INFO_PILL_CLASS}>
-                <Server className="h-3 w-3" />
+              <span className={PILL_STYLES.info}>
+                <Layers className="h-3 w-3" />
                 <span className="leading-none">{server.type}</span>
               </span>
             )}
@@ -197,13 +163,13 @@ export function ServerCard({ server }: ServerCardProps) {
             <span>网络</span>
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className={`${NETWORK_PILL_CLASS} justify-between`}>
+            <div className={`${PILL_STYLES.network} justify-between`}>
               <span className="text-muted-foreground">↑ 上传</span>
               <span className="font-medium">
                 {formatSpeed(server.network_tx)}
               </span>
             </div>
-            <div className={`${NETWORK_PILL_CLASS} justify-between`}>
+            <div className={`${PILL_STYLES.network} justify-between`}>
               <span className="text-muted-foreground">↓ 下载</span>
               <span className="font-medium">
                 {formatSpeed(server.network_rx)}
@@ -211,13 +177,13 @@ export function ServerCard({ server }: ServerCardProps) {
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className={`${NETWORK_PILL_CLASS} justify-between`}>
+            <div className={`${PILL_STYLES.network} justify-between`}>
               <span className="text-muted-foreground">↑ 总上传</span>
               <span className="font-medium">
                 {formatBytes(server.network_out)}
               </span>
             </div>
-            <div className={`${NETWORK_PILL_CLASS} justify-between`}>
+            <div className={`${PILL_STYLES.network} justify-between`}>
               <span className="text-muted-foreground">↓ 总下载</span>
               <span className="font-medium">
                 {formatBytes(server.network_in)}

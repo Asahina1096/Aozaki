@@ -1,20 +1,17 @@
-import { Clock4, MapPin, Server } from "lucide-react";
+import { Clock4, Layers, MapPin } from "lucide-react";
+import { GRID_STYLES, PILL_STYLES } from "@/lib/constants";
 import type { ServerStats } from "@/lib/types/serverstatus";
 import {
   formatBytes,
+  formatLoad,
   formatPercent,
   formatSpeed,
   formatUptime,
 } from "@/lib/utils";
+import { StatusPill } from "./ui/status-pill";
 
-const INFO_PILL_CLASS =
-  "inline-flex items-center gap-0.5 rounded-full border border-border/40 bg-muted/60 px-1 py-0.5 whitespace-nowrap text-[0.65rem]";
-const STATUS_PILL_CLASS =
-  "inline-flex items-center gap-0.5 rounded-full border border-border/40 bg-muted/60 px-1 py-0.5 whitespace-nowrap text-[0.65rem]";
-const GRID_TEMPLATE_CLASS =
-  "grid grid-cols-[minmax(220px,_2fr)_repeat(4,_minmax(140px,_1fr))]";
-const ROW_CONTAINER_CLASS = `${GRID_TEMPLATE_CLASS} items-center gap-4 rounded-2xl border border-border/60 bg-card/90 px-4 py-4 text-sm shadow-xs transition-all hover:shadow-md`;
-const HEADER_CONTAINER_CLASS = `${GRID_TEMPLATE_CLASS} items-center gap-4 rounded-2xl border border-border/60 bg-card/90 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground shadow-xs`;
+const ROW_CONTAINER_CLASS = `${GRID_STYLES.template} items-center gap-4 rounded-2xl border border-border/60 bg-card/90 px-4 py-4 text-sm shadow-xs transition-all hover:shadow-md`;
+const HEADER_CONTAINER_CLASS = `${GRID_STYLES.template} items-center gap-4 rounded-2xl border border-border/60 bg-card/90 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground shadow-xs`;
 
 interface ServerTableProps {
   servers: ServerStats[];
@@ -63,14 +60,14 @@ export function ServerTable({ servers }: ServerTableProps) {
                     </p>
                   </div>
                   <div className="mt-2 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
-                    <span className={INFO_PILL_CLASS}>
+                    <span className={PILL_STYLES.info}>
                       <Clock4 className="h-3 w-3" />
                       <span className="leading-none">
                         {server.uptime ? formatUptime(server.uptime) : "--"}
                       </span>
                     </span>
                     {server.location && (
-                      <span className={INFO_PILL_CLASS}>
+                      <span className={PILL_STYLES.info}>
                         <MapPin className="h-3 w-3" />
                         <span className="leading-none">{server.location}</span>
                       </span>
@@ -78,8 +75,8 @@ export function ServerTable({ servers }: ServerTableProps) {
                     <StatusPill label="v4" online={ipv4Online} />
                     <StatusPill label="v6" online={ipv6Online} />
                     {server.type && (
-                      <span className={INFO_PILL_CLASS}>
-                        <Server className="h-3 w-3" />
+                      <span className={PILL_STYLES.info}>
+                        <Layers className="h-3 w-3" />
                         <span className="leading-none">{server.type}</span>
                       </span>
                     )}
@@ -132,28 +129,5 @@ export function ServerTable({ servers }: ServerTableProps) {
         </div>
       </div>
     </div>
-  );
-}
-
-function formatLoad(value: number) {
-  return Math.round(value * 100) / 100;
-}
-
-function StatusPill({ label, online }: { label: string; online: boolean }) {
-  return (
-    <span className={STATUS_PILL_CLASS}>
-      <span
-        className={`h-1.5 w-1.5 rounded-full ${
-          online ? "bg-green-500" : "bg-gray-400"
-        }`}
-      />
-      <span
-        className={`leading-none ${
-          online ? "text-foreground" : "text-muted-foreground"
-        }`}
-      >
-        {label}
-      </span>
-    </span>
   );
 }
