@@ -6,6 +6,7 @@ import {
   useState,
   useTransition,
 } from "react";
+import { preconnect, prefetchDNS } from "react-dom";
 import { getAPIClient } from "@/lib/api";
 import type { ServerStats, StatsResponse } from "@/lib/types/serverstatus";
 import { ServerListSkeleton } from "./ServerListSkeleton";
@@ -52,6 +53,14 @@ export function ServerList({
       throw err;
     }
   }
+
+  // React 19 性能优化：预加载 API 资源
+  useEffect(() => {
+    // 预解析 DNS 和预连接到 API 服务器，减少首次请求延迟
+    const apiOrigin = window.location.origin;
+    prefetchDNS(apiOrigin);
+    preconnect(apiOrigin);
+  }, []);
 
   // 初始数据加载
   useEffect(() => {
