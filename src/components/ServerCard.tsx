@@ -49,7 +49,7 @@ function ServerCardComponent({ server }: ServerCardProps) {
   const load15 = formatLoad(server.load_15);
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden" style={{ contain: "layout style paint" }}>
       <CardHeader className="p-4 pb-2 space-y-0.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 ml-1">

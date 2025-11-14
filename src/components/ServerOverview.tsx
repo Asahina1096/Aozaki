@@ -49,7 +49,7 @@ export function ServerOverview({ servers }: ServerOverviewProps) {
     <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
       {/* 总节点数 */}
       <Card
-        className="hover:shadow-md hover:-translate-y-0.5 hover:border-border/30"
+        className="overview-card-hover"
         style={{ contain: "layout style paint" }}
       >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -67,7 +67,7 @@ export function ServerOverview({ servers }: ServerOverviewProps) {
 
       {/* 平均CPU使用率 */}
       <Card
-        className="hover:shadow-md hover:-translate-y-0.5 hover:border-border/30"
+        className="overview-card-hover"
         style={{ contain: "layout style paint" }}
       >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -81,7 +81,7 @@ export function ServerOverview({ servers }: ServerOverviewProps) {
 
       {/* 实时网络速率 */}
       <Card
-        className="hover:shadow-md hover:-translate-y-0.5 hover:border-border/30"
+        className="overview-card-hover"
         style={{ contain: "layout style paint" }}
       >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -107,7 +107,7 @@ export function ServerOverview({ servers }: ServerOverviewProps) {
 
       {/* 流量统计 */}
       <Card
-        className="hover:shadow-md hover:-translate-y-0.5 hover:border-border/30"
+        className="overview-card-hover"
         style={{ contain: "layout style paint" }}
       >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

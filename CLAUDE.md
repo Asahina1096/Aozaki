@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Aozaki is a modern ServerStatus-Rust frontend monitoring dashboard built with Astro, React 19, TailwindCSS 4, and shadcn/ui. It's a static site that fetches server statistics from a ServerStatus-Rust backend API and displays them in real-time.
 
+**Package Manager**: Bun 1.3.2 (enforced via packageManager field in package.json)
+
 ## Commands
 
 ### Development
@@ -42,6 +44,15 @@ bun run clean:all        # Remove everything including node_modules
 bun run package          # Package the build via scripts/package.sh
 ```
 
+## Environment Variables
+
+Required:
+
+- `PUBLIC_API_URL` - ServerStatus-Rust backend URL (e.g., https://status.example.com)
+  - Must NOT end with a trailing slash
+  - If not configured, application will fail to start
+  - See `.env.example` for template
+
 ## Architecture
 
 ### Hybrid Rendering Strategy
@@ -54,10 +65,10 @@ bun run package          # Package the build via scripts/package.sh
 ### Data Flow
 
 1. `ServerList.tsx` fetches data from ServerStatus-Rust API via `getAPIClient()`
-2. API client (`src/lib/api.ts`) handles requests with timeout and abort signal support
+2. API client (`src/lib/api.ts`) handles requests with timeout (10s default) and abort signal support
 3. Data conforms to `StatsResponse` type from `src/lib/types/serverstatus.ts`
 4. `ServerList` passes data to `ServerOverview` (statistics) and `VirtualizedServerGrid` (virtualized server grid for performance)
-5. Auto-refresh controlled by `refreshInterval` prop (default: 2000ms in index.astro:19)
+5. Auto-refresh controlled by `refreshInterval` prop (default: 2000ms)
 6. Page Visibility API pauses refresh when tab is hidden to save resources
 
 ### State Management
@@ -82,11 +93,11 @@ bun run package          # Package the build via scripts/package.sh
 - **Sorting optimization**: `useMemo` caches server sorting to avoid unnecessary recalculation
 - **React 19 preconnect**: Uses `preconnect()` and `prefetchDNS()` to reduce API request latency
 - **Smooth transitions**: Progress bars and hover effects use optimized CSS transitions
-- React chunk splitting (astro.config.mjs:93-95)
-- Viewport-based prefetching (astro.config.mjs:74-77)
-- Inline stylesheets set to "auto" (astro.config.mjs:110)
-- Custom Astro integration removes unused files from dist (astro.config.mjs:16-65)
-- esbuild minification and optimized chunk naming (astro.config.mjs:87-101)
+- **React chunk splitting**: Manual chunks in Vite config separate React runtime from app code
+- **Viewport-based prefetching**: Astro prefetch strategy set to "viewport" for on-demand loading
+- **Inline stylesheets**: Set to "auto" for optimal delivery based on size
+- **Custom Astro integration**: Removes unused files (preview.png, etc.) from dist after build
+- **esbuild minification**: Fast minification with optimized chunk naming for better caching
 
 ## Code Style
 
@@ -96,7 +107,7 @@ bun run package          # Package the build via scripts/package.sh
 - **Linter**: Strict rules with `noExplicitAny` as error (warn in JS/TS files for flexibility)
 - **TypeScript**: `noUnusedVariables` is error, `useExhaustiveDependencies` disabled (React Compiler handles deps)
 - **Astro files**: `noUnusedVariables` disabled for frontmatter to avoid false positives
-- **JavaScript globals**: Common browser and Node.js globals pre-configured (biome.json:183-194)
+- **JavaScript globals**: Common browser and Node.js globals pre-configured in biome.json
 
 ### Import Aliases
 
@@ -105,9 +116,9 @@ Use `@/` for src imports (e.g., `import { ServerList } from "@/components/Server
 ### React Patterns
 
 - Use React 19 features: `useOptimistic`, `useTransition`, `preconnect()`, `prefetchDNS()`
-- React Compiler is enabled - avoid manual `useCallback`/`useMemo` except for critical performance cases (e.g., expensive sorting in ServerList.tsx:179)
+- React Compiler is enabled - avoid manual `useCallback`/`useMemo` except for critical performance cases (e.g., expensive sorting operations)
 - Server keys use `server.name` (unique identifier per ServerStatus-Rust spec)
-- Dev environment validates name uniqueness (ServerList.tsx:159-175)
+- Dev environment validates name uniqueness to prevent React key warnings
 - Use AbortController with refs for cancelling async operations on unmount
 
 ## Key Files
@@ -119,17 +130,12 @@ Use `@/` for src imports (e.g., `import { ServerList } from "@/components/Server
 - `astro.config.mjs` - Astro config with React integration, babel-plugin-react-compiler, and performance settings
 - `src/pages/index.astro` - Main page with ServerList component
 - `biome.json` - Comprehensive Biome configuration for linting and formatting
-
-## Environment Variables
-
-Required:
-
-- `PUBLIC_API_URL` - ServerStatus-Rust backend URL (e.g., https://status.example.com)
+- `.env.example` - Environment variable template
 
 ## Notes
 
-- Package manager: Bun 1.3.2 (enforced via packageManager field)
 - ServerStatus-Rust expects `/json/stats.json` endpoint
-- Refresh interval can be modified in src/pages/index.astro:19
+- Refresh interval can be modified in `src/pages/index.astro` (default: 2000ms)
 - Build output excludes preview.png automatically via custom Astro integration
 - Server sorting: online servers first, then by weight (descending)
+- API requests include 10-second timeout with abort signal support

@@ -48,21 +48,68 @@
   --radius-sm: calc(var(--radius) - 4px);
 }
 
-/* 在线指示器呼吸动画 */
+/* 在线指示器呼吸动画 - GPU 加速版本（微妙效果） */
 @keyframes pulse-glow {
   0%,
   100% {
-    opacity: 1;
-    box-shadow: 0 0 8px 2px currentColor;
+    opacity: 0.9;
+    transform: scale(1);
   }
   50% {
-    opacity: 0.6;
-    box-shadow: 0 0 12px 4px currentColor;
+    opacity: 0.5;
+    transform: scale(1.15);
   }
 }
 
 @utility animate-pulse-glow {
+  position: relative;
   animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* 使用伪元素创建发光效果，GPU 加速 */
+.animate-pulse-glow::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  background: currentColor;
+  opacity: 0.25;
+  filter: blur(4px);
+  animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  will-change: opacity, transform;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* 优化的卡片悬停效果 - 使用伪元素避免 box-shadow 重绘 */
+@utility overview-card-hover {
+  position: relative;
+  transition:
+    transform 0.15s ease-out,
+    border-color 0.15s ease-out;
+}
+
+.overview-card-hover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow:
+    0 4px 6px -1px rgb(0 0 0 / 0.1),
+    0 2px 4px -2px rgb(0 0 0 / 0.1);
+  opacity: 0;
+  transition: opacity 0.15s ease-out;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.overview-card-hover:hover {
+  transform: translateY(-0.125rem);
+  border-color: hsl(var(--border) / 0.3);
+}
+
+.overview-card-hover:hover::after {
+  opacity: 1;
 }
 
 /*

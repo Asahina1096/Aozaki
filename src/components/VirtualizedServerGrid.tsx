@@ -69,6 +69,8 @@ export function VirtualizedServerGrid({ servers }: VirtualizedServerGridProps) {
           className="grid gap-6"
           style={{
             gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+            contain: "layout style paint",
+            contentVisibility: "auto",
           }}
         >
           {row.map((server) => (
