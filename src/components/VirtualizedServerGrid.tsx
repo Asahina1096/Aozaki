@@ -1,5 +1,5 @@
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { ServerStats } from "@/lib/types/serverstatus";
 import { ServerCard } from "./ServerCard";
 
@@ -71,7 +71,7 @@ export function VirtualizedServerGrid({ servers }: VirtualizedServerGridProps) {
     count: rows.length,
     estimateSize: () => CARD_HEIGHT + GAP,
     overscan: 3,
-    scrollMargin: listRef.current?.offsetTop ?? 0,
+    scrollMargin: 0, // 初始为 0，会在 useEffect 中动态更新
     // 性能优化：使用 RAF 包装 ResizeObserver，减少布局抖动
     useAnimationFrameWithResizeObserver: true,
     // 性能优化：调整 isScrolling 重置延迟
@@ -79,6 +79,18 @@ export function VirtualizedServerGrid({ servers }: VirtualizedServerGridProps) {
     // 性能优化：使用原生 scrollend 事件（现代浏览器支持）
     useScrollendEvent: typeof window !== "undefined" && "onscrollend" in window,
   });
+
+  // 动态更新 scrollMargin，确保在组件挂载后正确计算偏移量
+  // 使用 useLayoutEffect 避免视觉闪烁，且仅在挂载时执行一次
+  useLayoutEffect(() => {
+    if (listRef.current) {
+      const scrollMargin = listRef.current.offsetTop;
+      rowVirtualizer.options.scrollMargin = scrollMargin;
+      rowVirtualizer.measure();
+    }
+    // 仅在挂载时运行一次，避免重复测量导致的性能问题
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div ref={listRef}>

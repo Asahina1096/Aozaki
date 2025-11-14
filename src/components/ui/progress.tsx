@@ -14,8 +14,8 @@ const Progress = React.forwardRef<
   const percentage =
     safeMax === 0 ? 0 : Math.min(Math.max((safeValue / safeMax) * 100, 0), 100);
 
-  // 自动根据百分比确定渐变色
-  const getAutoGradient = () => {
+  // 使用 useMemo 缓存自动渐变计算，仅在百分比变化时重新计算
+  const autoGradient = React.useMemo(() => {
     if (percentage >= 80) {
       // 80-100%: 橙红到红色渐变
       return "bg-gradient-to-r from-orange-500 via-red-500 to-red-600";
@@ -26,7 +26,7 @@ const Progress = React.forwardRef<
     }
     // 0-60%: 青绿到绿色渐变
     return "bg-gradient-to-r from-emerald-400 via-green-500 to-green-600";
-  };
+  }, [percentage]);
 
   const variantClasses = {
     default: "bg-gradient-to-r from-primary/80 via-primary to-primary/80",
@@ -34,7 +34,7 @@ const Progress = React.forwardRef<
     warning: "bg-gradient-to-r from-yellow-400 via-yellow-500 to-orange-500",
     danger: "bg-gradient-to-r from-orange-500 via-red-500 to-red-600",
     muted: "bg-gradient-to-r from-gray-300 via-gray-400 to-gray-500",
-    auto: getAutoGradient(),
+    auto: autoGradient,
   };
 
   const actualVariant = variant === "auto" ? "auto" : variant;

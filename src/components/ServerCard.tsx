@@ -48,7 +48,7 @@ export function ServerCard({ server }: ServerCardProps) {
   const load15 = formatLoad(server.load_15);
 
   return (
-    <Card className="overflow-hidden transition-all duration-200 ease-out hover:shadow-lg hover:-translate-y-1 hover:border-border/30">
+    <Card className="group overflow-hidden transition-[box-shadow,transform,border-color] duration-200 ease-out hover:shadow-lg hover:-translate-y-1 hover:border-border/30">
       <CardHeader className="p-4 pb-2 space-y-0.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 ml-1">
@@ -57,10 +57,10 @@ export function ServerCard({ server }: ServerCardProps) {
               {server.alias || server.name}
             </CardTitle>
           </div>
-          <div
+          <span
             className={`h-2.5 w-2.5 rounded-full mr-1 ${
               isOnline
-                ? "bg-green-500 text-green-500 animate-pulse-glow"
+                ? "bg-green-500 shadow-[0_0_0_2px_rgba(34,197,94,0.3),0_0_8px_2px_rgba(34,197,94,0.4),0_0_12px_4px_rgba(34,197,94,0.2)]"
                 : "bg-gray-400"
             }`}
           />
