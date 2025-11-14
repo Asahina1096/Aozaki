@@ -29,7 +29,7 @@
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
     "@vercel/speed-insights": "^1.2.0",
-    "astro": "5.15.5",
+    "astro": "5.15.7",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "0.553.0",

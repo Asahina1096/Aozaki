@@ -8,6 +8,7 @@ import {
   Network,
   Server,
 } from "lucide-react";
+import { memo } from "react";
 import { PILL_STYLES } from "@/lib/constants";
 import type { ServerStats } from "@/lib/types/serverstatus";
 import {
@@ -32,7 +33,7 @@ interface ServerCardProps {
   server: ServerStats;
 }
 
-export function ServerCard({ server }: ServerCardProps) {
+function ServerCardComponent({ server }: ServerCardProps) {
   const isOnline = server.online4 || server.online6;
   const cpuUsage = server.cpu;
   const memUsage = server.memory_used;
@@ -48,7 +49,7 @@ export function ServerCard({ server }: ServerCardProps) {
   const load15 = formatLoad(server.load_15);
 
   return (
-    <Card className="group overflow-hidden transition-[box-shadow,transform,border-color] duration-200 ease-out hover:shadow-lg hover:-translate-y-1 hover:border-border/30">
+    <Card className="overflow-hidden">
       <CardHeader className="p-4 pb-2 space-y-0.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 ml-1">
@@ -60,7 +61,7 @@ export function ServerCard({ server }: ServerCardProps) {
           <span
             className={`h-2.5 w-2.5 rounded-full mr-1 ${
               isOnline
-                ? "bg-green-500 shadow-[0_0_0_2px_rgba(34,197,94,0.3),0_0_8px_2px_rgba(34,197,94,0.4),0_0_12px_4px_rgba(34,197,94,0.2)]"
+                ? "bg-green-500 text-green-500 animate-pulse-glow"
                 : "bg-gray-400"
             }`}
           />
@@ -195,3 +196,6 @@ export function ServerCard({ server }: ServerCardProps) {
     </Card>
   );
 }
+
+// 使用 memo 优化，只有当 server 数据真正变化时才重新渲染
+export const ServerCard = memo(ServerCardComponent);

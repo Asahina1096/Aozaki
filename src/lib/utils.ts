@@ -28,39 +28,6 @@ export function formatBytes(bytes: number, decimals: number = 2): string {
 }
 
 /**
- * 格式化时长
- * @param seconds - 秒数
- * @returns 格式化后的字符串，如 "1天"、"2小时"、"30分钟" 或 "45秒"
- */
-export function formatDuration(seconds: number): string {
-  if (seconds < 0) return "0秒";
-  if (seconds === 0) return "0秒";
-
-  const days = Math.floor(seconds / 86400);
-  const hours = Math.floor((seconds % 86400) / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const secs = Math.floor(seconds % 60);
-
-  // 大于等于1天：只显示天数
-  if (days > 0) {
-    return `${days}天`;
-  }
-
-  // 大于等于1小时：只显示小时数
-  if (hours > 0) {
-    return `${hours}小时`;
-  }
-
-  // 大于等于1分钟：只显示分钟数
-  if (minutes > 0) {
-    return `${minutes}分钟`;
-  }
-
-  // 小于1分钟：只显示秒数
-  return `${secs}秒`;
-}
-
-/**
  * 格式化百分比
  * @param value - 当前值
  * @param total - 总值

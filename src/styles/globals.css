@@ -46,26 +46,23 @@
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+}
 
-  --animate-accordion-down: accordion-down 0.2s ease-out;
-  --animate-accordion-up: accordion-up 0.2s ease-out;
+/* 在线指示器呼吸动画 */
+@keyframes pulse-glow {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 8px 2px currentColor;
+  }
+  50% {
+    opacity: 0.6;
+    box-shadow: 0 0 12px 4px currentColor;
+  }
+}
 
-  @keyframes accordion-down {
-    from {
-      height: 0;
-    }
-    to {
-      height: var(--radix-accordion-content-height);
-    }
-  }
-  @keyframes accordion-up {
-    from {
-      height: var(--radix-accordion-content-height);
-    }
-    to {
-      height: 0;
-    }
-  }
+@utility animate-pulse-glow {
+  animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 /*
@@ -86,13 +83,14 @@
   }
 }
 
-@utility animate-pulse-glow {
-  animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  /* GPU 加速优化 */
-  will-change: opacity;
-  /* 使用 transform 替代 box-shadow 以获得更好的性能 */
-}
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
 
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -169,20 +167,6 @@
     display: block;
     max-width: 100%;
     height: auto;
-  }
-}
-
-@layer utilities {
-  @keyframes pulse-glow {
-    0%,
-    100% {
-      opacity: 1;
-      box-shadow: 0 0 4px currentColor; /* 轻量级发光 */
-    }
-    50% {
-      opacity: 0.6;
-      box-shadow: 0 0 6px 1px currentColor; /* 轻量级扩散 */
-    }
   }
 }
 
@@ -316,20 +300,4 @@
   body {
     @apply bg-background text-foreground;
   }
-}
-
-/* 淡入上升动画 - 用于 ServerCard 错开加载效果 */
-@keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@utility animate-fade-in-up {
-  animation: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }

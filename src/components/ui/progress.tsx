@@ -43,10 +43,9 @@ const Progress = React.forwardRef<
     <div
       ref={ref}
       className={cn(
-        "relative h-2 w-full overflow-hidden rounded-full bg-secondary/50 backdrop-blur-sm shadow-inner",
+        "relative h-2 w-full overflow-hidden rounded-full bg-secondary/50 shadow-inner",
         className
       )}
-      style={{ contain: "layout style paint" }} // CSS containment 优化
       {...props}
     >
       <div
@@ -56,7 +55,6 @@ const Progress = React.forwardRef<
         )}
         style={{
           transform: `translateX(-${100 - percentage}%)`,
-          willChange: "transform", // GPU 加速提示
         }}
       />
     </div>

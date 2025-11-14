@@ -36,20 +36,27 @@ bun run clean            # Remove dist, .astro, cache, *.zip
 bun run clean:all        # Remove everything including node_modules
 ```
 
+### Packaging
+
+```bash
+bun run package          # Package the build via scripts/package.sh
+```
+
 ## Architecture
 
 ### Hybrid Rendering Strategy
 
 - **Static components** (Astro): Header, Footer, BaseLayout - rendered at build time
-- **Interactive components** (React): ServerList, ServerCard, ServerOverview - hydrated client-side with `client:visible`
-- React components use React 19 with babel-plugin-react-compiler for automatic optimization (no need for manual useCallback/useMemo except critical cases)
+- **Interactive components** (React): ServerList, ServerCard, ServerOverview, VirtualizedServerGrid - hydrated client-side
+- Hydration strategy: `client:idle` for ServerList (hydrates when browser is idle)
+- React components use React 19 with babel-plugin-react-compiler for automatic optimization (no need for manual useCallback/useMemo except critical cases like expensive sorting)
 
 ### Data Flow
 
 1. `ServerList.tsx` fetches data from ServerStatus-Rust API via `getAPIClient()`
 2. API client (`src/lib/api.ts`) handles requests with timeout and abort signal support
 3. Data conforms to `StatsResponse` type from `src/lib/types/serverstatus.ts`
-4. `ServerList` passes data to `ServerOverview` (statistics) and `ServerCard` (individual servers in grid layout)
+4. `ServerList` passes data to `ServerOverview` (statistics) and `VirtualizedServerGrid` (virtualized server grid for performance)
 5. Auto-refresh controlled by `refreshInterval` prop (default: 2000ms in index.astro:19)
 6. Page Visibility API pauses refresh when tab is hidden to save resources
 
@@ -59,6 +66,7 @@ bun run clean:all        # Remove everything including node_modules
 - AbortController pattern with refs for request cancellation on component unmount or re-fetch
 - Server sorting uses `useMemo` for performance optimization (online first, then by weight descending)
 - React Compiler automatically optimizes most function references and derived state
+- Page visibility state tracked to pause/resume data fetching when tab is hidden/shown
 
 ### API Configuration
 
@@ -69,23 +77,26 @@ bun run clean:all        # Remove everything including node_modules
 
 ### Performance Optimizations
 
+- **Virtualized server grid**: Uses `@tanstack/react-virtual` for efficient rendering of large server lists
 - **Page Visibility API**: Auto-pause data refresh when tab is hidden, resume when visible
 - **Sorting optimization**: `useMemo` caches server sorting to avoid unnecessary recalculation
+- **React 19 preconnect**: Uses `preconnect()` and `prefetchDNS()` to reduce API request latency
 - **Smooth transitions**: Progress bars and hover effects use optimized CSS transitions
-- React chunk splitting (astro.config.mjs:98-99)
-- Viewport-based prefetching (astro.config.mjs:78-81)
-- Inline stylesheets set to "auto" (astro.config.mjs:114)
-- Custom Astro integration removes unused files from dist (astro.config.mjs:20-69)
-- esbuild minification and optimized chunk naming (astro.config.mjs:91-104)
+- React chunk splitting (astro.config.mjs:93-95)
+- Viewport-based prefetching (astro.config.mjs:74-77)
+- Inline stylesheets set to "auto" (astro.config.mjs:110)
+- Custom Astro integration removes unused files from dist (astro.config.mjs:16-65)
+- esbuild minification and optimized chunk naming (astro.config.mjs:87-101)
 
 ## Code Style
 
 ### Biome Configuration
 
 - **Formatter**: 2 spaces, 80 char line width, LF endings, double quotes
-- **Linter**: Strict rules with `noExplicitAny` as error (warn in JS/TS files)
+- **Linter**: Strict rules with `noExplicitAny` as error (warn in JS/TS files for flexibility)
 - **TypeScript**: `noUnusedVariables` is error, `useExhaustiveDependencies` disabled (React Compiler handles deps)
-- **Astro files**: `noUnusedVariables` disabled for frontmatter
+- **Astro files**: `noUnusedVariables` disabled for frontmatter to avoid false positives
+- **JavaScript globals**: Common browser and Node.js globals pre-configured (biome.json:183-194)
 
 ### Import Aliases
 
@@ -93,18 +104,21 @@ Use `@/` for src imports (e.g., `import { ServerList } from "@/components/Server
 
 ### React Patterns
 
-- Use React 19 features: `useOptimistic`, `useTransition`
-- React Compiler is enabled - avoid manual `useCallback`/`useMemo` except for critical performance cases (e.g., expensive sorting)
+- Use React 19 features: `useOptimistic`, `useTransition`, `preconnect()`, `prefetchDNS()`
+- React Compiler is enabled - avoid manual `useCallback`/`useMemo` except for critical performance cases (e.g., expensive sorting in ServerList.tsx:179)
 - Server keys use `server.name` (unique identifier per ServerStatus-Rust spec)
-- Dev environment validates name uniqueness (ServerList.tsx)
+- Dev environment validates name uniqueness (ServerList.tsx:159-175)
+- Use AbortController with refs for cancelling async operations on unmount
 
 ## Key Files
 
 - `src/lib/api.ts` - ServerStatusAPI client with singleton pattern and abort signal support
 - `src/lib/types/serverstatus.ts` - Complete type definitions for API responses
-- `src/components/ServerList.tsx` - Main data fetching component with optimistic updates
-- `astro.config.mjs` - Astro config with React integration and performance settings
+- `src/components/ServerList.tsx` - Main data fetching component with optimistic updates and page visibility tracking
+- `src/components/VirtualizedServerGrid.tsx` - Virtualized grid using @tanstack/react-virtual
+- `astro.config.mjs` - Astro config with React integration, babel-plugin-react-compiler, and performance settings
 - `src/pages/index.astro` - Main page with ServerList component
+- `biome.json` - Comprehensive Biome configuration for linting and formatting
 
 ## Environment Variables
 
