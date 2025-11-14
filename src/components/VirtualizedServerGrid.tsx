@@ -72,6 +72,12 @@ export function VirtualizedServerGrid({ servers }: VirtualizedServerGridProps) {
     estimateSize: () => CARD_HEIGHT + GAP,
     overscan: 3,
     scrollMargin: listRef.current?.offsetTop ?? 0,
+    // 性能优化：使用 RAF 包装 ResizeObserver，减少布局抖动
+    useAnimationFrameWithResizeObserver: true,
+    // 性能优化：调整 isScrolling 重置延迟
+    isScrollingResetDelay: 100,
+    // 性能优化：使用原生 scrollend 事件（现代浏览器支持）
+    useScrollendEvent: typeof window !== "undefined" && "onscrollend" in window,
   });
 
   return (
