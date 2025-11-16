@@ -226,7 +226,7 @@ export function ServerList({
             type="button"
             onClick={handleRetry}
             disabled={isRetrying}
-            className="mt-4 rounded-lg bg-primary px-4 py-2 text-primary-foreground shadow-sm disabled:opacity-70"
+            className="mt-4 rounded-lg bg-primary px-4 py-2 text-primary-foreground shadow-sm disabled:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             {isRetrying ? "重试中..." : "重试"}
           </button>
@@ -244,7 +244,7 @@ export function ServerList({
             type="button"
             onClick={handleRetry}
             disabled={isRetrying}
-            className="mt-3 inline-flex items-center rounded-lg border border-destructive/20 backdrop-blur-sm px-3 py-1.5 text-sm font-medium disabled:opacity-70"
+            className="mt-3 inline-flex items-center rounded-lg border border-destructive/20 backdrop-blur-sm px-3 py-1.5 text-sm font-medium disabled:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             {isRetrying ? "重试中..." : "重新获取数据"}
           </button>

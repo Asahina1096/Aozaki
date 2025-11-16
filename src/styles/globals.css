@@ -43,6 +43,9 @@
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
 
+  --color-status-online: hsl(var(--status-online));
+  --color-status-offline: hsl(var(--status-offline));
+
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
@@ -79,37 +82,6 @@
   will-change: opacity, transform;
   pointer-events: none;
   z-index: -1;
-}
-
-/* 优化的卡片悬停效果 - 使用伪元素避免 box-shadow 重绘 */
-@utility overview-card-hover {
-  position: relative;
-  transition:
-    transform 0.15s ease-out,
-    border-color 0.15s ease-out;
-}
-
-.overview-card-hover::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  box-shadow:
-    0 4px 6px -1px rgb(0 0 0 / 0.1),
-    0 2px 4px -2px rgb(0 0 0 / 0.1);
-  opacity: 0;
-  transition: opacity 0.15s ease-out;
-  pointer-events: none;
-  z-index: -1;
-}
-
-.overview-card-hover:hover {
-  transform: translateY(-0.125rem);
-  border-color: hsl(var(--border) / 0.3);
-}
-
-.overview-card-hover:hover::after {
-  opacity: 1;
 }
 
 /*
@@ -159,6 +131,8 @@
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
+    --status-online: 142.1 76.2% 45%;
+    --status-offline: 220 8.9% 46.1%;
     --radius: 0.5rem;
     color-scheme: light;
   }
@@ -183,6 +157,8 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.3% 48%;
+    --status-online: 142.1 70.6% 50%;
+    --status-offline: 215 20.2% 55%;
     color-scheme: dark;
   }
 }

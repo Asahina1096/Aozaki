@@ -61,8 +61,8 @@ function ServerCardComponent({ server }: ServerCardProps) {
           <span
             className={`h-2.5 w-2.5 rounded-full mr-1 ${
               isOnline
-                ? "bg-green-500 text-green-500 animate-pulse-glow"
-                : "bg-gray-400"
+                ? "bg-status-online text-status-online animate-pulse-glow"
+                : "bg-status-offline"
             }`}
           />
         </div>

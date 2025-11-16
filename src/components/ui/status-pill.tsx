@@ -10,7 +10,7 @@ export function StatusPill({ label, online }: StatusPillProps) {
     <span className={PILL_STYLES.status}>
       <span
         className={`h-1.5 w-1.5 rounded-full ${
-          online ? "bg-green-500" : "bg-gray-400"
+          online ? "bg-status-online" : "bg-status-offline"
         }`}
       />
       <span
