@@ -1,4 +1,5 @@
 import { ArrowUpDown, Cpu, Network, Server } from "lucide-react";
+import { CARD_CONTAINMENT_STYLE, PILL_STYLES } from "@/lib/constants";
 import type { ServerStats } from "@/lib/types/serverstatus";
 import { formatBytes, formatSpeed } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
@@ -42,13 +43,10 @@ export function ServerOverview({ servers }: ServerOverviewProps) {
       ? Math.round((stats.totalCpu / stats.onlineCount) * 10) / 10
       : 0;
 
-  const capsuleClass =
-    "inline-flex items-center rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground";
-
   return (
     <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
       {/* 总节点数 */}
-      <Card style={{ contain: "layout style paint" }}>
+      <Card style={CARD_CONTAINMENT_STYLE}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">节点总数</CardTitle>
           <Server className="h-4 w-4 text-muted-foreground" />
@@ -56,14 +54,14 @@ export function ServerOverview({ servers }: ServerOverviewProps) {
         <CardContent>
           <div className="text-2xl font-bold">{totalServers}</div>
           <div className="mt-2 flex flex-wrap gap-2">
-            <span className={capsuleClass}>在线 {onlineServers}</span>
-            <span className={capsuleClass}>离线 {offlineServers}</span>
+            <span className={PILL_STYLES.capsule}>在线 {onlineServers}</span>
+            <span className={PILL_STYLES.capsule}>离线 {offlineServers}</span>
           </div>
         </CardContent>
       </Card>
 
       {/* 平均CPU使用率 */}
-      <Card style={{ contain: "layout style paint" }}>
+      <Card style={CARD_CONTAINMENT_STYLE}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">平均CPU使用率</CardTitle>
           <Cpu className="h-4 w-4 text-muted-foreground" />
@@ -74,7 +72,7 @@ export function ServerOverview({ servers }: ServerOverviewProps) {
       </Card>
 
       {/* 实时网络速率 */}
-      <Card style={{ contain: "layout style paint" }}>
+      <Card style={CARD_CONTAINMENT_STYLE}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">实时网络速率</CardTitle>
           <Network className="h-4 w-4 text-muted-foreground" />
@@ -86,10 +84,10 @@ export function ServerOverview({ servers }: ServerOverviewProps) {
             )}
           </div>
           <div className="mt-2 flex flex-wrap gap-2">
-            <span className={capsuleClass}>
+            <span className={PILL_STYLES.capsule}>
               ↑ 上传 {formatSpeed(stats.totalRealtimeUpload)}
             </span>
-            <span className={capsuleClass}>
+            <span className={PILL_STYLES.capsule}>
               ↓ 下载 {formatSpeed(stats.totalRealtimeDownload)}
             </span>
           </div>
@@ -97,7 +95,7 @@ export function ServerOverview({ servers }: ServerOverviewProps) {
       </Card>
 
       {/* 流量统计 */}
-      <Card style={{ contain: "layout style paint" }}>
+      <Card style={CARD_CONTAINMENT_STYLE}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">流量统计</CardTitle>
           <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
@@ -107,10 +105,10 @@ export function ServerOverview({ servers }: ServerOverviewProps) {
             {formatBytes(stats.totalDataUploaded + stats.totalDataDownloaded)}
           </div>
           <div className="mt-2 flex flex-wrap gap-2">
-            <span className={capsuleClass}>
+            <span className={PILL_STYLES.capsule}>
               ↑ 上传 {formatBytes(stats.totalDataUploaded)}
             </span>
-            <span className={capsuleClass}>
+            <span className={PILL_STYLES.capsule}>
               ↓ 下载 {formatBytes(stats.totalDataDownloaded)}
             </span>
           </div>

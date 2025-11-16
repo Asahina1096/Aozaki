@@ -12,6 +12,8 @@ export function StatusPill({ label, online }: StatusPillProps) {
         className={`h-1.5 w-1.5 rounded-full ${
           online ? "bg-status-online" : "bg-status-offline"
         }`}
+        role="img"
+        aria-hidden="true"
       />
       <span
         className={`leading-none ${

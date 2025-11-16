@@ -36,7 +36,9 @@ export function ServerList({
 
   // 获取服务器数据的函数
   // React Compiler 会自动优化函数引用，无需手动 useCallback
-  async function fetchServers(signal?: AbortSignal) {
+  async function fetchServers(
+    signal?: AbortSignal
+  ): Promise<StatsResponse | null> {
     try {
       const client = getAPIClient();
       const data = await client.getStats(signal);
@@ -187,7 +189,7 @@ export function ServerList({
 
   const hasServers = currentServers.length > 0;
 
-  function handleRetry() {
+  function handleRetry(): void {
     const abortController = new AbortController();
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -226,6 +228,8 @@ export function ServerList({
             type="button"
             onClick={handleRetry}
             disabled={isRetrying}
+            aria-busy={isRetrying}
+            aria-label={isRetrying ? "正在重试连接服务器" : "重试连接服务器"}
             className="mt-4 rounded-lg bg-primary px-4 py-2 text-primary-foreground shadow-sm disabled:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             {isRetrying ? "重试中..." : "重试"}
@@ -244,6 +248,8 @@ export function ServerList({
             type="button"
             onClick={handleRetry}
             disabled={isRetrying}
+            aria-busy={isRetrying}
+            aria-label={isRetrying ? "正在重新获取数据" : "重新获取服务器数据"}
             className="mt-3 inline-flex items-center rounded-lg border border-destructive/20 backdrop-blur-sm px-3 py-1.5 text-sm font-medium disabled:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             {isRetrying ? "重试中..." : "重新获取数据"}

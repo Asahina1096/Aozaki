@@ -9,7 +9,7 @@ import {
   Server,
 } from "lucide-react";
 import { memo } from "react";
-import { PILL_STYLES } from "@/lib/constants";
+import { CARD_CONTAINMENT_STYLE, PILL_STYLES } from "@/lib/constants";
 import type { ServerStats } from "@/lib/types/serverstatus";
 import {
   formatBytes,
@@ -49,7 +49,7 @@ function ServerCardComponent({ server }: ServerCardProps) {
   const load15 = formatLoad(server.load_15);
 
   return (
-    <Card className="overflow-hidden" style={{ contain: "layout style paint" }}>
+    <Card className="overflow-hidden" style={CARD_CONTAINMENT_STYLE}>
       <CardHeader className="p-4 pb-2 space-y-0.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 ml-1">
@@ -64,6 +64,8 @@ function ServerCardComponent({ server }: ServerCardProps) {
                 ? "bg-status-online text-status-online animate-pulse-glow"
                 : "bg-status-offline"
             }`}
+            aria-label={isOnline ? "在线" : "离线"}
+            role="status"
           />
         </div>
         <CardDescription className="flex flex-col gap-1 text-xs text-muted-foreground">

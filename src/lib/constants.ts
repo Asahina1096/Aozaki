@@ -8,4 +8,10 @@ export const PILL_STYLES = {
     "inline-flex items-center gap-0.5 rounded-full border border-border/20 bg-muted/60 px-1 py-0.5 whitespace-nowrap text-[0.65rem]",
   network:
     "inline-flex items-center gap-1 rounded-full border border-border/20 bg-muted/60 px-1.5 py-0.5 whitespace-nowrap",
+  capsule:
+    "inline-flex items-center rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground",
+} as const;
+
+export const CARD_CONTAINMENT_STYLE = {
+  contain: "layout style paint",
 } as const;

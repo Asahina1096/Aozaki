@@ -3,12 +3,16 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { ServerStats } from "@/lib/types/serverstatus";
 import { ServerCard } from "./ServerCard";
 
+const ESTIMATED_ROW_HEIGHT = 420; // ServerCard ~400px + gap 24px
+const VIRTUALIZER_OVERSCAN = 3; // Extra rows for smooth scrolling
+const RESIZE_DEBOUNCE_MS = 150; // Debounce delay for resize events
+
 interface VirtualizedServerGridProps {
   servers: ServerStats[];
 }
 
 // 计算当前视口下的列数
-function useResponsiveColumns() {
+function useResponsiveColumns(): number {
   const [columns, setColumns] = useState(() => {
     if (typeof window === "undefined") return 1;
     const width = window.innerWidth;
@@ -33,10 +37,10 @@ function useResponsiveColumns() {
     }
 
     // 使用防抖优化 resize 事件
-    let timeoutId: number;
+    let timeoutId: ReturnType<typeof setTimeout>;
     const debouncedUpdate = () => {
       clearTimeout(timeoutId);
-      timeoutId = window.setTimeout(updateColumns, 150);
+      timeoutId = setTimeout(updateColumns, RESIZE_DEBOUNCE_MS);
     };
 
     window.addEventListener("resize", debouncedUpdate);
@@ -71,8 +75,8 @@ export function VirtualizedServerGrid({ servers }: VirtualizedServerGridProps) {
   // 配置窗口虚拟化器
   const rowVirtualizer = useWindowVirtualizer({
     count: rows.length,
-    estimateSize: () => 420, // 估计每行高度（ServerCard约400px + gap 24px）
-    overscan: 3, // 额外渲染3行以优化滚动体验
+    estimateSize: () => ESTIMATED_ROW_HEIGHT,
+    overscan: VIRTUALIZER_OVERSCAN,
     scrollMargin: parentOffsetRef.current,
     measureElement:
       typeof window !== "undefined" &&
