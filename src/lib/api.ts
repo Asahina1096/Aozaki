@@ -98,3 +98,20 @@ export function getAPIClient(baseUrl?: string): ServerStatusAPI {
 
   return clientCache.get(url)!;
 }
+
+/**
+ * 获取 API 服务器的 origin（协议 + 主机名 + 端口）
+ * 用于 preconnect/prefetchDNS 等资源预加载
+ * @returns API 服务器的 origin，如果未配置或无效则返回 null
+ */
+export function getAPIOrigin(): string | null {
+  try {
+    const raw = import.meta.env.PUBLIC_API_URL?.replace(/\/+$/, "");
+    if (!raw) return null; // 不配置就不做预连接
+
+    return new URL(raw).origin;
+  } catch {
+    // 配错了就静默失败，不影响页面
+    return null;
+  }
+}

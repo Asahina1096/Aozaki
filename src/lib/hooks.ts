@@ -75,6 +75,7 @@ export function usePollingStats(options: {
   const { reset: resetAbortController } = useAbortController();
   const statsRef = useRef<StatsResponse | null>(null);
   const lastFetchTimeRef = useRef<number>(0);
+  const isFetchingRef = useRef<boolean>(false); // 防重入标志
 
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -111,12 +112,19 @@ export function usePollingStats(options: {
   );
 
   // 安全的数据获取包装器：用于定时器等不需要手动处理错误的场景
+  // 带有防重入保护，避免多个触发点同时发起请求
   const safeFetch = useCallback(
     async (signal?: AbortSignal): Promise<void> => {
+      // 防重入：如果当前正在请求，则跳过
+      if (isFetchingRef.current) return;
+
+      isFetchingRef.current = true;
       try {
         await fetchServers(signal);
       } catch {
         // 错误已由 fetchServers 设置到 error 状态，静默处理
+      } finally {
+        isFetchingRef.current = false;
       }
     },
     [fetchServers]
@@ -124,15 +132,20 @@ export function usePollingStats(options: {
 
   // 手动重试函数
   const retry = useCallback(() => {
+    // 防重入：如果当前正在请求，则跳过
+    if (isFetchingRef.current) return;
+
     const abortController = resetAbortController();
     setIsRetrying(true);
     setLoading(true);
+    isFetchingRef.current = true;
 
     fetchServers(abortController.signal)
       .catch(() => {
         // 错误状态由 fetchServers 负责
       })
       .finally(() => {
+        isFetchingRef.current = false;
         setIsRetrying(false);
         setLoading(false);
       });
@@ -146,9 +159,12 @@ export function usePollingStats(options: {
   // 初始数据加载
   useEffect(() => {
     if (!enabled) return;
+    // 防重入：如果当前正在请求，则跳过
+    if (isFetchingRef.current) return;
 
     const abortController = resetAbortController();
     setLoading(true);
+    isFetchingRef.current = true;
 
     fetchServers(abortController.signal)
       .then(() => {
@@ -156,6 +172,9 @@ export function usePollingStats(options: {
       })
       .catch(() => {
         setLoading(false);
+      })
+      .finally(() => {
+        isFetchingRef.current = false;
       });
   }, [enabled, fetchServers, resetAbortController]);
 

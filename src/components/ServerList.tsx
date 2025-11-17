@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useOptimistic, useState } from "react";
 import { preconnect, prefetchDNS } from "react-dom";
+import { getAPIOrigin } from "@/lib/api";
 import { usePollingStats } from "@/lib/hooks";
 import type { ServerStats } from "@/lib/types/serverstatus";
 import { formatRelativeTime } from "@/lib/utils";
@@ -40,6 +41,16 @@ export function ServerList({
     return () => clearInterval(interval);
   }, [lastFetchTime]);
 
+  // React 19 性能优化：预加载 API 资源
+  // 预解析 DNS 和预连接到 API 服务器，减少首次请求延迟
+  useEffect(() => {
+    const apiOrigin = getAPIOrigin();
+    if (apiOrigin) {
+      prefetchDNS(apiOrigin);
+      preconnect(apiOrigin);
+    }
+  }, []); // 只在组件挂载时执行一次
+
   // useOptimistic: 提供乐观更新的 UI 反馈
   // 在数据刷新期间保持显示当前数据，避免闪烁
   const currentServers = stats?.servers || [];
@@ -47,14 +58,6 @@ export function ServerList({
     currentServers,
     (_currentServers, optimisticValue: ServerStats[]) => optimisticValue
   );
-
-  // React 19 性能优化：预加载 API 资源
-  // 预解析 DNS 和预连接到 API 服务器，减少首次请求延迟
-  const apiOrigin = typeof window !== "undefined" ? window.location.origin : "";
-  if (apiOrigin) {
-    prefetchDNS(apiOrigin);
-    preconnect(apiOrigin);
-  }
 
   // 开发环境：验证 name 字段的唯一性
   if (import.meta.env.DEV && currentServers.length > 0) {
