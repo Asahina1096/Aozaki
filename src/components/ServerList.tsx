@@ -165,7 +165,7 @@ export function ServerList({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             aria-label="搜索服务器（按别名或位置）"
-            className="h-8 w-40 md:w-48 rounded-md border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="h-8 w-40 md:w-48 rounded-md border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus:outline-none"
           />
           {searchQuery && (
             <span className="text-sm text-muted-foreground">
