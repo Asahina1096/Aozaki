@@ -1,15 +1,8 @@
-import {
-  useEffect,
-  useMemo,
-  useOptimistic,
-  useRef,
-  useState,
-  useTransition,
-} from "react";
+import { useEffect, useMemo, useOptimistic, useState } from "react";
 import { preconnect, prefetchDNS } from "react-dom";
-import { getAPIClient } from "@/lib/api";
-import { useAbortController } from "@/lib/hooks";
-import type { ServerStats, StatsResponse } from "@/lib/types/serverstatus";
+import { usePollingStats } from "@/lib/hooks";
+import type { ServerStats } from "@/lib/types/serverstatus";
+import { formatRelativeTime } from "@/lib/utils";
 import { ServerListSkeleton } from "./ServerListSkeleton";
 import { ServerOverview } from "./ServerOverview";
 import { VirtualizedServerGrid } from "./VirtualizedServerGrid";
@@ -23,157 +16,45 @@ interface ServerListProps {
 export function ServerList({
   refreshInterval = DEFAULT_REFRESH_INTERVAL,
 }: ServerListProps) {
-  const { reset: resetAbortController } = useAbortController();
-  const statsRef = useRef<StatsResponse | null>(null);
-  const lastFetchTimeRef = useRef<number>(0); // 记录上次成功请求的时间戳
-  const [isPending, startTransition] = useTransition();
+  // 使用自定义 Hook 管理数据获取和轮询
+  const { stats, loading, error, isRetrying, retry, lastFetchTime } =
+    usePollingStats({
+      refreshInterval,
+      enabled: true,
+    });
 
-  // 使用 useState 存储数据
-  const [stats, setStats] = useState<StatsResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const [isRetrying, setIsRetrying] = useState(false);
-  const [isPageVisible, setIsPageVisible] = useState(
-    typeof document !== "undefined" ? !document.hidden : true
-  );
-  const [hasFocus, setHasFocus] = useState(
-    typeof document !== "undefined" ? document.hasFocus() : true
+  // 定时更新相对时间显示（每秒更新一次）
+  const [relativeTime, setRelativeTime] = useState(() =>
+    formatRelativeTime(lastFetchTime)
   );
 
-  // 获取服务器数据的函数
-  // React Compiler 会自动优化函数引用，无需手动 useCallback
-  async function fetchServers(
-    signal?: AbortSignal
-  ): Promise<StatsResponse | null> {
-    try {
-      const client = getAPIClient();
-      const data = await client.getStats(signal);
-      setStats(data);
-      setError(null);
-      lastFetchTimeRef.current = Date.now(); // 记录成功请求时间
-      return data;
-    } catch (err) {
-      // 如果请求被取消，不更新状态
-      if (err instanceof Error && err.name === "AbortError") {
-        return null;
-      }
-      // 其他错误设置错误状态
-      setError(err instanceof Error ? err : new Error("未知错误"));
-      throw err;
-    }
-  }
-
-  // React 19 性能优化：预加载 API 资源
   useEffect(() => {
-    // 预解析 DNS 和预连接到 API 服务器，减少首次请求延迟
-    const apiOrigin = window.location.origin;
-    prefetchDNS(apiOrigin);
-    preconnect(apiOrigin);
-  }, []);
+    // 立即更新一次
+    setRelativeTime(formatRelativeTime(lastFetchTime));
 
-  // 同步 stats 到 ref，确保 visibility change handler 总是访问最新值
-  useEffect(() => {
-    statsRef.current = stats;
-  }, [stats]);
+    // 每秒更新一次相对时间显示
+    const interval = setInterval(() => {
+      setRelativeTime(formatRelativeTime(lastFetchTime));
+    }, 1000);
 
-  // 初始数据加载
-  useEffect(() => {
-    const abortController = resetAbortController();
-
-    setLoading(true);
-    fetchServers(abortController.signal)
-      .then(() => {
-        setLoading(false);
-      })
-      .catch(() => {
-        // 只有非 AbortError 才会到达这里
-        setLoading(false);
-        // 错误已经通过 fetchServers 设置到 error 状态
-      });
-  }, []);
-
-  // 监听页面可见性变化和窗口焦点变化
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      const visible = !document.hidden;
-      setIsPageVisible(visible);
-    };
-
-    const handleFocus = () => {
-      setHasFocus(true);
-    };
-
-    const handleBlur = () => {
-      setHasFocus(false);
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("focus", handleFocus);
-    window.addEventListener("blur", handleBlur);
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("focus", handleFocus);
-      window.removeEventListener("blur", handleBlur);
-    };
-  }, []);
-
-  // 智能恢复：页面可见且获得焦点时，根据距离上次请求的时间决定是否立即刷新
-  useEffect(() => {
-    // 只有在页面可见且有焦点时才触发
-    if (!isPageVisible || !hasFocus) return;
-    // 必须有初始数据才执行恢复逻辑
-    if (!statsRef.current) return;
-
-    const timeSinceLastFetch = Date.now() - lastFetchTimeRef.current;
-    const threshold = refreshInterval * 2;
-
-    // 如果距离上次请求时间过长，立即请求
-    if (timeSinceLastFetch > threshold) {
-      const abortController = resetAbortController();
-      fetchServers(abortController.signal).catch(() => {
-        // 错误已由 fetchServers 处理
-      });
-    }
-    // 否则什么都不做，等待正常的定时轮询
-  }, [isPageVisible, hasFocus]);
+    return () => clearInterval(interval);
+  }, [lastFetchTime]);
 
   // useOptimistic: 提供乐观更新的 UI 反馈
   // 在数据刷新期间保持显示当前数据，避免闪烁
   const currentServers = stats?.servers || [];
-  const [optimisticServers, setOptimisticServers] = useOptimistic(
+  const [optimisticServers] = useOptimistic(
     currentServers,
     (_currentServers, optimisticValue: ServerStats[]) => optimisticValue
   );
 
-  // 定时刷新（仅在初始数据加载完成后启动，且页面可见+有焦点时才刷新）
-  useEffect(() => {
-    if (refreshInterval <= 0) return;
-    if (!stats) return; // 如果还没有初始数据，不启动定时刷新
-    if (!isPageVisible || !hasFocus) return; // 页面不可见或失焦时不刷新
-
-    const interval = setInterval(() => {
-      startTransition(() => {
-        // 重置 AbortController（自动中止旧请求）
-        const abortController = resetAbortController();
-
-        // 设置乐观状态为当前数据
-        if (stats?.servers) {
-          setOptimisticServers(stats.servers);
-        }
-
-        // 获取新数据
-        fetchServers(abortController.signal).catch(() => {
-          // 只有非 AbortError 才会到达这里
-          // 错误已经通过 fetchServers 设置到 error 状态
-        });
-      });
-    }, refreshInterval);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [refreshInterval, stats, isPageVisible, hasFocus]);
+  // React 19 性能优化：预加载 API 资源
+  // 预解析 DNS 和预连接到 API 服务器，减少首次请求延迟
+  const apiOrigin = typeof window !== "undefined" ? window.location.origin : "";
+  if (apiOrigin) {
+    prefetchDNS(apiOrigin);
+    preconnect(apiOrigin);
+  }
 
   // 开发环境：验证 name 字段的唯一性
   if (import.meta.env.DEV && currentServers.length > 0) {
@@ -206,22 +87,6 @@ export function ServerList({
 
   const hasServers = currentServers.length > 0;
 
-  function handleRetry(): void {
-    const abortController = resetAbortController();
-
-    setIsRetrying(true);
-    setLoading(true);
-
-    fetchServers(abortController.signal)
-      .catch(() => {
-        // 错误状态由 fetchServers 负责
-      })
-      .finally(() => {
-        setIsRetrying(false);
-        setLoading(false);
-      });
-  }
-
   // 初始加载或无数据时显示骨架屏
   if (loading && !hasServers) {
     return <ServerListSkeleton />;
@@ -239,7 +104,7 @@ export function ServerList({
         {error && (
           <button
             type="button"
-            onClick={handleRetry}
+            onClick={retry}
             disabled={isRetrying}
             aria-busy={isRetrying}
             aria-label={isRetrying ? "正在重试连接服务器" : "重试连接服务器"}
@@ -254,19 +119,12 @@ export function ServerList({
 
   return (
     <div className="space-y-6">
-      {/* 数据刷新中的微妙指示器 */}
-      {isPending && !error && hasServers && (
-        <div className="flex items-center justify-center gap-2 rounded-lg bg-primary/10 backdrop-blur-sm px-4 py-2 text-sm text-primary">
-          <div className="h-2 w-2 animate-pulse rounded-full bg-primary" />
-          <span>正在更新数据...</span>
-        </div>
-      )}
       {error && (
         <div className="rounded-2xl border border-destructive/20 bg-destructive/10 backdrop-blur-sm p-4 text-sm text-destructive shadow-sm">
           <p>数据刷新失败：{error.message || "请稍后再试。"}</p>
           <button
             type="button"
-            onClick={handleRetry}
+            onClick={retry}
             disabled={isRetrying}
             aria-busy={isRetrying}
             aria-label={isRetrying ? "正在重新获取数据" : "重新获取服务器数据"}
@@ -281,6 +139,11 @@ export function ServerList({
         <span className="text-xl md:text-2xl font-bold text-primary">
           节点列表
         </span>
+        {lastFetchTime > 0 && (
+          <span className="text-sm text-muted-foreground">
+            上次更新：{relativeTime}
+          </span>
+        )}
       </div>
       <VirtualizedServerGrid servers={sortedServers} />
     </div>

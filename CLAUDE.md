@@ -65,11 +65,16 @@ Required:
 
 ### Data Flow
 
-1. `ServerList.tsx` fetches data from ServerStatus-Rust API via `getAPIClient()`
-2. API client (`src/lib/api.ts`) handles requests with timeout (10s default) and abort signal support
-3. Data conforms to `StatsResponse` type from `src/lib/types/serverstatus.ts`
-4. `ServerList` passes data to `ServerOverview` (statistics) and `VirtualizedServerGrid` (virtualized server grid for performance)
-5. Auto-refresh controlled by `refreshInterval` prop (default: 2000ms)
+1. `ServerList.tsx` uses `usePollingStats` Hook to manage data fetching and polling
+2. `usePollingStats` Hook (`src/lib/hooks.ts`) handles:
+   - Initial data loading from ServerStatus-Rust API via `getAPIClient()`
+   - Automatic polling with configurable refresh interval
+   - Page visibility and window focus tracking for smart pause/resume
+   - AbortController management for request cancellation
+   - Error handling and retry logic
+3. API client (`src/lib/api.ts`) handles requests with timeout (10s default) and abort signal support
+4. Data conforms to `StatsResponse` type from `src/lib/types/serverstatus.ts`
+5. `ServerList` receives data from Hook and passes to `ServerOverview` (statistics) and `VirtualizedServerGrid` (virtualized server grid)
 6. **Smart polling control**: Pauses refresh when tab is hidden OR window loses focus
    - Tracks both page visibility (`visibilitychange`) and window focus (`focus`/`blur`)
    - Only polls when both `visible` AND `focused` to minimize background resource usage
@@ -79,12 +84,13 @@ Required:
 ### State Management
 
 - `ServerList` uses React 19's `useOptimistic` hook for smooth UI updates during data refreshes
-- Custom `useAbortController` hook manages AbortController lifecycle with automatic cleanup
-- AbortController pattern with refs for request cancellation on component unmount or re-fetch
+- `usePollingStats` Hook encapsulates all data fetching and polling logic:
+  - Internal `useAbortController` for AbortController lifecycle management with automatic cleanup
+  - Tracks page visibility and focus state for intelligent polling control
+  - Uses `useRef` for `statsRef` and `lastFetchTimeRef` to enable smart resume logic
+  - Returns `{ stats, loading, error, isRetrying, retry }` for component consumption
 - Server sorting uses `useMemo` for performance optimization (online first, then by weight descending)
 - React Compiler automatically optimizes most function references and derived state
-- Page visibility and focus state tracked with `useRef` for `lastFetchTimeRef` to enable smart resume logic
-- Dual-state tracking: `isPageVisible` (visibilitychange) and `hasFocus` (focus/blur) control polling behavior
 
 ### API Configuration
 
@@ -133,21 +139,25 @@ Use `@/` for src imports (e.g., `import { ServerList } from "@/components/Server
 
 ### React Patterns
 
-- Use React 19 features: `useOptimistic`, `useTransition`, `preconnect()`, `prefetchDNS()`
+- Use React 19 features: `useOptimistic`, `preconnect()`, `prefetchDNS()`
 - React Compiler is enabled - avoid manual `useCallback`/`useMemo` except for critical performance cases (e.g., expensive sorting operations)
 - Server keys use `server.name` (unique identifier per ServerStatus-Rust spec)
 - Dev environment validates name uniqueness to prevent React key warnings
-- Use custom `useAbortController` hook (from `@/lib/hooks`) for consistent request cancellation pattern
+- Custom Hooks in `src/lib/hooks.ts`:
+  - `useAbortController` - Reusable pattern for request cancellation
+  - `usePollingStats` - Encapsulated data fetching with smart polling, visibility tracking, and auto-pause/resume
 - Use `useRef` pattern to avoid closure traps in event handlers that need access to latest state
 - Shared utilities in `src/lib/utils.ts`: `isServerOnline()` for consistency across components
 
 ## Key Files
 
 - `src/lib/api.ts` - ServerStatusAPI client with singleton pattern, abort signal support, and URL validation
-- `src/lib/hooks.ts` - Custom React hooks (`useAbortController` for request cancellation)
+- `src/lib/hooks.ts` - Custom React hooks:
+  - `useAbortController` - AbortController lifecycle management for request cancellation
+  - `usePollingStats` - Smart polling with visibility tracking, auto-pause/resume, and error handling
 - `src/lib/utils.ts` - Shared utilities (`isServerOnline`, formatting functions for bytes/speed/uptime/load)
 - `src/lib/types/serverstatus.ts` - Complete type definitions for API responses
-- `src/components/ServerList.tsx` - Main data fetching component with optimistic updates, dual visibility+focus tracking, and smart resume logic
+- `src/components/ServerList.tsx` - Main component using `usePollingStats` Hook, with optimistic updates and server sorting
 - `src/components/VirtualizedServerGrid.tsx` - Virtualized grid using @tanstack/react-virtual with dynamic scrollMargin
 - `astro.config.mjs` - Astro config with React integration, babel-plugin-react-compiler, and performance settings
 - `src/pages/index.astro` - Main page with ServerList component

@@ -148,3 +148,43 @@ export function formatUptime(uptime: string): string {
   // 无法解析，返回原始字符串
   return uptime;
 }
+
+/**
+ * 格式化相对时间（距离现在多久）
+ * @param timestamp - 时间戳（毫秒）
+ * @returns 相对时间字符串（如 "刚刚"、"1分钟前"、"5小时前"）
+ */
+export function formatRelativeTime(timestamp: number): string {
+  if (!timestamp || timestamp <= 0) return "从未";
+
+  const now = Date.now();
+  const diff = now - timestamp;
+
+  // 小于 0 秒（未来时间）
+  if (diff < 0) return "刚刚";
+
+  // 小于 10 秒
+  if (diff < 10000) return "刚刚";
+
+  // 小于 1 分钟
+  if (diff < 60000) {
+    const seconds = Math.floor(diff / 1000);
+    return `${seconds}秒前`;
+  }
+
+  // 小于 1 小时
+  if (diff < 3600000) {
+    const minutes = Math.floor(diff / 60000);
+    return `${minutes}分钟前`;
+  }
+
+  // 小于 24 小时
+  if (diff < 86400000) {
+    const hours = Math.floor(diff / 3600000);
+    return `${hours}小时前`;
+  }
+
+  // 大于等于 1 天
+  const days = Math.floor(diff / 86400000);
+  return `${days}天前`;
+}
