@@ -19,9 +19,10 @@
     <div class="flex items-center gap-2">
       <button
         id="theme-toggle"
-        class="inline-flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background hover:text-foreground"
+        class="inline-flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background hover:text-foreground active:scale-95 data-[state=switching]:scale-90 data-[state=switching]:ring-2 data-[state=switching]:ring-primary/50"
         aria-label="切换主题"
         data-current-mode="system"
+        data-state="idle"
       >
         <span class="sr-only">切换主题</span>
         <span data-theme-icon="light" class="theme-icon">
@@ -146,10 +147,19 @@
     }
 
     function handleClick() {
-      if (!api) return;
+      if (!api || !toggle) return;
+
+      // 触发切换动效
+      toggle.dataset.state = "switching";
+
       const current = api.get();
       const next = getNextMode(current);
       api.set(next);
+
+      // 动效结束后恢复 idle 状态
+      setTimeout(() => {
+        if (toggle) toggle.dataset.state = "idle";
+      }, 200);
     }
 
     function handleThemeChange(event: Event) {

@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { ServerStats } from "@/lib/types/serverstatus";
 import { ServerCard } from "./ServerCard";
 
-const ESTIMATED_ROW_HEIGHT = 420; // ServerCard ~400px + gap 24px
+const ESTIMATED_ROW_HEIGHT = 420; // ServerCard ~400px + gap (mobile: 16px, desktop: 24px)
 const VIRTUALIZER_OVERSCAN = 3; // Extra rows for smooth scrolling
 const RESIZE_DEBOUNCE_MS = 150; // Debounce delay for resize events
 
@@ -130,7 +130,7 @@ export function VirtualizedServerGrid({ servers }: VirtualizedServerGridProps) {
               }}
             >
               <div
-                className="grid gap-6 pb-6"
+                className="grid gap-4 pb-4 md:gap-6 md:pb-6"
                 style={{
                   gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
                 }}

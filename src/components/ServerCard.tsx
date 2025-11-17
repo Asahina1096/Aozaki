@@ -51,11 +51,11 @@ function ServerCardComponent({ server }: ServerCardProps) {
 
   return (
     <Card className="overflow-hidden" style={CARD_CONTAINMENT_STYLE}>
-      <CardHeader className="p-4 pb-2 space-y-0.5">
+      <CardHeader className="p-5 pb-3 md:p-4 md:pb-2 space-y-0.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 ml-1">
             <Server className="h-5 w-5" />
-            <CardTitle className="text-lg">
+            <CardTitle className="text-xl md:text-lg">
               {server.alias || server.name}
             </CardTitle>
           </div>
@@ -95,7 +95,7 @@ function ServerCardComponent({ server }: ServerCardProps) {
           </div>
         </CardDescription>
       </CardHeader>
-      <CardContent className="p-4 pt-2 space-y-2">
+      <CardContent className="p-5 pt-3 md:p-4 md:pt-2 space-y-2">
         {/* CPU */}
         <div className="space-y-1">
           <div className="flex items-center justify-between text-sm ml-1">

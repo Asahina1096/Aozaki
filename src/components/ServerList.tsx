@@ -77,6 +77,9 @@ export function ServerList({
     }
   }
 
+  // 搜索过滤状态
+  const [searchQuery, setSearchQuery] = useState("");
+
   // 排序：在线优先，然后按权重排序
   // 使用 useMemo 缓存排序结果，避免每次渲染都重新计算
   const sortedServers = useMemo(() => {
@@ -87,6 +90,19 @@ export function ServerList({
       return (b.weight || 0) - (a.weight || 0);
     });
   }, [optimisticServers]);
+
+  // 按别名或位置过滤服务器
+  const filteredServers = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return sortedServers;
+    }
+    const query = searchQuery.toLowerCase().trim();
+    return sortedServers.filter(
+      (server) =>
+        server.alias?.toLowerCase().includes(query) ||
+        server.location?.toLowerCase().includes(query)
+    );
+  }, [sortedServers, searchQuery]);
 
   const hasServers = currentServers.length > 0;
 
@@ -139,16 +155,31 @@ export function ServerList({
       )}
       <ServerOverview servers={optimisticServers} />
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <span className="text-xl md:text-2xl font-bold text-primary">
-          节点列表
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-xl md:text-2xl font-bold text-primary">
+            节点列表
+          </span>
+          <input
+            type="search"
+            placeholder="搜索别名/位置..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            aria-label="搜索服务器（按别名或位置）"
+            className="h-8 w-40 md:w-48 rounded-md border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          />
+          {searchQuery && (
+            <span className="text-sm text-muted-foreground">
+              {filteredServers.length}/{sortedServers.length}
+            </span>
+          )}
+        </div>
         {lastFetchTime > 0 && (
           <span className="text-sm text-muted-foreground">
             上次更新：{relativeTime}
           </span>
         )}
       </div>
-      <VirtualizedServerGrid servers={sortedServers} />
+      <VirtualizedServerGrid servers={filteredServers} />
     </div>
   );
 }
