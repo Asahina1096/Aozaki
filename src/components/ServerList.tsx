@@ -25,6 +25,7 @@ export function ServerList({
 }: ServerListProps) {
   const { reset: resetAbortController } = useAbortController();
   const statsRef = useRef<StatsResponse | null>(null);
+  const lastFetchTimeRef = useRef<number>(0); // 记录上次成功请求的时间戳
   const [isPending, startTransition] = useTransition();
 
   // 使用 useState 存储数据
@@ -34,6 +35,9 @@ export function ServerList({
   const [isRetrying, setIsRetrying] = useState(false);
   const [isPageVisible, setIsPageVisible] = useState(
     typeof document !== "undefined" ? !document.hidden : true
+  );
+  const [hasFocus, setHasFocus] = useState(
+    typeof document !== "undefined" ? document.hasFocus() : true
   );
 
   // 获取服务器数据的函数
@@ -46,6 +50,7 @@ export function ServerList({
       const data = await client.getStats(signal);
       setStats(data);
       setError(null);
+      lastFetchTimeRef.current = Date.now(); // 记录成功请求时间
       return data;
     } catch (err) {
       // 如果请求被取消，不更新状态
@@ -87,27 +92,51 @@ export function ServerList({
       });
   }, []);
 
-  // 监听页面可见性变化
+  // 监听页面可见性变化和窗口焦点变化
   useEffect(() => {
     const handleVisibilityChange = () => {
       const visible = !document.hidden;
       setIsPageVisible(visible);
+    };
 
-      // 页面重新可见时立即刷新一次数据
-      // 使用 ref 访问最新的 stats，避免闭包陷阱
-      if (visible && statsRef.current) {
-        const abortController = resetAbortController();
-        fetchServers(abortController.signal).catch(() => {
-          // 错误已由 fetchServers 处理
-        });
-      }
+    const handleFocus = () => {
+      setHasFocus(true);
+    };
+
+    const handleBlur = () => {
+      setHasFocus(false);
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleFocus);
+    window.addEventListener("blur", handleBlur);
+
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("blur", handleBlur);
     };
-  }, []); // 不再依赖 stats，使用 ref 访问最新值
+  }, []);
+
+  // 智能恢复：页面可见且获得焦点时，根据距离上次请求的时间决定是否立即刷新
+  useEffect(() => {
+    // 只有在页面可见且有焦点时才触发
+    if (!isPageVisible || !hasFocus) return;
+    // 必须有初始数据才执行恢复逻辑
+    if (!statsRef.current) return;
+
+    const timeSinceLastFetch = Date.now() - lastFetchTimeRef.current;
+    const threshold = refreshInterval * 2;
+
+    // 如果距离上次请求时间过长，立即请求
+    if (timeSinceLastFetch > threshold) {
+      const abortController = resetAbortController();
+      fetchServers(abortController.signal).catch(() => {
+        // 错误已由 fetchServers 处理
+      });
+    }
+    // 否则什么都不做，等待正常的定时轮询
+  }, [isPageVisible, hasFocus]);
 
   // useOptimistic: 提供乐观更新的 UI 反馈
   // 在数据刷新期间保持显示当前数据，避免闪烁
@@ -117,11 +146,11 @@ export function ServerList({
     (_currentServers, optimisticValue: ServerStats[]) => optimisticValue
   );
 
-  // 定时刷新（仅在初始数据加载完成后启动，且页面可见时才刷新）
+  // 定时刷新（仅在初始数据加载完成后启动，且页面可见+有焦点时才刷新）
   useEffect(() => {
     if (refreshInterval <= 0) return;
     if (!stats) return; // 如果还没有初始数据，不启动定时刷新
-    if (!isPageVisible) return; // 页面不可见时不刷新
+    if (!isPageVisible || !hasFocus) return; // 页面不可见或失焦时不刷新
 
     const interval = setInterval(() => {
       startTransition(() => {
@@ -144,7 +173,7 @@ export function ServerList({
     return () => {
       clearInterval(interval);
     };
-  }, [refreshInterval, stats, isPageVisible]);
+  }, [refreshInterval, stats, isPageVisible, hasFocus]);
 
   // 开发环境：验证 name 字段的唯一性
   if (import.meta.env.DEV && currentServers.length > 0) {

@@ -70,7 +70,11 @@ Required:
 3. Data conforms to `StatsResponse` type from `src/lib/types/serverstatus.ts`
 4. `ServerList` passes data to `ServerOverview` (statistics) and `VirtualizedServerGrid` (virtualized server grid for performance)
 5. Auto-refresh controlled by `refreshInterval` prop (default: 2000ms)
-6. Page Visibility API pauses refresh when tab is hidden to save resources
+6. **Smart polling control**: Pauses refresh when tab is hidden OR window loses focus
+   - Tracks both page visibility (`visibilitychange`) and window focus (`focus`/`blur`)
+   - Only polls when both `visible` AND `focused` to minimize background resource usage
+   - Smart resume: On recovery, immediately fetches if last request was >2× refresh interval ago, otherwise waits for normal polling cycle
+   - Prevents excessive requests during frequent tab switching
 
 ### State Management
 
@@ -79,7 +83,8 @@ Required:
 - AbortController pattern with refs for request cancellation on component unmount or re-fetch
 - Server sorting uses `useMemo` for performance optimization (online first, then by weight descending)
 - React Compiler automatically optimizes most function references and derived state
-- Page visibility state tracked with `useRef` pattern to avoid closure traps in event handlers
+- Page visibility and focus state tracked with `useRef` for `lastFetchTimeRef` to enable smart resume logic
+- Dual-state tracking: `isPageVisible` (visibilitychange) and `hasFocus` (focus/blur) control polling behavior
 
 ### API Configuration
 
@@ -97,7 +102,11 @@ Required:
   - Dynamic scrollMargin recalculation on window resize for accurate positioning
   - Debounced resize handler (150ms) to avoid excessive recalculations
   - Overscan of 3 rows for smooth scrolling
-- **Page Visibility API**: Auto-pause data refresh when tab is hidden, resume when visible
+- **Page Visibility API + Window Focus tracking**:
+  - Auto-pause polling when tab is hidden OR window loses focus
+  - Smart resume logic: immediately fetch if idle >2× refresh interval, else wait for next polling cycle
+  - Prevents wasteful requests when browser is in background or user switches tabs frequently
+  - Saves bandwidth and reduces server load during extended idle periods
 - **Sorting optimization**: `useMemo` caches server sorting to avoid unnecessary recalculation
 - **React 19 preconnect**: Uses `preconnect()` and `prefetchDNS()` to reduce API request latency
 - **Custom hooks**: Reusable `useAbortController` hook eliminates code duplication for request cancellation
@@ -138,7 +147,7 @@ Use `@/` for src imports (e.g., `import { ServerList } from "@/components/Server
 - `src/lib/hooks.ts` - Custom React hooks (`useAbortController` for request cancellation)
 - `src/lib/utils.ts` - Shared utilities (`isServerOnline`, formatting functions for bytes/speed/uptime/load)
 - `src/lib/types/serverstatus.ts` - Complete type definitions for API responses
-- `src/components/ServerList.tsx` - Main data fetching component with optimistic updates and page visibility tracking
+- `src/components/ServerList.tsx` - Main data fetching component with optimistic updates, dual visibility+focus tracking, and smart resume logic
 - `src/components/VirtualizedServerGrid.tsx` - Virtualized grid using @tanstack/react-virtual with dynamic scrollMargin
 - `astro.config.mjs` - Astro config with React integration, babel-plugin-react-compiler, and performance settings
 - `src/pages/index.astro` - Main page with ServerList component
