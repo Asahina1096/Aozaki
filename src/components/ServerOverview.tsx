@@ -1,7 +1,7 @@
 import { ArrowUpDown, Cpu, Network, Server } from "lucide-react";
 import { CARD_CONTAINMENT_STYLE, PILL_STYLES } from "@/lib/constants";
 import type { ServerStats } from "@/lib/types/serverstatus";
-import { formatBytes, formatSpeed } from "@/lib/utils";
+import { formatBytes, formatSpeed, isServerOnline } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 
 interface ServerOverviewProps {
@@ -12,8 +12,7 @@ export function ServerOverview({ servers }: ServerOverviewProps) {
   // 单次遍历计算所有统计数据
   const stats = servers.reduce(
     (acc, s) => {
-      const isOnline = s.online4 || s.online6;
-      if (isOnline) {
+      if (isServerOnline(s)) {
         acc.onlineCount++;
         acc.totalCpu += s.cpu;
       }

@@ -17,6 +17,7 @@ import {
   formatPercent,
   formatSpeed,
   formatUptime,
+  isServerOnline,
 } from "@/lib/utils";
 import {
   Card,
@@ -34,7 +35,7 @@ interface ServerCardProps {
 }
 
 function ServerCardComponent({ server }: ServerCardProps) {
-  const isOnline = server.online4 || server.online6;
+  const isOnline = isServerOnline(server);
   const cpuUsage = server.cpu;
   const memUsage = server.memory_used;
   const memTotal = server.memory_total;

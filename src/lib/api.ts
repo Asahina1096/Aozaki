@@ -16,9 +16,11 @@ export class ServerStatusAPI {
     const url = baseUrl || import.meta.env.PUBLIC_API_URL?.replace(/\/+$/, "");
 
     if (!url) {
-      throw new Error(
-        "API URL is not configured. Please set PUBLIC_API_URL environment variable."
-      );
+      throw new Error("API URL 未配置，请设置 PUBLIC_API_URL 环境变量");
+    }
+
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      throw new Error("API URL 必须是有效的 HTTP 或 HTTPS 地址");
     }
 
     this.baseUrl = url;
@@ -58,19 +60,16 @@ export class ServerStatusAPI {
         signal: controller.signal, // 同时支持外部取消与内部超时
       });
 
-      clearTimeout(timeoutId);
-
       if (!response.ok) {
         throw new Error(
-          `Failed to fetch stats: ${response.status} ${response.statusText}`
+          `获取服务器统计数据失败：${response.status} ${response.statusText}`
         );
       }
 
       return response.json();
-    } catch (err) {
-      clearTimeout(timeoutId);
-      throw err;
     } finally {
+      // 统一在 finally 中清理资源
+      clearTimeout(timeoutId);
       detachParentAbort?.();
     }
   }
@@ -86,9 +85,11 @@ export function getAPIClient(baseUrl?: string): ServerStatusAPI {
   const url = baseUrl || import.meta.env.PUBLIC_API_URL?.replace(/\/+$/, "");
 
   if (!url) {
-    throw new Error(
-      "API URL is not configured. Please set PUBLIC_API_URL environment variable."
-    );
+    throw new Error("API URL 未配置，请设置 PUBLIC_API_URL 环境变量");
+  }
+
+  if (!url.startsWith("http://") && !url.startsWith("https://")) {
+    throw new Error("API URL 必须是有效的 HTTP 或 HTTPS 地址");
   }
 
   if (!clientCache.has(url)) {

@@ -1,8 +1,18 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import type { ServerStats } from "./types/serverstatus";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+/**
+ * 检查服务器是否在线
+ * @param server - 服务器状态对象
+ * @returns 如果 IPv4 或 IPv6 任一在线则返回 true
+ */
+export function isServerOnline(server: ServerStats): boolean {
+  return server.online4 || server.online6;
 }
 
 /**

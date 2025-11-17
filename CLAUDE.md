@@ -49,8 +49,9 @@ bun run package          # Package the build via scripts/package.sh
 Required:
 
 - `PUBLIC_API_URL` - ServerStatus-Rust backend URL (e.g., https://status.example.com)
+  - Must be a valid HTTP or HTTPS URL (validated at runtime)
   - Must NOT end with a trailing slash
-  - If not configured, application will fail to start
+  - If not configured or invalid, application will throw clear error message
   - See `.env.example` for template
 
 ## Architecture
@@ -74,10 +75,11 @@ Required:
 ### State Management
 
 - `ServerList` uses React 19's `useOptimistic` hook for smooth UI updates during data refreshes
+- Custom `useAbortController` hook manages AbortController lifecycle with automatic cleanup
 - AbortController pattern with refs for request cancellation on component unmount or re-fetch
 - Server sorting uses `useMemo` for performance optimization (online first, then by weight descending)
 - React Compiler automatically optimizes most function references and derived state
-- Page visibility state tracked to pause/resume data fetching when tab is hidden/shown
+- Page visibility state tracked with `useRef` pattern to avoid closure traps in event handlers
 
 ### API Configuration
 
@@ -89,9 +91,16 @@ Required:
 ### Performance Optimizations
 
 - **Virtualized server grid**: Uses `@tanstack/react-virtual` for efficient rendering of large server lists
+  - Window-based virtualization (scrolls entire page, not container)
+  - Responsive column layout (1/2/3/4 columns based on viewport width: <768px/768px/1024px/1280px)
+  - Dynamic row height measurement (except Firefox which uses estimated height)
+  - Dynamic scrollMargin recalculation on window resize for accurate positioning
+  - Debounced resize handler (150ms) to avoid excessive recalculations
+  - Overscan of 3 rows for smooth scrolling
 - **Page Visibility API**: Auto-pause data refresh when tab is hidden, resume when visible
 - **Sorting optimization**: `useMemo` caches server sorting to avoid unnecessary recalculation
 - **React 19 preconnect**: Uses `preconnect()` and `prefetchDNS()` to reduce API request latency
+- **Custom hooks**: Reusable `useAbortController` hook eliminates code duplication for request cancellation
 - **Smooth transitions**: Progress bars and hover effects use optimized CSS transitions
 - **React chunk splitting**: Manual chunks in Vite config separate React runtime from app code
 - **Viewport-based prefetching**: Astro prefetch strategy set to "viewport" for on-demand loading
@@ -119,14 +128,18 @@ Use `@/` for src imports (e.g., `import { ServerList } from "@/components/Server
 - React Compiler is enabled - avoid manual `useCallback`/`useMemo` except for critical performance cases (e.g., expensive sorting operations)
 - Server keys use `server.name` (unique identifier per ServerStatus-Rust spec)
 - Dev environment validates name uniqueness to prevent React key warnings
-- Use AbortController with refs for cancelling async operations on unmount
+- Use custom `useAbortController` hook (from `@/lib/hooks`) for consistent request cancellation pattern
+- Use `useRef` pattern to avoid closure traps in event handlers that need access to latest state
+- Shared utilities in `src/lib/utils.ts`: `isServerOnline()` for consistency across components
 
 ## Key Files
 
-- `src/lib/api.ts` - ServerStatusAPI client with singleton pattern and abort signal support
+- `src/lib/api.ts` - ServerStatusAPI client with singleton pattern, abort signal support, and URL validation
+- `src/lib/hooks.ts` - Custom React hooks (`useAbortController` for request cancellation)
+- `src/lib/utils.ts` - Shared utilities (`isServerOnline`, formatting functions for bytes/speed/uptime/load)
 - `src/lib/types/serverstatus.ts` - Complete type definitions for API responses
 - `src/components/ServerList.tsx` - Main data fetching component with optimistic updates and page visibility tracking
-- `src/components/VirtualizedServerGrid.tsx` - Virtualized grid using @tanstack/react-virtual
+- `src/components/VirtualizedServerGrid.tsx` - Virtualized grid using @tanstack/react-virtual with dynamic scrollMargin
 - `astro.config.mjs` - Astro config with React integration, babel-plugin-react-compiler, and performance settings
 - `src/pages/index.astro` - Main page with ServerList component
 - `biome.json` - Comprehensive Biome configuration for linting and formatting
@@ -139,3 +152,5 @@ Use `@/` for src imports (e.g., `import { ServerList } from "@/components/Server
 - Build output excludes preview.png automatically via custom Astro integration
 - Server sorting: online servers first, then by weight (descending)
 - API requests include 10-second timeout with abort signal support
+- All user-facing error messages are in Chinese for UI consistency
+- URL validation ensures `PUBLIC_API_URL` is valid HTTP/HTTPS at runtime

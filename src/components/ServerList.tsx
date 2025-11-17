@@ -8,6 +8,7 @@ import {
 } from "react";
 import { preconnect, prefetchDNS } from "react-dom";
 import { getAPIClient } from "@/lib/api";
+import { useAbortController } from "@/lib/hooks";
 import type { ServerStats, StatsResponse } from "@/lib/types/serverstatus";
 import { ServerListSkeleton } from "./ServerListSkeleton";
 import { ServerOverview } from "./ServerOverview";
@@ -22,8 +23,9 @@ interface ServerListProps {
 export function ServerList({
   refreshInterval = DEFAULT_REFRESH_INTERVAL,
 }: ServerListProps) {
-  const abortControllerRef = useRef<AbortController | null>(null);
-  const [, startTransition] = useTransition();
+  const { reset: resetAbortController } = useAbortController();
+  const statsRef = useRef<StatsResponse | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   // 使用 useState 存储数据
   const [stats, setStats] = useState<StatsResponse | null>(null);
@@ -64,10 +66,14 @@ export function ServerList({
     preconnect(apiOrigin);
   }, []);
 
+  // 同步 stats 到 ref，确保 visibility change handler 总是访问最新值
+  useEffect(() => {
+    statsRef.current = stats;
+  }, [stats]);
+
   // 初始数据加载
   useEffect(() => {
-    const abortController = new AbortController();
-    abortControllerRef.current = abortController;
+    const abortController = resetAbortController();
 
     setLoading(true);
     fetchServers(abortController.signal)
@@ -79,10 +85,6 @@ export function ServerList({
         setLoading(false);
         // 错误已经通过 fetchServers 设置到 error 状态
       });
-
-    return () => {
-      abortController.abort();
-    };
   }, []);
 
   // 监听页面可见性变化
@@ -92,12 +94,9 @@ export function ServerList({
       setIsPageVisible(visible);
 
       // 页面重新可见时立即刷新一次数据
-      if (visible && stats) {
-        const abortController = new AbortController();
-        if (abortControllerRef.current) {
-          abortControllerRef.current.abort();
-        }
-        abortControllerRef.current = abortController;
+      // 使用 ref 访问最新的 stats，避免闭包陷阱
+      if (visible && statsRef.current) {
+        const abortController = resetAbortController();
         fetchServers(abortController.signal).catch(() => {
           // 错误已由 fetchServers 处理
         });
@@ -108,7 +107,7 @@ export function ServerList({
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [stats]);
+  }, []); // 不再依赖 stats，使用 ref 访问最新值
 
   // useOptimistic: 提供乐观更新的 UI 反馈
   // 在数据刷新期间保持显示当前数据，避免闪烁
@@ -126,14 +125,8 @@ export function ServerList({
 
     const interval = setInterval(() => {
       startTransition(() => {
-        // 取消之前的请求
-        if (abortControllerRef.current) {
-          abortControllerRef.current.abort();
-        }
-
-        // 创建新的 AbortController
-        const abortController = new AbortController();
-        abortControllerRef.current = abortController;
+        // 重置 AbortController（自动中止旧请求）
+        const abortController = resetAbortController();
 
         // 设置乐观状态为当前数据
         if (stats?.servers) {
@@ -150,11 +143,6 @@ export function ServerList({
 
     return () => {
       clearInterval(interval);
-      // 清理定时器时，如果还有正在进行的请求，也一并取消
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-        abortControllerRef.current = null;
-      }
     };
   }, [refreshInterval, stats, isPageVisible]);
 
@@ -190,11 +178,7 @@ export function ServerList({
   const hasServers = currentServers.length > 0;
 
   function handleRetry(): void {
-    const abortController = new AbortController();
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    abortControllerRef.current = abortController;
+    const abortController = resetAbortController();
 
     setIsRetrying(true);
     setLoading(true);
@@ -241,6 +225,13 @@ export function ServerList({
 
   return (
     <div className="space-y-6">
+      {/* 数据刷新中的微妙指示器 */}
+      {isPending && !error && hasServers && (
+        <div className="flex items-center justify-center gap-2 rounded-lg bg-primary/10 backdrop-blur-sm px-4 py-2 text-sm text-primary">
+          <div className="h-2 w-2 animate-pulse rounded-full bg-primary" />
+          <span>正在更新数据...</span>
+        </div>
+      )}
       {error && (
         <div className="rounded-2xl border border-destructive/20 bg-destructive/10 backdrop-blur-sm p-4 text-sm text-destructive shadow-sm">
           <p>数据刷新失败：{error.message || "请稍后再试。"}</p>

@@ -59,8 +59,26 @@ export function VirtualizedServerGrid({ servers }: VirtualizedServerGridProps) {
   const parentOffsetRef = useRef(0);
 
   // 计算容器相对于页面顶部的偏移量
+  // 在窗口大小改变或布局变化时动态更新
   useLayoutEffect(() => {
-    parentOffsetRef.current = parentRef.current?.offsetTop ?? 0;
+    const updateOffset = () => {
+      parentOffsetRef.current = parentRef.current?.offsetTop ?? 0;
+    };
+
+    updateOffset();
+
+    // 监听窗口大小变化，因为可能影响上方元素的高度
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const debouncedUpdate = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(updateOffset, RESIZE_DEBOUNCE_MS);
+    };
+
+    window.addEventListener("resize", debouncedUpdate);
+    return () => {
+      window.removeEventListener("resize", debouncedUpdate);
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   // 将服务器按行分组
