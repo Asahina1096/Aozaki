@@ -1,4 +1,10 @@
-import { useEffect, useMemo, useOptimistic, useState } from "react";
+import {
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useOptimistic,
+  useState,
+} from "react";
 import { preconnect, prefetchDNS } from "react-dom";
 import { getAPIOrigin } from "@/lib/api";
 import { usePollingStats } from "@/lib/hooks";
@@ -80,6 +86,10 @@ export function ServerList({
   // 搜索过滤状态
   const [searchQuery, setSearchQuery] = useState("");
 
+  // 使用 useDeferredValue 延迟搜索查询，保持输入框响应性
+  // 当用户快速输入时，输入框立即更新，但过滤操作使用延迟的值
+  const deferredSearchQuery = useDeferredValue(searchQuery);
+
   // 排序：在线优先，然后按权重排序
   // 使用 useMemo 缓存排序结果，避免每次渲染都重新计算
   const sortedServers = useMemo(() => {
@@ -92,19 +102,23 @@ export function ServerList({
   }, [optimisticServers]);
 
   // 按别名或位置过滤服务器
+  // 使用延迟的搜索查询值，避免快速输入时阻塞 UI
   const filteredServers = useMemo(() => {
-    if (!searchQuery.trim()) {
+    if (!deferredSearchQuery.trim()) {
       return sortedServers;
     }
-    const query = searchQuery.toLowerCase().trim();
+    const query = deferredSearchQuery.toLowerCase().trim();
     return sortedServers.filter(
       (server) =>
         server.alias?.toLowerCase().includes(query) ||
         server.location?.toLowerCase().includes(query)
     );
-  }, [sortedServers, searchQuery]);
+  }, [sortedServers, deferredSearchQuery]);
 
   const hasServers = currentServers.length > 0;
+
+  // 检测搜索过滤是否正在延迟处理中
+  const isSearchPending = searchQuery !== deferredSearchQuery;
 
   // 初始加载或无数据时显示骨架屏
   if (loading && !hasServers) {
@@ -159,14 +173,43 @@ export function ServerList({
           <span className="text-xl md:text-2xl font-bold text-primary">
             节点列表
           </span>
-          <input
-            type="search"
-            placeholder="搜索别名/位置..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            aria-label="搜索服务器（按别名或位置）"
-            className="h-8 w-40 md:w-48 rounded-md border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus:outline-none"
-          />
+          <div className="relative">
+            <input
+              type="search"
+              placeholder="搜索别名/位置..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label="搜索服务器（按别名或位置）"
+              className="h-8 w-40 md:w-48 rounded-md border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus:outline-none"
+            />
+            {isSearchPending && (
+              <span
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
+                aria-label="正在搜索"
+              >
+                <svg
+                  className="animate-spin h-4 w-4"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
+                </svg>
+              </span>
+            )}
+          </div>
           {searchQuery && (
             <span className="text-sm text-muted-foreground">
               {filteredServers.length}/{sortedServers.length}

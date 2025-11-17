@@ -8,7 +8,6 @@ import type { StatsResponse } from "./types/serverstatus";
  * 提供创建、重置和自动清理 AbortController 的功能
  * 常用于取消 fetch 请求或其他异步操作
  *
- * @returns {Object} 包含 controllerRef 和 reset 函数
  * @example
  * const { controllerRef, reset } = useAbortController();
  *
@@ -21,7 +20,6 @@ export function useAbortController() {
 
   /**
    * 重置 AbortController：中止旧请求并创建新实例
-   * @returns {AbortController} 新的 AbortController 实例
    */
   const reset = useCallback(() => {
     // 如果存在旧的 controller，先中止它
@@ -55,11 +53,6 @@ export function useAbortController() {
  * - 页面不可见或失焦时自动暂停轮询
  * - 恢复时智能决定是否立即刷新（基于距离上次请求的时间）
  * - 自动管理 AbortController 以取消过时的请求
- *
- * @param {Object} options - 配置选项
- * @param {number} options.refreshInterval - 轮询间隔（毫秒），默认 2000ms
- * @param {boolean} options.enabled - 是否启用轮询，默认 true
- * @returns {Object} 包含 stats、loading、error、isRetrying 和 retry 函数
  *
  * @example
  * const { stats, loading, error, retry } = usePollingStats({
