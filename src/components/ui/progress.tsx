@@ -33,7 +33,8 @@ const Progress = React.forwardRef<
     success: "bg-gradient-to-r from-emerald-400 via-green-500 to-green-600",
     warning: "bg-gradient-to-r from-yellow-400 via-yellow-500 to-orange-500",
     danger: "bg-gradient-to-r from-orange-500 via-red-500 to-red-600",
-    muted: "bg-gradient-to-r from-gray-300 via-gray-400 to-gray-500",
+    muted:
+      "bg-gradient-to-r from-gray-300 via-gray-400 to-gray-500 dark:from-gray-600 dark:via-gray-700 dark:to-gray-800",
     auto: getAutoGradient(percentage),
   };
 
