@@ -69,6 +69,8 @@ export default defineConfig({
   experimental: {
     // 保持脚本和样式的声明顺序
     preserveScriptOrder: true,
+    // SVG 优化
+    svgo: true,
   },
   // Prefetch 配置：仅对标记的关键路由进行预取
   prefetch: {
