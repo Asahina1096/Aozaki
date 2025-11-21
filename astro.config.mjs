@@ -1,4 +1,4 @@
-import react from "@astrojs/react";
+import svelte from "@astrojs/svelte";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "astro/config";
 import fs from "fs";
@@ -7,11 +7,7 @@ import path from "path";
 // https://astro.build/config
 export default defineConfig({
   integrations: [
-    react({
-      babel: {
-        plugins: ["babel-plugin-react-compiler"],
-      },
-    }),
+    svelte(),
     // 清理未使用文件的集成
     {
       name: "cleanup-unused-files",
@@ -81,7 +77,7 @@ export default defineConfig({
     plugins: [tailwindcss()],
     // 性能优化配置
     optimizeDeps: {
-      include: ["react", "react-dom"],
+      include: ["svelte"],
     },
     build: {
       chunkSizeWarningLimit: 1000,
@@ -91,10 +87,6 @@ export default defineConfig({
       reportCompressedSize: false, // 禁用压缩大小报告以加快构建
       rollupOptions: {
         output: {
-          // 手动分块以优化加载性能
-          manualChunks: {
-            react: ["react", "react-dom"],
-          },
           // 优化文件名以便于缓存
           chunkFileNames: "_astro/[name].[hash].js",
           entryFileNames: "_astro/[name].[hash].js",
