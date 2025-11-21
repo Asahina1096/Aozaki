@@ -112,16 +112,16 @@
 
   // 搜索过滤状态
   let searchQuery = $state("");
-
-  // 简单的 debounce 实现（替代 useDeferredValue）
   let deferredSearchQuery = $state("");
-  let searchDebounceTimeout: ReturnType<typeof setTimeout>;
 
+  // 使用 $effect 实现 debounce - 必须在 $effect 主体中读取 searchQuery
   $effect(() => {
-    clearTimeout(searchDebounceTimeout);
-    searchDebounceTimeout = setTimeout(() => {
-      deferredSearchQuery = searchQuery;
-    }, 100);
+    const currentQuery = searchQuery; // 在这里读取，确保被追踪
+    const timeoutId = setTimeout(() => {
+      deferredSearchQuery = currentQuery;
+    }, 150);
+
+    return () => clearTimeout(timeoutId);
   });
 
   // 排序：在线优先，然后按权重排序
