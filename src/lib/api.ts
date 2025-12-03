@@ -1,18 +1,11 @@
 import type { StatsResponse } from "./types/serverstatus";
 
-/**
- * API 默认超时时间（毫秒）
- */
-const DEFAULT_API_TIMEOUT = 10000; // 10秒
+const DEFAULT_API_TIMEOUT = 10000;
 
-/**
- * ServerStatus-Rust API 客户端
- */
 export class ServerStatusAPI {
   private baseUrl: string;
 
   constructor(baseUrl?: string) {
-    // 优先使用传入的 baseUrl，否则使用环境变量
     const url = baseUrl || import.meta.env.PUBLIC_API_URL?.replace(/\/+$/, "");
 
     if (!url) {
@@ -26,11 +19,6 @@ export class ServerStatusAPI {
     this.baseUrl = url;
   }
 
-  /**
-   * 获取服务器统计信息
-   * @param signal 可选的 AbortSignal，用于取消请求
-   * @param timeout 请求超时时间（毫秒），默认 10 秒
-   */
   async getStats(
     signal?: AbortSignal,
     timeout = DEFAULT_API_TIMEOUT
@@ -38,26 +26,22 @@ export class ServerStatusAPI {
     const url = `${this.baseUrl}/json/stats.json`;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
-    let detachParentAbort: (() => void) | undefined;
+    let cleanup: (() => void) | undefined;
 
     if (signal) {
       if (signal.aborted) {
         controller.abort();
       } else {
-        const handleAbort = () => {
-          controller.abort();
-        };
+        const handleAbort = () => controller.abort();
         signal.addEventListener("abort", handleAbort);
-        detachParentAbort = () => {
-          signal.removeEventListener("abort", handleAbort);
-        };
+        cleanup = () => signal.removeEventListener("abort", handleAbort);
       }
     }
 
     try {
       const response = await fetch(url, {
-        cache: "no-store", // 禁用缓存以获取最新数据
-        signal: controller.signal, // 同时支持外部取消与内部超时
+        cache: "no-store",
+        signal: controller.signal,
       });
 
       if (!response.ok) {
@@ -68,17 +52,12 @@ export class ServerStatusAPI {
 
       return response.json();
     } finally {
-      // 统一在 finally 中清理资源
       clearTimeout(timeoutId);
-      detachParentAbort?.();
+      cleanup?.();
     }
   }
 }
 
-/**
- * 获取共享的 API 客户端实例
- * 每个 baseUrl 对应一个独立的客户端实例
- */
 const clientCache = new Map<string, ServerStatusAPI>();
 
 export function getAPIClient(baseUrl?: string): ServerStatusAPI {
@@ -99,19 +78,13 @@ export function getAPIClient(baseUrl?: string): ServerStatusAPI {
   return clientCache.get(url)!;
 }
 
-/**
- * 获取 API 服务器的 origin（协议 + 主机名 + 端口）
- * 用于 preconnect/prefetchDNS 等资源预加载
- * @returns API 服务器的 origin，如果未配置或无效则返回 null
- */
 export function getAPIOrigin(): string | null {
   try {
     const raw = import.meta.env.PUBLIC_API_URL?.replace(/\/+$/, "");
-    if (!raw) return null; // 不配置就不做预连接
+    if (!raw) return null;
 
     return new URL(raw).origin;
   } catch {
-    // 配错了就静默失败，不影响页面
     return null;
   }
 }

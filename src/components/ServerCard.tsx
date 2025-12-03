@@ -70,7 +70,6 @@ function ServerCardComponent({ server }: ServerCardProps) {
           />
         </div>
         <CardDescription className="flex flex-col gap-1 text-xs text-muted-foreground">
-          {/* 第一行：运行时间 + 地区 + IPV4 + IPV6 + 类型 */}
           <div className="flex flex-nowrap items-center gap-1 overflow-x-auto whitespace-nowrap">
             <span className={PILL_STYLES.info}>
               <Clock4 className="h-3 w-3" />
@@ -96,7 +95,6 @@ function ServerCardComponent({ server }: ServerCardProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="p-5 pt-3 md:p-4 md:pt-2 space-y-2">
-        {/* CPU */}
         <div className="space-y-1">
           <div className="flex items-center justify-between text-sm ml-1">
             <div className="flex items-center gap-2">
@@ -117,7 +115,6 @@ function ServerCardComponent({ server }: ServerCardProps) {
 
         <Separator className="my-1" />
 
-        {/* 内存 */}
         <div className="space-y-1">
           <div className="flex items-center justify-between text-sm ml-1">
             <div className="flex items-center gap-2">
@@ -138,7 +135,6 @@ function ServerCardComponent({ server }: ServerCardProps) {
 
         <Separator className="my-1" />
 
-        {/* 磁盘 */}
         <div className="space-y-1">
           <div className="flex items-center justify-between text-sm ml-1">
             <div className="flex items-center gap-2">
@@ -160,7 +156,6 @@ function ServerCardComponent({ server }: ServerCardProps) {
 
         <Separator className="my-1" />
 
-        {/* 网络 */}
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-sm ml-1">
             <Network className="h-4 w-4" />
@@ -200,5 +195,4 @@ function ServerCardComponent({ server }: ServerCardProps) {
   );
 }
 
-// 使用 memo 优化，只有当 server 数据真正变化时才重新渲染
 export const ServerCard = memo(ServerCardComponent);

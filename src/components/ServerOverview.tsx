@@ -9,7 +9,6 @@ interface ServerOverviewProps {
 }
 
 export function ServerOverview({ servers }: ServerOverviewProps) {
-  // 单次遍历计算所有统计数据
   const stats = servers.reduce(
     (acc, s) => {
       if (isServerOnline(s)) {
@@ -36,7 +35,6 @@ export function ServerOverview({ servers }: ServerOverviewProps) {
   const onlineServers = stats.onlineCount;
   const offlineServers = totalServers - onlineServers;
 
-  // 计算平均CPU使用率（仅在线节点）
   const avgCpu =
     stats.onlineCount > 0
       ? Math.round((stats.totalCpu / stats.onlineCount) * 10) / 10
@@ -44,7 +42,6 @@ export function ServerOverview({ servers }: ServerOverviewProps) {
 
   return (
     <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-      {/* 总节点数 */}
       <Card style={CARD_CONTAINMENT_STYLE}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">节点总数</CardTitle>
@@ -59,7 +56,6 @@ export function ServerOverview({ servers }: ServerOverviewProps) {
         </CardContent>
       </Card>
 
-      {/* 平均CPU使用率 */}
       <Card style={CARD_CONTAINMENT_STYLE}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">平均CPU使用率</CardTitle>
@@ -70,7 +66,6 @@ export function ServerOverview({ servers }: ServerOverviewProps) {
         </CardContent>
       </Card>
 
-      {/* 实时网络速率 */}
       <Card style={CARD_CONTAINMENT_STYLE}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">实时网络速率</CardTitle>
@@ -93,7 +88,6 @@ export function ServerOverview({ servers }: ServerOverviewProps) {
         </CardContent>
       </Card>
 
-      {/* 流量统计 */}
       <Card style={CARD_CONTAINMENT_STYLE}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">流量统计</CardTitle>

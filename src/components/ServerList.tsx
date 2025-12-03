@@ -14,32 +14,28 @@ import { ServerListSkeleton } from "./ServerListSkeleton";
 import { ServerOverview } from "./ServerOverview";
 import { VirtualizedServerGrid } from "./VirtualizedServerGrid";
 
-const DEFAULT_REFRESH_INTERVAL = 2000; // 默认刷新间隔（毫秒）
+const DEFAULT_REFRESH_INTERVAL = 2000;
 
 interface ServerListProps {
-  refreshInterval?: number; // 刷新间隔（毫秒）
+  refreshInterval?: number;
 }
 
 export function ServerList({
   refreshInterval = DEFAULT_REFRESH_INTERVAL,
 }: ServerListProps) {
-  // 使用自定义 Hook 管理数据获取和轮询
   const { stats, loading, error, isRetrying, retry, lastFetchTime } =
     usePollingStats({
       refreshInterval,
       enabled: true,
     });
 
-  // 定时更新相对时间显示（每秒更新一次）
   const [relativeTime, setRelativeTime] = useState(() =>
     formatRelativeTime(lastFetchTime)
   );
 
   useEffect(() => {
-    // 立即更新一次
     setRelativeTime(formatRelativeTime(lastFetchTime));
 
-    // 每秒更新一次相对时间显示
     const interval = setInterval(() => {
       setRelativeTime(formatRelativeTime(lastFetchTime));
     }, 1000);
@@ -47,25 +43,20 @@ export function ServerList({
     return () => clearInterval(interval);
   }, [lastFetchTime]);
 
-  // React 19 性能优化：预加载 API 资源
-  // 预解析 DNS 和预连接到 API 服务器，减少首次请求延迟
   useEffect(() => {
     const apiOrigin = getAPIOrigin();
     if (apiOrigin) {
       prefetchDNS(apiOrigin);
       preconnect(apiOrigin);
     }
-  }, []); // 只在组件挂载时执行一次
+  }, []);
 
-  // useOptimistic: 提供乐观更新的 UI 反馈
-  // 在数据刷新期间保持显示当前数据，避免闪烁
   const currentServers = stats?.servers || [];
   const [optimisticServers] = useOptimistic(
     currentServers,
     (_currentServers, optimisticValue: ServerStats[]) => optimisticValue
   );
 
-  // 开发环境：验证 name 字段的唯一性
   if (import.meta.env.DEV && currentServers.length > 0) {
     const names = currentServers.map((s) => s.name);
     const duplicates = names.filter(
@@ -83,15 +74,9 @@ export function ServerList({
     }
   }
 
-  // 搜索过滤状态
   const [searchQuery, setSearchQuery] = useState("");
-
-  // 使用 useDeferredValue 延迟搜索查询，保持输入框响应性
-  // 当用户快速输入时，输入框立即更新，但过滤操作使用延迟的值
   const deferredSearchQuery = useDeferredValue(searchQuery);
 
-  // 排序：在线优先，然后按权重排序
-  // 使用 useMemo 缓存排序结果，避免每次渲染都重新计算
   const sortedServers = useMemo(() => {
     return [...optimisticServers].sort((a, b) => {
       const aOnline = a.online4 || a.online6 ? 1 : 0;
@@ -101,8 +86,6 @@ export function ServerList({
     });
   }, [optimisticServers]);
 
-  // 按别名或位置过滤服务器
-  // 使用延迟的搜索查询值，避免快速输入时阻塞 UI
   const filteredServers = useMemo(() => {
     if (!deferredSearchQuery.trim()) {
       return sortedServers;
@@ -116,11 +99,8 @@ export function ServerList({
   }, [sortedServers, deferredSearchQuery]);
 
   const hasServers = currentServers.length > 0;
-
-  // 检测搜索过滤是否正在延迟处理中
   const isSearchPending = searchQuery !== deferredSearchQuery;
 
-  // 初始加载或无数据时显示骨架屏
   if (loading && !hasServers) {
     return <ServerListSkeleton />;
   }

@@ -3,15 +3,14 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { ServerStats } from "@/lib/types/serverstatus";
 import { ServerCard } from "./ServerCard";
 
-const ESTIMATED_ROW_HEIGHT = 420; // ServerCard ~400px + gap (mobile: 16px, desktop: 24px)
-const VIRTUALIZER_OVERSCAN = 3; // Extra rows for smooth scrolling
-const RESIZE_DEBOUNCE_MS = 150; // Debounce delay for resize events
+const ESTIMATED_ROW_HEIGHT = 420;
+const VIRTUALIZER_OVERSCAN = 3;
+const RESIZE_DEBOUNCE_MS = 150;
 
 interface VirtualizedServerGridProps {
   servers: ServerStats[];
 }
 
-// 计算当前视口下的列数
 function useResponsiveColumns(): number {
   const [columns, setColumns] = useState(() => {
     if (typeof window === "undefined") return 1;
@@ -36,7 +35,6 @@ function useResponsiveColumns(): number {
       }
     }
 
-    // 使用防抖优化 resize 事件
     let timeoutId: ReturnType<typeof setTimeout>;
     const debouncedUpdate = () => {
       clearTimeout(timeoutId);
@@ -58,8 +56,6 @@ export function VirtualizedServerGrid({ servers }: VirtualizedServerGridProps) {
   const parentRef = useRef<HTMLDivElement>(null);
   const parentOffsetRef = useRef(0);
 
-  // 计算容器相对于页面顶部的偏移量
-  // 在窗口大小改变或布局变化时动态更新
   useLayoutEffect(() => {
     const updateOffset = () => {
       parentOffsetRef.current = parentRef.current?.offsetTop ?? 0;
@@ -67,7 +63,6 @@ export function VirtualizedServerGrid({ servers }: VirtualizedServerGridProps) {
 
     updateOffset();
 
-    // 监听窗口大小变化，因为可能影响上方元素的高度
     let timeoutId: ReturnType<typeof setTimeout>;
     const debouncedUpdate = () => {
       clearTimeout(timeoutId);
@@ -81,7 +76,6 @@ export function VirtualizedServerGrid({ servers }: VirtualizedServerGridProps) {
     };
   }, []);
 
-  // 将服务器按行分组
   const rows = useMemo(() => {
     const result: ServerStats[][] = [];
     for (let i = 0; i < servers.length; i += columns) {
@@ -90,7 +84,6 @@ export function VirtualizedServerGrid({ servers }: VirtualizedServerGridProps) {
     return result;
   }, [servers, columns]);
 
-  // 配置窗口虚拟化器
   const rowVirtualizer = useWindowVirtualizer({
     count: rows.length,
     estimateSize: () => ESTIMATED_ROW_HEIGHT,

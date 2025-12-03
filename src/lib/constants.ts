@@ -1,7 +1,3 @@
-/**
- * Shared style constants for consistent UI across components
- */
-
 export const PILL_STYLES = {
   info: "inline-flex items-center gap-0.5 rounded-full border border-border/20 bg-muted/60 px-1 py-0.5 whitespace-nowrap text-[0.65rem]",
   status:
