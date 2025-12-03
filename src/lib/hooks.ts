@@ -1,6 +1,57 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { getAPIClient } from "./api";
 import type { StatsResponse } from "./types/serverstatus";
+
+function useEvent<T extends (...args: never[]) => unknown>(callback: T): T {
+  const callbackRef = useRef<T>(callback);
+
+  useLayoutEffect(() => {
+    callbackRef.current = callback;
+  });
+
+  return useCallback((...args: Parameters<T>) => {
+    return callbackRef.current(...args);
+  }, []) as T;
+}
+
+export function useDebouncedCallback<T extends (...args: never[]) => void>(
+  callback: T,
+  delay: number
+): T {
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined
+  );
+
+  const debouncedCallback = useEvent(callback);
+
+  const debounced = useCallback(
+    (...args: Parameters<T>) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      timeoutRef.current = setTimeout(() => {
+        debouncedCallback(...args);
+      }, delay);
+    },
+    [delay, debouncedCallback]
+  ) as T;
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  return debounced;
+}
 
 export function useAbortController() {
   const controllerRef = useRef<AbortController | null>(null);
@@ -31,7 +82,6 @@ export function usePollingStats(options: {
 }) {
   const { refreshInterval = 2000, enabled = true } = options;
   const { reset: resetAbortController } = useAbortController();
-  const statsRef = useRef<StatsResponse | null>(null);
   const lastFetchTimeRef = useRef<number>(0);
   const isFetchingRef = useRef<boolean>(false);
 
@@ -46,7 +96,7 @@ export function usePollingStats(options: {
     typeof document !== "undefined" ? document.hasFocus() : true
   );
 
-  const fetchServers = useCallback(
+  const fetchServers = useEvent(
     async (signal?: AbortSignal): Promise<StatsResponse | null> => {
       try {
         const client = getAPIClient();
@@ -62,25 +112,21 @@ export function usePollingStats(options: {
         setError(err instanceof Error ? err : new Error("未知错误"));
         throw err;
       }
-    },
-    []
+    }
   );
 
-  const safeFetch = useCallback(
-    async (signal?: AbortSignal): Promise<void> => {
-      if (isFetchingRef.current) return;
+  const safeFetch = useEvent(async (signal?: AbortSignal): Promise<void> => {
+    if (isFetchingRef.current) return;
 
-      isFetchingRef.current = true;
-      try {
-        await fetchServers(signal);
-      } catch {
-        // Error handled by fetchServers
-      } finally {
-        isFetchingRef.current = false;
-      }
-    },
-    [fetchServers]
-  );
+    isFetchingRef.current = true;
+    try {
+      await fetchServers(signal);
+    } catch {
+      // Error handled by fetchServers
+    } finally {
+      isFetchingRef.current = false;
+    }
+  });
 
   const retry = useCallback(() => {
     if (isFetchingRef.current) return;
@@ -102,10 +148,6 @@ export function usePollingStats(options: {
   }, [fetchServers, resetAbortController]);
 
   useEffect(() => {
-    statsRef.current = stats;
-  }, [stats]);
-
-  useEffect(() => {
     if (!enabled) return;
     if (isFetchingRef.current) return;
 
@@ -121,7 +163,8 @@ export function usePollingStats(options: {
         isFetchingRef.current = false;
         setLoading(false);
       });
-  }, [enabled, fetchServers, resetAbortController]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled]);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -150,7 +193,7 @@ export function usePollingStats(options: {
   useEffect(() => {
     if (!enabled) return;
     if (!isPageVisible || !hasFocus) return;
-    if (!statsRef.current) return;
+    if (!stats) return;
 
     const timeSinceLastFetch = Date.now() - lastFetchTimeRef.current;
     const threshold = refreshInterval * 2;
@@ -159,14 +202,8 @@ export function usePollingStats(options: {
       const abortController = resetAbortController();
       safeFetch(abortController.signal);
     }
-  }, [
-    enabled,
-    isPageVisible,
-    hasFocus,
-    refreshInterval,
-    safeFetch,
-    resetAbortController,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, isPageVisible, hasFocus, refreshInterval, stats]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -182,15 +219,8 @@ export function usePollingStats(options: {
     return () => {
       clearInterval(interval);
     };
-  }, [
-    enabled,
-    refreshInterval,
-    stats,
-    isPageVisible,
-    hasFocus,
-    safeFetch,
-    resetAbortController,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, refreshInterval, stats, isPageVisible, hasFocus]);
 
   return {
     stats,

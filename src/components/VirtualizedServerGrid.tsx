@@ -1,5 +1,6 @@
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useDebouncedCallback } from "@/lib/hooks";
 import type { ServerStats } from "@/lib/types/serverstatus";
 import { ServerCard } from "./ServerCard";
 
@@ -12,41 +13,33 @@ interface VirtualizedServerGridProps {
 }
 
 function useResponsiveColumns(): number {
-  const [columns, setColumns] = useState(() => {
-    if (typeof window === "undefined") return 1;
-    const width = window.innerWidth;
+  const getColumns = useCallback((width: number): number => {
     if (width >= 1280) return 4;
     if (width >= 1024) return 3;
     if (width >= 768) return 2;
     return 1;
+  }, []);
+
+  const [columns, setColumns] = useState(() => {
+    if (typeof window === "undefined") return 1;
+    return getColumns(window.innerWidth);
   });
 
-  useEffect(() => {
-    function updateColumns() {
-      const width = window.innerWidth;
-      if (width >= 1280) {
-        setColumns(4);
-      } else if (width >= 1024) {
-        setColumns(3);
-      } else if (width >= 768) {
-        setColumns(2);
-      } else {
-        setColumns(1);
-      }
-    }
+  const updateColumns = useCallback(() => {
+    setColumns(getColumns(window.innerWidth));
+  }, [getColumns]);
 
-    let timeoutId: ReturnType<typeof setTimeout>;
-    const debouncedUpdate = () => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(updateColumns, RESIZE_DEBOUNCE_MS);
-    };
+  const debouncedUpdate = useDebouncedCallback(
+    updateColumns,
+    RESIZE_DEBOUNCE_MS
+  );
 
+  useLayoutEffect(() => {
     window.addEventListener("resize", debouncedUpdate);
     return () => {
       window.removeEventListener("resize", debouncedUpdate);
-      clearTimeout(timeoutId);
     };
-  }, []);
+  }, [debouncedUpdate]);
 
   return columns;
 }
@@ -56,25 +49,23 @@ export function VirtualizedServerGrid({ servers }: VirtualizedServerGridProps) {
   const parentRef = useRef<HTMLDivElement>(null);
   const parentOffsetRef = useRef(0);
 
-  useLayoutEffect(() => {
-    const updateOffset = () => {
-      parentOffsetRef.current = parentRef.current?.offsetTop ?? 0;
-    };
+  const updateOffset = useCallback(() => {
+    parentOffsetRef.current = parentRef.current?.offsetTop ?? 0;
+  }, []);
 
+  const debouncedUpdateOffset = useDebouncedCallback(
+    updateOffset,
+    RESIZE_DEBOUNCE_MS
+  );
+
+  useLayoutEffect(() => {
     updateOffset();
 
-    let timeoutId: ReturnType<typeof setTimeout>;
-    const debouncedUpdate = () => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(updateOffset, RESIZE_DEBOUNCE_MS);
-    };
-
-    window.addEventListener("resize", debouncedUpdate);
+    window.addEventListener("resize", debouncedUpdateOffset);
     return () => {
-      window.removeEventListener("resize", debouncedUpdate);
-      clearTimeout(timeoutId);
+      window.removeEventListener("resize", debouncedUpdateOffset);
     };
-  }, []);
+  }, [updateOffset, debouncedUpdateOffset]);
 
   const rows = useMemo(() => {
     const result: ServerStats[][] = [];
