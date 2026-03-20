@@ -12,12 +12,10 @@ export default defineConfig({
         plugins: ["babel-plugin-react-compiler"],
       },
     }),
-    // 清理未使用文件的集成
     {
       name: "cleanup-unused-files",
       hooks: {
         "astro:build:done": () => {
-          // 在整个 Astro 构建流程完成后执行清理
           const filesToRemove = [
             path.join("./dist", "preview.png"),
             path.join("./dist", "_astro", "astro"),
@@ -26,7 +24,6 @@ export default defineConfig({
 
           for (const pattern of filesToRemove) {
             try {
-              // 处理 glob 模式
               if (pattern.includes("*")) {
                 const dir = path.dirname(pattern);
                 const filePattern = path.basename(pattern);
@@ -39,25 +36,22 @@ export default defineConfig({
                     if (regex.test(file)) {
                       const filePath = path.join(dir, file);
                       fs.unlinkSync(filePath);
-                      console.log(`✅ 已删除未使用文件: ${file}`);
+                      console.log(`✅ Removed: ${file}`);
                     }
                   }
                 }
               } else if (fs.existsSync(pattern)) {
-                // 处理目录和文件
                 const stats = fs.statSync(pattern);
                 if (stats.isDirectory()) {
                   fs.rmSync(pattern, { recursive: true });
-                  console.log(
-                    `✅ 已删除未使用目录: ${path.basename(pattern)}/`
-                  );
+                  console.log(`✅ Removed dir: ${path.basename(pattern)}/`);
                 } else {
                   fs.unlinkSync(pattern);
-                  console.log(`✅ 已删除未使用文件: ${path.basename(pattern)}`);
+                  console.log(`✅ Removed: ${path.basename(pattern)}`);
                 }
               }
             } catch (error) {
-              console.warn(`⚠️ 无法删除 ${pattern}:`, error.message);
+              console.warn(`⚠️ Cannot remove ${pattern}:`, error.message);
             }
           }
         },
@@ -65,52 +59,47 @@ export default defineConfig({
     },
   ],
   publicDir: "./public",
-  // 实验性特性：性能优化
   experimental: {
-    // 保持脚本和样式的声明顺序
     preserveScriptOrder: true,
-    // SVG 优化
     svgo: true,
   },
-  // Prefetch 配置：仅对标记的关键路由进行预取
   prefetch: {
     prefetchAll: false,
     defaultStrategy: "viewport",
   },
   vite: {
     plugins: [tailwindcss()],
-    // 性能优化配置
+    server: {
+      proxy: {
+        '/api': { target: process.env.VITE_API_TARGET || 'http://127.0.0.1:25774', changeOrigin: true, ws: true },
+        '/themes': { target: process.env.VITE_API_TARGET || 'http://127.0.0.1:25774', changeOrigin: true },
+      },
+    },
     optimizeDeps: {
       include: ["react", "react-dom"],
     },
     build: {
       chunkSizeWarningLimit: 1000,
-      // 性能优化：启用代码分割和压缩
       minify: "esbuild",
       cssMinify: true,
-      reportCompressedSize: false, // 禁用压缩大小报告以加快构建
+      reportCompressedSize: false,
       rollupOptions: {
         output: {
-          // 手动分块以优化加载性能
           manualChunks: {
             react: ["react", "react-dom"],
           },
-          // 优化文件名以便于缓存
           chunkFileNames: "_astro/[name].[hash].js",
           entryFileNames: "_astro/[name].[hash].js",
           assetFileNames: "_astro/[name].[hash][extname]",
         },
       },
     },
-    // 性能优化：减少日志输出
     logLevel: "warn",
   },
   output: "static",
   build: {
     format: "file",
-    // 性能优化：根据体积自动决定是否内联样式
     inlineStylesheets: "auto",
-    // 控制 public 目录文件复制
     copyPublicDir: true,
   },
   outDir: "./dist",

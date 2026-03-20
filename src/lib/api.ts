@@ -1,90 +1,141 @@
-import type { StatsResponse } from "./types/serverstatus";
+import React from "react";
 
-const DEFAULT_API_TIMEOUT = 10000;
-
-export class ServerStatusAPI {
-  private baseUrl: string;
-
-  constructor(baseUrl?: string) {
-    const url = baseUrl || import.meta.env.PUBLIC_API_URL?.replace(/\/+$/, "");
-
-    if (!url) {
-      throw new Error("API URL 未配置，请设置 PUBLIC_API_URL 环境变量");
-    }
-
-    if (!url.startsWith("http://") && !url.startsWith("https://")) {
-      throw new Error("API URL 必须是有效的 HTTP 或 HTTPS 地址");
-    }
-
-    this.baseUrl = url;
-  }
-
-  async getStats(
-    signal?: AbortSignal,
-    timeout = DEFAULT_API_TIMEOUT
-  ): Promise<StatsResponse> {
-    const url = `${this.baseUrl}/json/stats.json`;
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
-    let cleanup: (() => void) | undefined;
-
-    if (signal) {
-      if (signal.aborted) {
-        controller.abort();
-      } else {
-        const handleAbort = () => controller.abort();
-        signal.addEventListener("abort", handleAbort);
-        cleanup = () => signal.removeEventListener("abort", handleAbort);
-      }
-    }
-
-    try {
-      const response = await fetch(url, {
-        cache: "no-store",
-        signal: controller.signal,
-      });
-
-      if (!response.ok) {
-        throw new Error(
-          `获取服务器统计数据失败：${response.status} ${response.statusText}`
-        );
-      }
-
-      return response.json();
-    } finally {
-      clearTimeout(timeoutId);
-      cleanup?.();
-    }
-  }
+export interface SettingsResponse {
+  sitename: string;
+  description: string;
+  allow_cors: boolean;
+  geo_ip_enabled: boolean;
+  geo_ip_provider: string;
+  o_auth_provider: string;
+  o_auth_enabled: boolean;
+  custom_head: string;
+  CreatedAt: string;
+  UpdatedAt: string;
+  [key: string]: any;
 }
 
-const clientCache = new Map<string, ServerStatusAPI>();
-
-export function getAPIClient(baseUrl?: string): ServerStatusAPI {
-  const url = baseUrl || import.meta.env.PUBLIC_API_URL?.replace(/\/+$/, "");
-
-  if (!url) {
-    throw new Error("API URL 未配置，请设置 PUBLIC_API_URL 环境变量");
-  }
-
-  if (!url.startsWith("http://") && !url.startsWith("https://")) {
-    throw new Error("API URL 必须是有效的 HTTP 或 HTTPS 地址");
-  }
-
-  if (!clientCache.has(url)) {
-    clientCache.set(url, new ServerStatusAPI(baseUrl));
-  }
-
-  return clientCache.get(url)!;
-}
-
-export function getAPIOrigin(): string | null {
+export async function getSettings(): Promise<SettingsResponse> {
   try {
-    const raw = import.meta.env.PUBLIC_API_URL?.replace(/\/+$/, "");
-    if (!raw) return null;
+    const response = await fetch("/api/admin/settings");
 
-    return new URL(raw).origin;
-  } catch {
-    return null;
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    const { CreatedAt, UpdatedAt, id, ...settings } = data["data"];
+
+    return settings as SettingsResponse;
+  } catch (error) {
+    console.error("Failed to fetch settings:", error);
+    throw error;
   }
+}
+
+export async function updateSettings(
+  settings: Partial<SettingsResponse>
+): Promise<void> {
+  try {
+    const response = await fetch("/api/admin/settings", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(settings),
+    });
+
+    if (!response.ok) {
+      try {
+        const errorData = await response.json();
+        throw new Error(
+          `${errorData['message']}`
+        );
+      } catch (jsonError) {
+        throw jsonError
+      }
+    }
+  } catch (error) {
+    console.error("Failed to update settings:", error);
+    throw error;
+  }
+}
+
+export function useSettings() {
+  const [settings, setSettings] = React.useState<SettingsResponse>({
+    sitename: "",
+    description: "",
+    allow_cors: false,
+    geo_ip_enabled: false,
+    geo_ip_provider: "",
+    o_auth_provider: "",
+    o_auth_enabled: false,
+    custom_head: "",
+    CreatedAt: "",
+    UpdatedAt: "",
+  });
+
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const fetchSettings = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await getSettings();
+        setSettings(data);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Failed to fetch settings"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSettings();
+  }, []);
+
+  const updateSetting = async <K extends keyof SettingsResponse>(
+    key: K,
+    value: SettingsResponse[K]
+  ) => {
+    try {
+      await updateSettings({ [key]: value });
+      setSettings((prev) => ({ ...prev, [key]: value }));
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : `Failed to update ${String(key)}`
+      );
+      throw err;
+    }
+  };
+
+  const updateMultipleSettings = async (
+    newSettings: Partial<SettingsResponse>
+  ) => {
+    try {
+      const updatedSettings = { ...settings, ...newSettings };
+      await updateSettings(updatedSettings);
+      setSettings(updatedSettings);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to update settings"
+      );
+      throw err;
+    }
+  };
+
+  return {
+    settings,
+    loading,
+    error,
+    updateSetting,
+    updateMultipleSettings,
+    refetch: async () => {
+      const data = await getSettings();
+      setSettings(data);
+    },
+  };
 }

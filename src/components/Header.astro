@@ -10,6 +10,7 @@
   <div class="container flex h-16 items-center justify-between">
     <div class="flex items-center gap-3">
       <h1
+        id="site-title"
         class="text-2xl font-bold bg-gradient-to-r from-primary via-primary/70 to-primary/30 bg-clip-text text-transparent"
       >
         Aozaki
@@ -186,6 +187,28 @@
 
   initThemeToggle();
 
+  async function initSiteTitle() {
+    const titleEl = document.getElementById("site-title");
+    if (!titleEl) return;
+
+    try {
+      const response = await fetch("/api/admin/settings");
+      if (!response.ok) return;
+
+      const result = await response.json();
+      const sitename = result?.data?.sitename;
+
+      if (typeof sitename === "string" && sitename.trim()) {
+        titleEl.textContent = sitename.trim();
+      }
+    } catch {
+      return;
+    }
+  }
+
+  initSiteTitle();
+
   // 支持 Astro View Transitions
   document.addEventListener("astro:page-load", initThemeToggle);
+  document.addEventListener("astro:page-load", initSiteTitle);
 </script>

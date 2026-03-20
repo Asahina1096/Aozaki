@@ -1,0 +1,433 @@
+import { Button, Flex, Switch } from "@radix-ui/themes";
+import { Eye, EyeOff } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import {
+  Area,
+  CartesianGrid,
+  ComposedChart,
+  Line,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import { useRPC2Call } from "@/contexts/RPC2Context";
+import { cutPeakValues, interpolateNullsLinear } from "@/utils/RecordHelper";
+
+interface PingRecord {
+  client: string;
+  task_id: number;
+  time: string;
+  value: number;
+}
+
+interface TaskInfo {
+  id: number;
+  name: string;
+  interval: number;
+  loss: number;
+  p99?: number;
+  p50?: number;
+  p99_p50_ratio?: number;
+  min?: number;
+  max?: number;
+  avg?: number;
+  latest?: number;
+  total?: number;
+  type?: string;
+}
+
+const colors = [
+  "#F38181",
+  "#347433",
+  "#898AC4",
+  "#03A6A1",
+  "#7AD6F0",
+  "#B388FF",
+  "#FF8A65",
+  "#FFD600",
+];
+
+const presetViews = [
+  { key: "1h", hours: 1 },
+  { key: "6h", hours: 6 },
+  { key: "12h", hours: 12 },
+  { key: "1d", hours: 24 },
+];
+
+const Y_AXIS_WIDTH = 82;
+
+const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
+  const { t } = useTranslation();
+  const { call } = useRPC2Call();
+
+  const [hours, setHours] = useState(1);
+  const [remoteData, setRemoteData] = useState<PingRecord[] | null>(null);
+  const [tasks, setTasks] = useState<TaskInfo[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [cutPeak, setCutPeak] = useState(false);
+  const [hiddenLines, setHiddenLines] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    const selected = presetViews.find((v) => v.key === view);
+    setHours(selected?.hours || 1);
+  }, [view]);
+
+  useEffect(() => {
+    if (!uuid || !hours) {
+      setRemoteData(null);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    (async () => {
+      try {
+        type RpcResp = {
+          count: number;
+          records: PingRecord[];
+          tasks?: TaskInfo[];
+        };
+        const result = await call<any, RpcResp>("common:getRecords", {
+          uuid,
+          type: "ping",
+          hours,
+        });
+        const records = result?.records || [];
+        records.sort(
+          (a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()
+        );
+        setRemoteData(records);
+        setTasks(result?.tasks || []);
+      } catch (err: any) {
+        setError(err?.message || "Error");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [call, hours, uuid]);
+
+  const midData = useMemo(() => {
+    const source = remoteData || [];
+    if (!source.length) return [];
+
+    const intervals = tasks
+      .map((task) => task.interval)
+      .filter((v): v is number => typeof v === "number" && v > 0);
+    const fallbackIntervalSec = intervals.length ? Math.min(...intervals) : 60;
+
+    const toleranceMs = Math.min(
+      6000,
+      Math.max(800, Math.floor(fallbackIntervalSec * 1000 * 0.25))
+    );
+
+    const grouped: Record<number, any> = {};
+    const anchors: number[] = [];
+
+    for (const rec of source) {
+      const ts = new Date(rec.time).getTime();
+      let anchor: number | null = null;
+
+      for (const a of anchors) {
+        if (Math.abs(a - ts) <= toleranceMs) {
+          anchor = a;
+          break;
+        }
+      }
+
+      const use = anchor ?? ts;
+      if (!grouped[use]) {
+        grouped[use] = { time: new Date(use).toISOString() };
+        if (anchor === null) anchors.push(use);
+      }
+      grouped[use][rec.task_id] = rec.value < 0 ? null : rec.value;
+    }
+
+    const merged = Object.values(grouped).sort(
+      (a: any, b: any) =>
+        new Date(a.time).getTime() - new Date(b.time).getTime()
+    ) as any[];
+
+    const lastTs = new Date(merged[merged.length - 1].time).getTime();
+    const fromTs = lastTs - hours * 3600_000;
+
+    let startIdx = 0;
+    for (let i = 0; i < merged.length; i++) {
+      if (new Date(merged[i].time).getTime() >= fromTs) {
+        startIdx = Math.max(0, i - 1);
+        break;
+      }
+    }
+
+    return merged.slice(startIdx);
+  }, [hours, remoteData, tasks]);
+
+  const chartData = useMemo(() => {
+    let output = midData;
+    if (cutPeak && tasks.length > 0) {
+      const keys = tasks.map((task) => String(task.id));
+      output = cutPeakValues(midData, keys);
+    }
+    if (tasks.length > 0 && output.length > 0) {
+      output = interpolateNullsLinear(
+        output,
+        tasks.map((task) => String(task.id)),
+        {
+          maxGapMultiplier: 6,
+          minCapMs: 2 * 60_000,
+          maxCapMs: 30 * 60_000,
+        }
+      );
+    }
+    return output;
+  }, [cutPeak, midData, tasks]);
+
+  const timeFormatter = (value: string, index: number) => {
+    if (!chartData.length) return "";
+    if (index === 0 || index === chartData.length - 1) {
+      if (hours < 24) {
+        return new Date(value).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      }
+      return new Date(value).toLocaleDateString([], {
+        month: "2-digit",
+        day: "2-digit",
+      });
+    }
+    return "";
+  };
+
+  const labelFormatter = (value: string) => {
+    const date = new Date(value);
+    if (hours < 24) {
+      return date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      });
+    }
+    return date.toLocaleString([], {
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const chartConfig = useMemo(() => {
+    const config: Record<string, any> = {};
+    tasks.forEach((task, idx) => {
+      config[String(task.id)] = {
+        label: task.name,
+        color: colors[idx % colors.length],
+      };
+    });
+    return config;
+  }, [tasks]);
+
+  const latestValues = useMemo(() => {
+    if (!remoteData || !tasks.length) return [];
+    const map = new Map<number, PingRecord>();
+    for (const task of tasks) {
+      for (let i = remoteData.length - 1; i >= 0; i--) {
+        const rec = remoteData[i];
+        if (rec.task_id === task.id && rec.value >= 0) {
+          map.set(task.id, rec);
+          break;
+        }
+      }
+    }
+    return tasks.map((task, idx) => ({
+      ...task,
+      value: map.get(task.id)?.value ?? null,
+      color: colors[idx % colors.length],
+    }));
+  }, [remoteData, tasks]);
+
+  const handleLegendClick = useCallback((entry: any) => {
+    const key = String(entry.dataKey);
+    setHiddenLines((prev) => ({ ...prev, [key]: !prev[key] }));
+  }, []);
+
+  const toggleAllLines = useCallback(() => {
+    const allHidden = tasks.every((task) => hiddenLines[String(task.id)]);
+    const next: Record<string, boolean> = {};
+    tasks.forEach((task) => {
+      next[String(task.id)] = !allHidden;
+    });
+    setHiddenLines(next);
+  }, [hiddenLines, tasks]);
+
+  const cardClass =
+    "w-full max-w-[1200px] rounded-2xl border border-border/20 bg-card/95 p-4 shadow-sm";
+
+  return (
+    <Flex direction="column" align="center" gap="4" className="w-full">
+      {loading && (
+        <div className="text-center text-muted-foreground">Loading...</div>
+      )}
+      {error && (
+        <div className="w-full text-center text-destructive">{error}</div>
+      )}
+
+      {latestValues.length > 0 ? (
+        <div className={`mb-3 ${cardClass}`}>
+          <div
+            className="mb-2 grid w-full gap-2"
+            style={{
+              gridTemplateColumns: "repeat(auto-fit, minmax(240px,1fr))",
+            }}
+          >
+            {latestValues.map((task) => (
+              <div key={task.id} className="flex items-center rounded">
+                <div
+                  className="h-6 w-1 rounded-xs"
+                  style={{ backgroundColor: task.color }}
+                />
+                <div className="ml-1 flex flex-col items-start justify-center">
+                  <label className="text-md font-bold text-foreground">
+                    {task.name}
+                  </label>
+                  <div className="flex gap-2 text-sm text-muted-foreground">
+                    <span>
+                      {task.value !== null
+                        ? `${Number(task.value).toFixed(0)} ms`
+                        : "-"}
+                    </span>
+                    <span>{`${Number(task.loss).toFixed(1)}%${t("chart.lossRate")}`}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="mb-3 w-full max-w-[980px] text-center text-muted-foreground">
+          {t("common.none")}
+        </div>
+      )}
+
+      <div className={cardClass}>
+        {chartData.length === 0 ? (
+          <div className="flex h-40 w-full items-center justify-center text-muted-foreground">
+            {t("common.none")}
+          </div>
+        ) : (
+          <ChartContainer
+            config={chartConfig}
+            className="h-40 w-full aspect-auto"
+          >
+            <ComposedChart
+              data={chartData}
+              accessibilityLayer
+              margin={{ top: 4, right: 16, bottom: 4, left: 12 }}
+            >
+              <CartesianGrid vertical={false} />
+              <XAxis
+                dataKey="time"
+                tickLine={false}
+                tickFormatter={timeFormatter}
+                interval="preserveStartEnd"
+                minTickGap={30}
+                allowDuplicatedCategory={false}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                unit="ms"
+                allowDecimals={false}
+                orientation="left"
+                type="number"
+                width={Y_AXIS_WIDTH}
+              />
+              <ChartTooltip
+                cursor={false}
+                formatter={((v: number) => `${Math.round(v)} ms`) as any}
+                content={
+                  <ChartTooltipContent
+                    labelFormatter={labelFormatter}
+                    indicator="dot"
+                  />
+                }
+              />
+              <ChartLegend onClick={handleLegendClick} />
+              {tasks.map((task, idx) => [
+                <Area
+                  key={`area-${task.id}`}
+                  dataKey={String(task.id)}
+                  stroke={colors[idx % colors.length]}
+                  fill={colors[idx % colors.length]}
+                  fillOpacity={0.12}
+                  isAnimationActive={false}
+                  connectNulls={false}
+                  type={cutPeak ? "basis" : "linear"}
+                  hide={!!hiddenLines[String(task.id)]}
+                />,
+                <Line
+                  key={task.id}
+                  dataKey={String(task.id)}
+                  name={task.name}
+                  stroke={colors[idx % colors.length]}
+                  dot={false}
+                  isAnimationActive={false}
+                  strokeWidth={2}
+                  connectNulls={false}
+                  type={cutPeak ? "basis" : "linear"}
+                  hide={!!hiddenLines[String(task.id)]}
+                />,
+              ])}
+            </ComposedChart>
+          </ChartContainer>
+        )}
+
+        <div
+          className="mt-3 flex items-center justify-between gap-4"
+          style={{ display: loading ? "none" : "flex" }}
+        >
+          <div className="flex items-center gap-2">
+            <Switch
+              id="cut-peak"
+              checked={cutPeak}
+              onCheckedChange={setCutPeak}
+            />
+            <label
+              htmlFor="cut-peak"
+              className="flex items-center gap-1 text-sm font-medium text-muted-foreground"
+            >
+              {t("chart.cutPeak")}
+            </label>
+          </div>
+          <Button
+            variant="soft"
+            size="2"
+            onClick={toggleAllLines}
+            className="flex items-center gap-2"
+          >
+            {tasks.every((task) => hiddenLines[String(task.id)]) ? (
+              <>
+                <Eye size={16} />
+                {t("chart.showAll")}
+              </>
+            ) : (
+              <>
+                <EyeOff size={16} />
+                {t("chart.hideAll")}
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+    </Flex>
+  );
+};
+
+export default PingChart;

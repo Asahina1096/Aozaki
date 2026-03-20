@@ -6,6 +6,7 @@ dist/
 
 # generated types
 .astro/
+komari-web/
 
 # dependencies
 node_modules/

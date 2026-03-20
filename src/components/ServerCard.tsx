@@ -2,23 +2,16 @@ import {
   Clock4,
   Cpu,
   HardDrive,
-  Layers,
   MapPin,
   MemoryStick,
   Network,
   Server,
 } from "lucide-react";
 import { memo } from "react";
+import type { NodeBasicInfo } from "@/contexts/NodeListContext";
 import { CARD_CONTAINMENT_STYLE, PILL_STYLES } from "@/lib/constants";
-import type { ServerStats } from "@/lib/types/serverstatus";
-import {
-  formatBytes,
-  formatLoad,
-  formatPercent,
-  formatSpeed,
-  formatUptime,
-  isServerOnline,
-} from "@/lib/utils";
+import { formatBytes } from "@/lib/utils";
+import type { Record } from "@/types/LiveData";
 import {
   Card,
   CardContent,
@@ -28,26 +21,41 @@ import {
 } from "./ui/card";
 import { Progress } from "./ui/progress";
 import { Separator } from "./ui/separator";
-import { StatusPill } from "./ui/status-pill";
 
 interface ServerCardProps {
-  server: ServerStats;
+  node: NodeBasicInfo;
+  liveData?: Record;
+  isOnline: boolean;
 }
 
-function ServerCardComponent({ server }: ServerCardProps) {
-  const isOnline = isServerOnline(server);
-  const cpuUsage = server.cpu;
-  const memUsage = server.memory_used;
-  const memTotal = server.memory_total;
-  const diskUsage = server.hdd_used;
-  const diskTotal = server.hdd_total;
+function formatUptimeSeconds(seconds: number): string {
+  if (!seconds || seconds <= 0) return "--";
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  if (days > 0) return `${days}天`;
+  if (hours > 0) return `${hours}小时`;
+  if (minutes > 0) return `${minutes}分钟`;
+  return "1分钟";
+}
 
-  const memPercent = formatPercent(memUsage, memTotal);
-  const diskPercent = formatPercent(diskUsage, diskTotal);
-  const cpuDisplay = Math.round(cpuUsage * 10) / 10;
-  const load1 = formatLoad(server.load_1);
-  const load5 = formatLoad(server.load_5);
-  const load15 = formatLoad(server.load_15);
+function ServerCardComponent({ node, liveData, isOnline }: ServerCardProps) {
+  const cpuUsage = liveData?.cpu?.usage ?? 0;
+  const ramUsed = liveData?.ram?.used ?? 0;
+  const memTotal = node.mem_total;
+  const diskUsed = liveData?.disk?.used ?? 0;
+  const diskTotal = node.disk_total;
+
+  const ramPercent = memTotal > 0 ? (ramUsed / memTotal) * 100 : 0;
+  const diskPercent = diskTotal > 0 ? (diskUsed / diskTotal) * 100 : 0;
+  const load1 = liveData?.load?.load1 ?? 0;
+  const load5 = liveData?.load?.load5 ?? 0;
+  const load15 = liveData?.load?.load15 ?? 0;
+
+  const networkUp = liveData?.network?.up ?? 0;
+  const networkDown = liveData?.network?.down ?? 0;
+  const totalUp = liveData?.network?.totalUp ?? 0;
+  const totalDown = liveData?.network?.totalDown ?? 0;
 
   return (
     <Card className="overflow-hidden" style={CARD_CONTAINMENT_STYLE}>
@@ -55,9 +63,7 @@ function ServerCardComponent({ server }: ServerCardProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 ml-1">
             <Server className="h-5 w-5" />
-            <CardTitle className="text-xl md:text-lg">
-              {server.alias || server.name}
-            </CardTitle>
+            <CardTitle className="text-xl md:text-lg">{node.name}</CardTitle>
           </div>
           <span
             className={`h-2.5 w-2.5 rounded-full mr-1 ${
@@ -74,21 +80,16 @@ function ServerCardComponent({ server }: ServerCardProps) {
             <span className={PILL_STYLES.info}>
               <Clock4 className="h-3 w-3" />
               <span className="leading-none">
-                {server.uptime ? formatUptime(server.uptime) : "--"}
+                {liveData?.uptime ? formatUptimeSeconds(liveData.uptime) : "--"}
               </span>
             </span>
-            {server.location && (
+            <span className={PILL_STYLES.info}>
+              <MapPin className="h-3 w-3" />
+              <span className="leading-none">{node.region}</span>
+            </span>
+            {node.group && (
               <span className={PILL_STYLES.info}>
-                <MapPin className="h-3 w-3" />
-                <span className="leading-none">{server.location}</span>
-              </span>
-            )}
-            <StatusPill label="v4" online={server.online4} />
-            <StatusPill label="v6" online={server.online6} />
-            {server.type && (
-              <span className={PILL_STYLES.info}>
-                <Layers className="h-3 w-3" />
-                <span className="leading-none">{server.type}</span>
+                <span className="leading-none">{node.group}</span>
               </span>
             )}
           </div>
@@ -101,7 +102,7 @@ function ServerCardComponent({ server }: ServerCardProps) {
               <Cpu className="h-4 w-4" />
               <span>CPU</span>
             </div>
-            <span>{cpuDisplay}%</span>
+            <span>{cpuUsage.toFixed(1)}%</span>
           </div>
           <Progress
             value={cpuUsage}
@@ -109,7 +110,7 @@ function ServerCardComponent({ server }: ServerCardProps) {
             variant={isOnline ? "auto" : "muted"}
           />
           <p className="text-xs text-muted-foreground">
-            负载: {load1} / {load5} / {load15}
+            负载: {load1.toFixed(2)} / {load5.toFixed(2)} / {load15.toFixed(2)}
           </p>
         </div>
 
@@ -121,15 +122,15 @@ function ServerCardComponent({ server }: ServerCardProps) {
               <MemoryStick className="h-4 w-4" />
               <span>内存</span>
             </div>
-            <span>{memPercent}</span>
+            <span>{ramPercent.toFixed(1)}%</span>
           </div>
           <Progress
-            value={memUsage}
-            max={memTotal}
+            value={ramPercent}
+            max={100}
             variant={isOnline ? "auto" : "muted"}
           />
           <p className="text-xs text-muted-foreground">
-            {formatBytes(memUsage * 1024)} / {formatBytes(memTotal * 1024)}
+            {formatBytes(ramUsed)} / {formatBytes(memTotal)}
           </p>
         </div>
 
@@ -141,16 +142,15 @@ function ServerCardComponent({ server }: ServerCardProps) {
               <HardDrive className="h-4 w-4" />
               <span>磁盘</span>
             </div>
-            <span>{diskPercent}</span>
+            <span>{diskPercent.toFixed(1)}%</span>
           </div>
           <Progress
-            value={diskUsage}
-            max={diskTotal}
+            value={diskPercent}
+            max={100}
             variant={isOnline ? "auto" : "muted"}
           />
           <p className="text-xs text-muted-foreground">
-            {formatBytes(diskUsage * 1024 * 1024)} /{" "}
-            {formatBytes(diskTotal * 1024 * 1024)}
+            {formatBytes(diskUsed)} / {formatBytes(diskTotal)}
           </p>
         </div>
 
@@ -164,29 +164,21 @@ function ServerCardComponent({ server }: ServerCardProps) {
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className={`${PILL_STYLES.network} justify-between`}>
               <span className="text-muted-foreground">↑ 上传</span>
-              <span className="font-medium">
-                {formatSpeed(server.network_tx)}
-              </span>
+              <span className="font-medium">{formatBytes(networkUp)}/s</span>
             </div>
             <div className={`${PILL_STYLES.network} justify-between`}>
               <span className="text-muted-foreground">↓ 下载</span>
-              <span className="font-medium">
-                {formatSpeed(server.network_rx)}
-              </span>
+              <span className="font-medium">{formatBytes(networkDown)}/s</span>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className={`${PILL_STYLES.network} justify-between`}>
               <span className="text-muted-foreground">↑ 总上传</span>
-              <span className="font-medium">
-                {formatBytes(server.network_out)}
-              </span>
+              <span className="font-medium">{formatBytes(totalUp)}</span>
             </div>
             <div className={`${PILL_STYLES.network} justify-between`}>
               <span className="text-muted-foreground">↓ 总下载</span>
-              <span className="font-medium">
-                {formatBytes(server.network_in)}
-              </span>
+              <span className="font-medium">{formatBytes(totalDown)}</span>
             </div>
           </div>
         </div>
