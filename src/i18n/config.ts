@@ -1,11 +1,11 @@
 import i18next from "i18next";
-import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
+import { initReactI18next } from "react-i18next";
 import en from "./locales/en.json";
+import id_ID from "./locales/id_ID.json";
+import ja_JP from "./locales/ja_JP.json";
 import zh_CN from "./locales/zh_CN.json";
 import zh_TW from "./locales/zh_TW.json";
-import ja_JP from "./locales/ja_JP.json"; 
-import id_ID from "./locales/id_ID.json";
 
 const resources = {
   "en-US": {

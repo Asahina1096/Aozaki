@@ -60,7 +60,6 @@ export default defineConfig({
   ],
   publicDir: "./public",
   experimental: {
-    preserveScriptOrder: true,
     svgo: true,
   },
   prefetch: {
@@ -71,8 +70,15 @@ export default defineConfig({
     plugins: [tailwindcss()],
     server: {
       proxy: {
-        '/api': { target: process.env.VITE_API_TARGET || 'http://127.0.0.1:25774', changeOrigin: true, ws: true },
-        '/themes': { target: process.env.VITE_API_TARGET || 'http://127.0.0.1:25774', changeOrigin: true },
+        "/api": {
+          target: process.env.VITE_API_TARGET || "http://127.0.0.1:25774",
+          changeOrigin: true,
+          ws: true,
+        },
+        "/themes": {
+          target: process.env.VITE_API_TARGET || "http://127.0.0.1:25774",
+          changeOrigin: true,
+        },
       },
     },
     optimizeDeps: {
@@ -85,9 +91,6 @@ export default defineConfig({
       reportCompressedSize: false,
       rollupOptions: {
         output: {
-          manualChunks: {
-            react: ["react", "react-dom"],
-          },
           chunkFileNames: "_astro/[name].[hash].js",
           entryFileNames: "_astro/[name].[hash].js",
           assetFileNames: "_astro/[name].[hash][extname]",

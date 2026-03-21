@@ -1,36 +1,37 @@
 import type {
-  JSONRPC2Request,
-  JSONRPC2Response,
   JSONRPC2BatchRequest,
   JSONRPC2BatchResponse,
-  RPC2ConnectionStateType,
-  RPC2ConnectionOptions,
+  JSONRPC2Request,
+  JSONRPC2Response,
   RPC2CallOptions,
+  RPC2ConnectionOptions,
+  RPC2ConnectionStateType,
   RPC2EventListeners,
 } from "../types/rpc2";
 import { RPC2ConnectionState } from "../types/rpc2";
 
 export class RPC2Client {
   private ws: WebSocket | null = null;
-  private connectionState: RPC2ConnectionStateType = RPC2ConnectionState.DISCONNECTED;
+  private connectionState: RPC2ConnectionStateType =
+    RPC2ConnectionState.DISCONNECTED;
   private requestId = 0;
-  private pendingRequests = new Map<string | number, {
-    resolve: (value: any) => void;
-    reject: (reason?: any) => void;
-    timeout?: NodeJS.Timeout;
-  }>();
+  private pendingRequests = new Map<
+    string | number,
+    {
+      resolve: (value: unknown) => void;
+      reject: (reason?: unknown) => void;
+      timeout?: NodeJS.Timeout;
+    }
+  >();
   private reconnectAttempts = 0;
   private reconnectTimeout?: NodeJS.Timeout;
   private heartbeatInterval?: NodeJS.Timeout;
   private eventListeners: RPC2EventListeners = {};
- 
+
   private readonly baseUrl: string;
   private readonly options: Required<RPC2ConnectionOptions>;
 
-  constructor(
-    baseUrl = "/api/rpc2",
-    options: RPC2ConnectionOptions = {}
-  ) {
+  constructor(baseUrl = "/api/rpc2", options: RPC2ConnectionOptions = {}) {
     this.baseUrl = baseUrl;
     this.options = {
       autoConnect: true,
@@ -60,8 +61,10 @@ export class RPC2Client {
   }
 
   async connect(): Promise<void> {
-    if (this.connectionState === RPC2ConnectionState.CONNECTED || 
-        this.connectionState === RPC2ConnectionState.CONNECTING) {
+    if (
+      this.connectionState === RPC2ConnectionState.CONNECTED ||
+      this.connectionState === RPC2ConnectionState.CONNECTING
+    ) {
       return;
     }
 
@@ -134,7 +137,7 @@ export class RPC2Client {
     this.clearPendingRequests(new Error("连接已断开"));
   }
 
-  async callViaWebSocket<TParams = any, TResult = any>(
+  async callViaWebSocket<TParams = unknown, TResult = unknown>(
     method: string,
     params?: TParams,
     options: RPC2CallOptions = {}
@@ -162,8 +165,8 @@ export class RPC2Client {
       }, options.timeout || this.options.requestTimeout);
 
       this.pendingRequests.set(request.id!, {
-        resolve,
-        reject,
+        resolve: resolve as (value: unknown) => void,
+        reject: reject as (reason?: unknown) => void,
         timeout,
       });
 
@@ -171,7 +174,7 @@ export class RPC2Client {
     });
   }
 
-  async callViaHTTP<TParams = any, TResult = any>(
+  async callViaHTTP<TParams = unknown, TResult = unknown>(
     method: string,
     params?: TParams,
     options: RPC2CallOptions = {}
@@ -188,7 +191,9 @@ export class RPC2Client {
         method: "POST",
         headers: this.options.headers,
         body: JSON.stringify(request),
-        signal: options.timeout ? AbortSignal.timeout(options.timeout) : undefined,
+        signal: options.timeout
+          ? AbortSignal.timeout(options.timeout)
+          : undefined,
       });
 
       if (!response.ok) {
@@ -200,9 +205,11 @@ export class RPC2Client {
       }
 
       const jsonResponse: JSONRPC2Response<TResult> = await response.json();
-      
+
       if ("error" in jsonResponse) {
-        throw new Error(`RPC Error ${jsonResponse.error.code}: ${jsonResponse.error.message}`);
+        throw new Error(
+          `RPC Error ${jsonResponse.error.code}: ${jsonResponse.error.message}`
+        );
       }
 
       return jsonResponse.result;
@@ -214,12 +221,14 @@ export class RPC2Client {
     }
   }
 
-  async batchCall(requests: Array<{
-    method: string;
-    params?: any;
-    notification?: boolean;
-  }>): Promise<any[]> {
-    const batchRequest: JSONRPC2BatchRequest = requests.map(req => ({
+  async batchCall(
+    requests: Array<{
+      method: string;
+      params?: unknown;
+      notification?: boolean;
+    }>
+  ): Promise<unknown[]> {
+    const batchRequest: JSONRPC2BatchRequest = requests.map((req) => ({
       jsonrpc: "2.0",
       method: req.method,
       params: req.params,
@@ -238,8 +247,8 @@ export class RPC2Client {
       }
 
       const jsonResponse: JSONRPC2BatchResponse = await response.json();
-      
-      return jsonResponse.map(res => {
+
+      return jsonResponse.map((res) => {
         if ("error" in res) {
           throw new Error(`RPC Error ${res.error.code}: ${res.error.message}`);
         }
@@ -253,25 +262,23 @@ export class RPC2Client {
     }
   }
 
-  async call<TParams = any, TResult = any>(
+  async call<TParams = unknown, TResult = unknown>(
     method: string,
     params?: TParams,
     options: RPC2CallOptions = {}
   ): Promise<TResult> {
-    if (this.options.autoConnect && 
-        this.connectionState === RPC2ConnectionState.DISCONNECTED) {
+    if (
+      this.options.autoConnect &&
+      this.connectionState === RPC2ConnectionState.DISCONNECTED
+    ) {
       this.autoConnect();
     }
 
     if (this.connectionState === RPC2ConnectionState.CONNECTED) {
       try {
         return await this.callViaWebSocket(method, params, options);
-      } catch (wsErr) {
-        try {
-          return await this.callViaHTTP(method, params, options);
-        } catch (httpErr) {
-          throw httpErr;
-        }
+      } catch {
+        return await this.callViaHTTP(method, params, options);
       }
     }
 
@@ -308,9 +315,11 @@ export class RPC2Client {
       this.setConnectionState(RPC2ConnectionState.DISCONNECTED);
       this.stopHeartbeat();
       this.eventListeners.onDisconnect?.();
-      
-      if (this.options.autoReconnect && 
-          this.reconnectAttempts < this.options.maxReconnectAttempts) {
+
+      if (
+        this.options.autoReconnect &&
+        this.reconnectAttempts < this.options.maxReconnectAttempts
+      ) {
         this.attemptReconnect();
       }
     };
@@ -328,13 +337,15 @@ export class RPC2Client {
     if (!pending) return;
 
     this.pendingRequests.delete(data.id);
-    
+
     if (pending.timeout) {
       clearTimeout(pending.timeout);
     }
 
     if ("error" in data) {
-      pending.reject(new Error(`RPC Error ${data.error.code}: ${data.error.message}`));
+      pending.reject(
+        new Error(`RPC Error ${data.error.code}: ${data.error.message}`)
+      );
     } else {
       pending.resolve(data.result);
     }
@@ -370,16 +381,16 @@ export class RPC2Client {
     if (!this.options.enableHeartbeat) {
       return;
     }
-    
+
     this.stopHeartbeat();
-    
+
     this.heartbeatInterval = setInterval(() => {
       if (this.ws && this.ws.readyState === WebSocket.OPEN) {
         try {
           const heartbeatRequest: JSONRPC2Request = {
             jsonrpc: "2.0",
             method: "rpc.ping",
-            params: { timestamp: Date.now() }
+            params: { timestamp: Date.now() },
           };
           this.ws.send(JSON.stringify(heartbeatRequest));
         } catch (error) {
@@ -402,7 +413,8 @@ export class RPC2Client {
     this.eventListeners.onReconnecting?.(this.reconnectAttempts);
 
     this.reconnectTimeout = setTimeout(() => {
-      this.connect().catch(() => {
+      this.connect().catch((error) => {
+        console.warn("重连失败:", error);
       });
     }, this.options.reconnectInterval);
   }

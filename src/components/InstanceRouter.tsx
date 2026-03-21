@@ -1,13 +1,12 @@
-import { Card, Flex, SegmentedControl, Text } from "@radix-ui/themes";
+import { Flex, SegmentedControl, Text } from "@radix-ui/themes";
 import { ArrowLeft } from "lucide-react";
-import React, { useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useLiveData } from "../contexts/LiveDataContext";
+import { useNavigate } from "react-router-dom";
+import LoadChart from "@/components/instance/LoadChart";
+import PingChart from "@/components/instance/PingChart";
 import { useNodeList } from "../contexts/NodeListContext";
 import { formatBytes } from "../lib/utils";
-import LoadChart from "../pages/instance/LoadChart";
-import PingChart from "../pages/instance/PingChart";
 import Flag from "./Flag";
 
 interface InstanceDetailProps {
@@ -16,42 +15,10 @@ interface InstanceDetailProps {
 
 const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
   const { t } = useTranslation();
-  const { onRefresh } = useLiveData();
   const { nodeList } = useNodeList();
-  const [recent, setRecent] = useState<any[]>([]);
   const [chartView, setChartView] = useState<"load" | "ping">("load");
-  const length = 30 * 5;
 
   const node = nodeList?.find((n) => n.uuid === uuid);
-  const live_data = useLiveData().live_data?.data?.data?.[uuid];
-
-  React.useEffect(() => {
-    fetch(`/api/recent/${uuid}`)
-      .then((res) => res.json())
-      .then((data) => setRecent(data.data?.slice(-length) || []))
-      .catch((err) => console.error("Failed to fetch recent data:", err));
-  }, [uuid]);
-
-  React.useEffect(() => {
-    const unsubscribe = onRefresh((resp) => {
-      if (!uuid) return;
-      const data = resp.data.data[uuid];
-      if (!data) return;
-
-      setRecent((prev) => {
-        const newRecord = data;
-        const exists = prev.some(
-          (item) => item.updated_at === newRecord.updated_at
-        );
-        if (exists) return prev;
-
-        const updated = [...prev, newRecord].slice(-length);
-        return updated;
-      });
-    });
-
-    return unsubscribe;
-  }, [onRefresh, uuid]);
 
   if (!node) {
     return (
@@ -124,13 +91,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
 
 const InstanceRouter: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const [selectedUuid, setSelectedUuid] = useState<string | null>(null);
-
-  const handleInstanceClick = (uuid: string) => {
-    setSelectedUuid(uuid);
-    navigate(`/instance/${uuid}`);
-  };
 
   const handleBack = () => {
     setSelectedUuid(null);

@@ -1,12 +1,14 @@
 import { Flex, Text } from "@radix-ui/themes";
+import { ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { DetailsGrid } from "@/components/DetailsGrid";
+import LoadChart from "@/components/instance/LoadChart";
+import PingChart from "@/components/instance/PingChart";
 import { liveDataToRecords } from "@/utils/RecordHelper";
 import { useLiveData } from "../contexts/LiveDataContext";
 import { useNodeList } from "../contexts/NodeListContext";
-import LoadChart from "../pages/instance/LoadChart";
-import PingChart from "../pages/instance/PingChart";
 import type { Record as LiveRecord } from "../types/LiveData";
 
 interface InstanceDetailProps {
@@ -15,6 +17,7 @@ interface InstanceDetailProps {
 
 const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { onRefresh } = useLiveData();
   const [recent, setRecent] = useState<LiveRecord[]>([]);
   const [chartView, setChartView] = useState<"load" | "ping">("load");
@@ -23,9 +26,9 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
   const { nodeList } = useNodeList();
   const length = 30 * 5;
   const sectionCardClass =
-    "rounded-2xl border border-border/20 bg-card/95 p-4 shadow-sm";
+    "rounded-2xl border border-border/20 bg-card/95 p-5 shadow-sm";
   const controlBaseClass =
-    "rounded-lg border border-border/25 bg-background px-3 py-1.5 text-sm font-medium text-muted-foreground transition hover:bg-muted/40 sm:px-4";
+    "rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-accent-foreground sm:px-4";
   const controlActiveClass =
     "border-transparent bg-primary text-primary-foreground hover:bg-primary/90";
 
@@ -66,19 +69,31 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
     >
       <div className="flex w-full max-w-[1200px] flex-col gap-4">
         <div className={sectionCardClass}>
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-3">
-              <span className="inline-flex rounded-full border border-border/30 bg-muted px-2.5 py-0.5 text-xs font-semibold tracking-wide text-muted-foreground">
-                {region}
-              </span>
-              <h1 className="text-xl font-bold tracking-tight text-foreground md:text-2xl">
-                <Text as="span" wrap="nowrap">
-                  {serverName}
-                </Text>
-              </h1>
+          <div className="flex items-start gap-3">
+            <button
+              type="button"
+              onClick={() => navigate("/")}
+              aria-label="Back to list"
+              className="inline-flex h-9 w-10 shrink-0 items-center justify-center rounded-lg border border-input bg-background text-foreground transition hover:bg-accent"
+            >
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+            </button>
+
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-3">
+                <span className="inline-flex rounded-full border border-border/30 bg-muted px-2.5 py-0.5 text-xs font-semibold tracking-wide text-muted-foreground">
+                  {region}
+                </span>
+                <h1 className="text-xl font-bold tracking-tight text-foreground md:text-2xl">
+                  <Text as="span" wrap="nowrap">
+                    {serverName}
+                  </Text>
+                </h1>
+              </div>
+
+              <DetailsGrid uuid={uuid ?? ""} />
             </div>
           </div>
-          <DetailsGrid uuid={uuid ?? ""} />
         </div>
 
         <div

@@ -27,9 +27,11 @@ export type NodeBasicInfo = {
   expired_at: string;
   created_at: string;
   updated_at: string;
-  ipv4?: string; 
+  ipv4?: string;
   ipv6?: string;
 };
+
+type NodePayload = Partial<NodeBasicInfo> & Record<string, unknown>;
 
 interface NodeListContextType {
   nodeList: NodeBasicInfo[] | null;
@@ -52,45 +54,60 @@ export const NodeListProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const refresh = () => {
     setError(null);
-    call<{ uuid?: string }, Record<string, any>>("common:getNodes")
+    call<undefined, Record<string, NodePayload>>("common:getNodes")
       .then((result) => {
         if (!result || typeof result !== "object") {
           setNodeList([]);
           return;
         }
-        const list: NodeBasicInfo[] = Object.values(result).map((n: any) => ({
-          uuid: n.uuid,
-          name: n.name,
-          cpu_name: n.cpu_name,
-          virtualization: n.virtualization,
-          arch: n.arch,
-          cpu_cores: n.cpu_cores,
-          os: n.os,
-          kernel_version: n.kernel_version,
-          gpu_name: n.gpu_name,
-          region: n.region,
-          mem_total: n.mem_total,
-          swap_total: n.swap_total,
-          disk_total: n.disk_total,
-          version: n.version ?? "",
-          weight: n.weight ?? 0,
-          price: n.price ?? 0,
-          tags: n.tags ?? "",
-          billing_cycle: n.billing_cycle ?? 0,
-          currency: n.currency ?? "",
-          group: n.group ?? "",
-          traffic_limit: n.traffic_limit ?? 0,
-          traffic_limit_type: n.traffic_limit_type,
-          expired_at: n.expired_at ?? "",
-          created_at: n.created_at ?? "",
-          updated_at: n.updated_at ?? "",
-          ipv4: n.ipv4,
-          ipv6: n.ipv6,
+        const list: NodeBasicInfo[] = Object.values(result).map((n) => ({
+          uuid: typeof n.uuid === "string" ? n.uuid : "",
+          name: typeof n.name === "string" ? n.name : "",
+          cpu_name: typeof n.cpu_name === "string" ? n.cpu_name : "",
+          virtualization:
+            typeof n.virtualization === "string" ? n.virtualization : "",
+          arch: typeof n.arch === "string" ? n.arch : "",
+          cpu_cores: typeof n.cpu_cores === "number" ? n.cpu_cores : 0,
+          os: typeof n.os === "string" ? n.os : "",
+          kernel_version:
+            typeof n.kernel_version === "string" ? n.kernel_version : "",
+          gpu_name: typeof n.gpu_name === "string" ? n.gpu_name : "",
+          region: typeof n.region === "string" ? n.region : "",
+          mem_total: typeof n.mem_total === "number" ? n.mem_total : 0,
+          swap_total: typeof n.swap_total === "number" ? n.swap_total : 0,
+          disk_total: typeof n.disk_total === "number" ? n.disk_total : 0,
+          version: typeof n.version === "string" ? n.version : "",
+          weight: typeof n.weight === "number" ? n.weight : 0,
+          price: typeof n.price === "number" ? n.price : 0,
+          tags: typeof n.tags === "string" ? n.tags : "",
+          billing_cycle:
+            typeof n.billing_cycle === "number" ? n.billing_cycle : 0,
+          currency: typeof n.currency === "string" ? n.currency : "",
+          group: typeof n.group === "string" ? n.group : "",
+          traffic_limit:
+            typeof n.traffic_limit === "number" ? n.traffic_limit : 0,
+          traffic_limit_type:
+            n.traffic_limit_type === "sum" ||
+            n.traffic_limit_type === "max" ||
+            n.traffic_limit_type === "min" ||
+            n.traffic_limit_type === "up" ||
+            n.traffic_limit_type === "down"
+              ? n.traffic_limit_type
+              : undefined,
+          expired_at: typeof n.expired_at === "string" ? n.expired_at : "",
+          created_at: typeof n.created_at === "string" ? n.created_at : "",
+          updated_at: typeof n.updated_at === "string" ? n.updated_at : "",
+          ipv4: typeof n.ipv4 === "string" ? n.ipv4 : undefined,
+          ipv6: typeof n.ipv6 === "string" ? n.ipv6 : undefined,
         }));
         setNodeList(list);
       })
-      .catch((err: any) => {
-        setError(err?.message || "An error occurred while fetching data");
+      .catch((err: unknown) => {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "An error occurred while fetching data"
+        );
         setNodeList([]);
       })
       .finally(() => {

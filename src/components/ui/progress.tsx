@@ -11,8 +11,8 @@ const getAutoGradient = (percentage: number) => {
     // 60-80%: 黄色到橙色渐变
     return "bg-gradient-to-r from-yellow-400 via-yellow-500 to-orange-500";
   }
-  // 0-60%: 青绿到绿色渐变
-  return "bg-gradient-to-r from-emerald-400 via-green-500 to-green-600";
+  // 0-59%: 绿青渐变（绿色为主）
+  return "bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500";
 };
 
 const Progress = React.forwardRef<

@@ -88,16 +88,16 @@ export function liveDataToRecords(
   }));
 }
 
-function createNullTemplate(obj: any): any {
+function createNullTemplate(obj: unknown): unknown {
   if (obj === null || obj === undefined) return null;
   if (typeof obj === "number") return null;
   if (typeof obj === "string" || typeof obj === "boolean") return obj;
   if (Array.isArray(obj)) return obj.map(createNullTemplate);
   if (typeof obj === "object") {
-    const res: any = {};
+    const res: Record<string, unknown> = {};
     for (const k in obj) {
       if (k === "updated_at" || k === "time") continue;
-      res[k] = createNullTemplate(obj[k]);
+      res[k] = createNullTemplate((obj as Record<string, unknown>)[k]);
     }
     return res;
   }
@@ -135,7 +135,10 @@ export default function fillMissingTimePoints<
     timePoints.push(t);
   }
 
-  const nullTemplate = createNullTemplate(lastItem.item);
+  const nullTemplate = createNullTemplate(lastItem.item) as Record<
+    string,
+    unknown
+  >;
   let dataIdx = 0;
   const matchToleranceMs = (matchToleranceSec ?? intervalSec) * 1000;
 
@@ -164,7 +167,9 @@ export default function fillMissingTimePoints<
   });
 }
 
-export function interpolateNullsLinear<T extends { [key: string]: any }>(
+export function interpolateNullsLinear<
+  T extends Record<string, unknown> & { time?: string; updated_at?: string },
+>(
   rows: T[],
   keys: string[],
   options?:
@@ -179,7 +184,7 @@ export function interpolateNullsLinear<T extends { [key: string]: any }>(
   if (!rows || rows.length === 0 || !keys.length) return rows;
 
   const times = rows.map((r) =>
-    new Date((r as any).time ?? (r as any).updated_at ?? "").getTime()
+    new Date(r.time ?? r.updated_at ?? "").getTime()
   );
   const out = rows.map((r) => ({ ...r }));
 
@@ -235,7 +240,7 @@ export function interpolateNullsLinear<T extends { [key: string]: any }>(
       for (let j = i0 + 1; j < i1; j++) {
         const tj = times[j];
         const ratio = (tj - t0) / (t1 - t0);
-        (out as any)[j][key] = v0 + (v1 - v0) * ratio;
+        (out[j] as Record<string, unknown>)[key] = v0 + (v1 - v0) * ratio;
       }
     }
   }
@@ -243,7 +248,7 @@ export function interpolateNullsLinear<T extends { [key: string]: any }>(
   return out;
 }
 
-export function cutPeakValues<T extends { [key: string]: any }>(
+export function cutPeakValues<T extends Record<string, unknown>>(
   data: T[],
   keys: string[],
   alpha: number = 0.3,

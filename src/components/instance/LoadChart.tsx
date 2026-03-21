@@ -25,7 +25,17 @@ const presetViews = [
   { key: "30d", hours: 720 },
 ];
 
-const colors = ["#F38181", "#FCE38A", "#EAFFD0", "#95E1D3"];
+const colors = ["#FF8A98", "#8FD6FF", "#9DE8C9", "#B7C4FF"];
+const SOFT_GRID_STROKE = "hsl(var(--border) / 0.55)";
+const SOFT_FILL_START = "hsl(var(--primary) / 0.35)";
+const softFillDef = (
+  <defs>
+    <linearGradient id="soft-chart-fill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stopColor={SOFT_FILL_START} />
+      <stop offset="100%" stopColor="rgba(255, 71, 87, 0)" />
+    </linearGradient>
+  </defs>
+);
 
 const sixChartMargin = {
   top: 10,
@@ -43,14 +53,14 @@ const gpuChartMargin = {
 
 const axisTickStyle = {
   fontSize: 10,
-  fill: "#71717a",
+  fill: "hsl(var(--muted-foreground))",
   textAnchor: "end",
   dx: -5,
 } as const;
 
 const xAxisTickStyle = {
   fontSize: 10,
-  fill: "#71717a",
+  fill: "hsl(var(--muted-foreground))",
   dy: 10,
 } as const;
 
@@ -58,7 +68,7 @@ const yAxisTickCount = 5;
 
 const gpuAxisTickStyle = {
   fontSize: 10,
-  fill: "#a1a1aa",
+  fill: "hsl(var(--muted-foreground))",
   textAnchor: "start",
   dx: -15,
 } as const;
@@ -73,6 +83,13 @@ const formatGigabytesTick = (value: number) => {
 const formatKilobytesPerSecTick = (value: number) => {
   const kb = Number(value) / 1024;
   return `${kb.toFixed(2)} KB/s`;
+};
+
+const toNumeric = (value: unknown): number => {
+  if (Array.isArray(value)) {
+    return Number(value[0]);
+  }
+  return Number(value);
 };
 
 const LoadChart = ({ data = [], view }: LoadChartProps) => {
@@ -159,8 +176,8 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
     return "";
   };
 
-  const labelFormatter = (value: string) => {
-    const date = new Date(value);
+  const labelFormatter = (value: React.ReactNode) => {
+    const date = new Date(String(value));
     if (isRealtime || view === "4h") {
       return date.toLocaleTimeString([], {
         hour: "2-digit",
@@ -176,17 +193,18 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
     });
   };
 
-  const percentageFormatter = (value: number) => `${value.toFixed(2)}%`;
+  const percentageFormatter = (value: unknown) =>
+    `${toNumeric(value).toFixed(2)}%`;
   const cardClass =
-    "flex h-full w-full flex-col rounded-2xl border border-border/20 bg-card/95 p-4 shadow-sm";
+    "flex h-full w-full flex-col rounded-2xl border border-border/20 bg-card/95 p-5 shadow-sm";
   const chartBodyClass = "h-40 w-full aspect-auto";
 
   const chartTitle = (text: string, right: React.ReactNode) => (
     <div className="mb-2 flex items-center justify-between gap-4">
-      <label className="text-lg font-bold leading-none text-foreground md:text-xl">
+      <label className="font-sans text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground md:text-sm">
         {text}
       </label>
-      <div className="text-right font-mono text-sm text-muted-foreground">
+      <div className="text-right font-mono text-sm text-foreground">
         {right}
       </div>
     </div>
@@ -216,7 +234,12 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
               accessibilityLayer
               margin={sixChartMargin}
             >
-              <CartesianGrid vertical={false} />
+              {softFillDef}
+              <CartesianGrid
+                vertical={false}
+                stroke={SOFT_GRID_STROKE}
+                strokeDasharray="3 6"
+              />
               <XAxis
                 dataKey="time"
                 axisLine={false}
@@ -238,10 +261,10 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
               />
               <ChartTooltip
                 cursor={false}
-                formatter={percentageFormatter as any}
+                formatter={percentageFormatter}
                 content={
                   <ChartTooltipContent
-                    labelFormatter={labelFormatter as any}
+                    labelFormatter={labelFormatter}
                     indicator="dot"
                   />
                 }
@@ -250,9 +273,10 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                 dataKey="cpu"
                 animationDuration={0}
                 stroke={colors[0]}
-                fill={colors[0]}
-                opacity={0.8}
+                fill="url(#soft-chart-fill)"
+                strokeWidth={2}
                 dot={false}
+                type="monotone"
               />
             </AreaChart>
           </ChartContainer>
@@ -281,7 +305,12 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
               accessibilityLayer
               margin={sixChartMargin}
             >
-              <CartesianGrid vertical={false} />
+              {softFillDef}
+              <CartesianGrid
+                vertical={false}
+                stroke={SOFT_GRID_STROKE}
+                strokeDasharray="3 6"
+              />
               <XAxis
                 dataKey="time"
                 axisLine={false}
@@ -303,20 +332,28 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
               />
               <ChartTooltip
                 cursor={false}
-                formatter={
-                  ((value: number, name: string, props: any) => {
-                    const raw =
-                      name === "ram"
-                        ? (props?.payload?.ram_raw ?? 0)
-                        : (props?.payload?.swap_raw ?? 0);
-                    const percent =
-                      typeof value === "number" ? value : Number(value) || 0;
-                    return `${formatBytes(raw)} (${percent.toFixed(0)}%)`;
-                  }) as any
-                }
+                formatter={(value: unknown, name: unknown, props: unknown) => {
+                  const payload =
+                    typeof props === "object" &&
+                    props !== null &&
+                    "payload" in props &&
+                    typeof props.payload === "object" &&
+                    props.payload !== null
+                      ? (props.payload as {
+                          ram_raw?: number;
+                          swap_raw?: number;
+                        })
+                      : undefined;
+                  const raw =
+                    String(name) === "ram"
+                      ? (payload?.ram_raw ?? 0)
+                      : (payload?.swap_raw ?? 0);
+                  const percent = toNumeric(value) || 0;
+                  return `${formatBytes(raw)} (${percent.toFixed(0)}%)`;
+                }}
                 content={
                   <ChartTooltipContent
-                    labelFormatter={labelFormatter as any}
+                    labelFormatter={labelFormatter}
                     indicator="dot"
                   />
                 }
@@ -325,17 +362,19 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                 dataKey="ram"
                 animationDuration={0}
                 stroke={colors[0]}
-                fill={colors[0]}
-                opacity={0.8}
+                fill="url(#soft-chart-fill)"
+                strokeWidth={2}
                 dot={false}
+                type="monotone"
               />
               <Area
                 dataKey="swap"
                 animationDuration={0}
                 stroke={colors[1]}
-                fill={colors[1]}
-                opacity={0.8}
+                fill="url(#soft-chart-fill)"
+                strokeWidth={2}
                 dot={false}
+                type="monotone"
               />
             </AreaChart>
           </ChartContainer>
@@ -358,7 +397,12 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
               accessibilityLayer
               margin={sixChartMargin}
             >
-              <CartesianGrid vertical={false} />
+              {softFillDef}
+              <CartesianGrid
+                vertical={false}
+                stroke={SOFT_GRID_STROKE}
+                strokeDasharray="3 6"
+              />
               <XAxis
                 dataKey="time"
                 axisLine={false}
@@ -379,10 +423,10 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
               />
               <ChartTooltip
                 cursor={false}
-                formatter={formatBytes as any}
+                formatter={(value) => formatBytes(Number(value))}
                 content={
                   <ChartTooltipContent
-                    labelFormatter={labelFormatter as any}
+                    labelFormatter={labelFormatter}
                     indicator="dot"
                   />
                 }
@@ -391,8 +435,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                 dataKey="net_in"
                 animationDuration={0}
                 stroke={colors[0]}
-                fill={colors[0]}
-                fillOpacity={0.14}
+                fill="url(#soft-chart-fill)"
                 strokeWidth={2}
                 dot={false}
                 type="monotone"
@@ -401,8 +444,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                 dataKey="net_out"
                 animationDuration={0}
                 stroke={colors[3]}
-                fill={colors[3]}
-                fillOpacity={0.14}
+                fill="url(#soft-chart-fill)"
                 strokeWidth={2}
                 dot={false}
                 type="monotone"
@@ -427,7 +469,12 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
               accessibilityLayer
               margin={sixChartMargin}
             >
-              <CartesianGrid vertical={false} />
+              {softFillDef}
+              <CartesianGrid
+                vertical={false}
+                stroke={SOFT_GRID_STROKE}
+                strokeDasharray="3 6"
+              />
               <XAxis
                 dataKey="time"
                 axisLine={false}
@@ -449,10 +496,10 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
               />
               <ChartTooltip
                 cursor={false}
-                formatter={formatBytes as any}
+                formatter={(value) => formatBytes(Number(value))}
                 content={
                   <ChartTooltipContent
-                    labelFormatter={labelFormatter as any}
+                    labelFormatter={labelFormatter}
                     indicator="dot"
                   />
                 }
@@ -461,9 +508,10 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                 dataKey="disk"
                 animationDuration={0}
                 stroke={colors[0]}
-                fill={colors[0]}
-                opacity={0.8}
+                fill="url(#soft-chart-fill)"
+                strokeWidth={2}
                 dot={false}
+                type="monotone"
               />
             </AreaChart>
           </ChartContainer>
@@ -486,7 +534,12 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
               accessibilityLayer
               margin={sixChartMargin}
             >
-              <CartesianGrid vertical={false} />
+              {softFillDef}
+              <CartesianGrid
+                vertical={false}
+                stroke={SOFT_GRID_STROKE}
+                strokeDasharray="3 6"
+              />
               <XAxis
                 dataKey="time"
                 axisLine={false}
@@ -509,7 +562,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                 cursor={false}
                 content={
                   <ChartTooltipContent
-                    labelFormatter={labelFormatter as any}
+                    labelFormatter={labelFormatter}
                     indicator="dot"
                   />
                 }
@@ -518,8 +571,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                 dataKey="connections"
                 animationDuration={0}
                 stroke={colors[0]}
-                fill={colors[0]}
-                fillOpacity={0.14}
+                fill="url(#soft-chart-fill)"
                 strokeWidth={2}
                 dot={false}
                 type="monotone"
@@ -528,8 +580,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                 dataKey="connections_udp"
                 animationDuration={0}
                 stroke={colors[3]}
-                fill={colors[3]}
-                fillOpacity={0.14}
+                fill="url(#soft-chart-fill)"
                 strokeWidth={2}
                 dot={false}
                 type="monotone"
@@ -551,7 +602,12 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
               accessibilityLayer
               margin={sixChartMargin}
             >
-              <CartesianGrid vertical={false} />
+              {softFillDef}
+              <CartesianGrid
+                vertical={false}
+                stroke={SOFT_GRID_STROKE}
+                strokeDasharray="3 6"
+              />
               <XAxis
                 dataKey="time"
                 axisLine={false}
@@ -575,7 +631,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                 cursor={false}
                 content={
                   <ChartTooltipContent
-                    labelFormatter={labelFormatter as any}
+                    labelFormatter={labelFormatter}
                     indicator="dot"
                   />
                 }
@@ -584,8 +640,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                 dataKey="process"
                 animationDuration={0}
                 stroke={colors[0]}
-                fill={colors[0]}
-                fillOpacity={0.14}
+                fill="url(#soft-chart-fill)"
                 strokeWidth={2}
                 dot={false}
                 type="monotone"
@@ -600,21 +655,21 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
             <div key={`gpu-${index}`} className={cardClass}>
               <Flex direction="column" gap="2" className="mb-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-xl font-bold text-foreground">{`GPU ${index + 1}: ${gpu.name}`}</label>
-                  <span className="text-sm text-muted-foreground">
+                  <label className="font-sans text-sm font-semibold uppercase tracking-[0.08em] text-muted-foreground">{`GPU ${index + 1}: ${gpu.name}`}</label>
+                  <span className="text-sm font-mono text-foreground">
                     {formatBytes(gpu.memory_total)}
                   </span>
                 </div>
-                <div className="grid grid-cols-3 gap-4 text-sm text-muted-foreground">
+                <div className="grid grid-cols-3 gap-4 text-xs text-muted-foreground">
                   <div className="text-center">
                     <div className="font-medium">{t("chart.usage")}</div>
-                    <div className="text-lg font-bold text-foreground">
+                    <div className="text-lg font-mono font-bold text-foreground">
                       {gpu.utilization}%
                     </div>
                   </div>
                   <div className="text-center">
                     <div className="font-medium">{t("chart.gpu_memory")}</div>
-                    <div className="text-lg font-bold text-foreground">
+                    <div className="text-lg font-mono font-bold text-foreground">
                       {((gpu.memory_used / gpu.memory_total) * 100).toFixed(1)}%
                     </div>
                   </div>
@@ -622,7 +677,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                     <div className="font-medium">
                       {t("nodeCard.temperature")}
                     </div>
-                    <div className="text-lg font-bold text-foreground">
+                    <div className="text-lg font-mono font-bold text-foreground">
                       {gpu.temperature}°C
                     </div>
                   </div>
@@ -661,7 +716,12 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                   accessibilityLayer
                   margin={gpuChartMargin}
                 >
-                  <CartesianGrid vertical={false} />
+                  {softFillDef}
+                  <CartesianGrid
+                    vertical={false}
+                    stroke={SOFT_GRID_STROKE}
+                    strokeDasharray="3 6"
+                  />
                   <XAxis
                     dataKey="time"
                     tickLine={false}
@@ -681,22 +741,32 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                   />
                   <ChartTooltip
                     cursor={false}
-                    formatter={
-                      ((value: number, name: string, props: any) => {
-                        if (name === "gpu_temp") return `${value}°C`;
-                        if (name === "gpu_usage")
-                          return `${Number(value).toFixed(1)}%`;
-                        if (name === "gpu_memory") {
-                          const percentage = Number(value).toFixed(1);
-                          const raw = props.payload?.gpu_memory_raw || 0;
-                          return `${formatBytes(raw)}(${percentage}%)`;
-                        }
-                        return `${Number(value).toFixed(1)}`;
-                      }) as any
-                    }
+                    formatter={(
+                      value: unknown,
+                      name: unknown,
+                      props: unknown
+                    ) => {
+                      const payload =
+                        typeof props === "object" &&
+                        props !== null &&
+                        "payload" in props &&
+                        typeof props.payload === "object" &&
+                        props.payload !== null
+                          ? (props.payload as { gpu_memory_raw?: number })
+                          : undefined;
+                      if (String(name) === "gpu_temp") return `${value}°C`;
+                      if (String(name) === "gpu_usage")
+                        return `${toNumeric(value).toFixed(1)}%`;
+                      if (String(name) === "gpu_memory") {
+                        const percentage = toNumeric(value).toFixed(1);
+                        const raw = payload?.gpu_memory_raw || 0;
+                        return `${formatBytes(raw)}(${percentage}%)`;
+                      }
+                      return `${toNumeric(value).toFixed(1)}`;
+                    }}
                     content={
                       <ChartTooltipContent
-                        labelFormatter={labelFormatter as any}
+                        labelFormatter={labelFormatter}
                         indicator="dot"
                       />
                     }
@@ -705,25 +775,28 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                     dataKey="gpu_usage"
                     animationDuration={0}
                     stroke={colors[0]}
-                    fill={colors[0]}
-                    opacity={0.8}
+                    fill="url(#soft-chart-fill)"
+                    strokeWidth={2}
                     dot={false}
+                    type="monotone"
                   />
                   <Area
                     dataKey="gpu_memory"
                     animationDuration={0}
                     stroke={colors[1]}
-                    fill={colors[1]}
-                    opacity={0.8}
+                    fill="url(#soft-chart-fill)"
+                    strokeWidth={2}
                     dot={false}
+                    type="monotone"
                   />
                   <Area
                     dataKey="gpu_temp"
                     animationDuration={0}
                     stroke={colors[2]}
-                    fill={colors[2]}
-                    opacity={0.6}
+                    fill="url(#soft-chart-fill)"
+                    strokeWidth={2}
                     dot={false}
+                    type="monotone"
                   />
                 </AreaChart>
               </ChartContainer>

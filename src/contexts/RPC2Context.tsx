@@ -1,6 +1,12 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { RPC2Client } from "../lib/rpc2";
-import type { RPC2ConnectionStateType } from "../types/rpc2";
+import type { RPC2CallOptions, RPC2ConnectionStateType } from "../types/rpc2";
 
 interface RPC2ContextType {
   client: RPC2Client;
@@ -16,7 +22,9 @@ const RPC2Context = createContext<RPC2ContextType | undefined>(undefined);
 let __rpc2_singleton__: RPC2Client | null = null;
 let __rpc2_refcount = 0;
 
-export const RPC2Provider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const RPC2Provider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [client] = useState(() => {
     if (!__rpc2_singleton__) {
       __rpc2_singleton__ = new RPC2Client("/api/rpc2", { autoConnect: true });
@@ -81,7 +89,7 @@ export const RPC2Provider: React.FC<{ children: React.ReactNode }> = ({ children
         isConnected,
         error,
         connect,
-        disconnect
+        disconnect,
       }}
     >
       {children}
@@ -100,26 +108,43 @@ export const useRPC2 = (): RPC2ContextType => {
 export const useRPC2Call = () => {
   const { client, isConnected } = useRPC2();
 
-  const call = useCallback(<TParams = any, TResult = any>(
-    method: string,
-    params?: TParams,
-    options?: any
-  ): Promise<TResult> => client.call(method, params, options), [client]);
+  const call = useCallback(
+    <TParams = unknown, TResult = unknown>(
+      method: string,
+      params?: TParams,
+      options?: RPC2CallOptions
+    ): Promise<TResult> => client.call(method, params, options),
+    [client]
+  );
 
-  const callViaWebSocket = useCallback(<TParams = any, TResult = any>(
-    method: string,
-    params?: TParams,
-    options?: any
-  ): Promise<TResult> => client.callViaWebSocket(method, params, options), [client]);
+  const callViaWebSocket = useCallback(
+    <TParams = unknown, TResult = unknown>(
+      method: string,
+      params?: TParams,
+      options?: RPC2CallOptions
+    ): Promise<TResult> => client.callViaWebSocket(method, params, options),
+    [client]
+  );
 
-  const callViaHTTP = useCallback(<TParams = any, TResult = any>(
-    method: string,
-    params?: TParams,
-    options?: any
-  ): Promise<TResult> => client.callViaHTTP(method, params, options), [client]);
+  const callViaHTTP = useCallback(
+    <TParams = unknown, TResult = unknown>(
+      method: string,
+      params?: TParams,
+      options?: RPC2CallOptions
+    ): Promise<TResult> => client.callViaHTTP(method, params, options),
+    [client]
+  );
 
-  const batchCall = useCallback((requests: Array<{ method: string; params?: any; notification?: boolean }>) =>
-    client.batchCall(requests), [client]);
+  const batchCall = useCallback(
+    (
+      requests: Array<{
+        method: string;
+        params?: unknown;
+        notification?: boolean;
+      }>
+    ) => client.batchCall(requests),
+    [client]
+  );
 
   return {
     call,
@@ -128,4 +153,4 @@ export const useRPC2Call = () => {
     batchCall,
     isConnected,
   };
-}
+};

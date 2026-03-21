@@ -10,6 +10,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import type { ChartConfig } from "@/components/ui/chart";
 import {
   ChartContainer,
   ChartLegend,
@@ -42,16 +43,30 @@ interface TaskInfo {
   type?: string;
 }
 
+type PingRow = {
+  time: string;
+} & Record<string, number | string | null | undefined>;
+
 const colors = [
-  "#F38181",
-  "#347433",
-  "#898AC4",
-  "#03A6A1",
-  "#7AD6F0",
-  "#B388FF",
-  "#FF8A65",
-  "#FFD600",
+  "#FF8A98",
+  "#8FD6FF",
+  "#9DE8C9",
+  "#B7C4FF",
+  "#79D9F8",
+  "#C5B4FF",
+  "#FFB28F",
+  "#FBD89A",
 ];
+const SOFT_GRID_STROKE = "hsl(var(--border) / 0.55)";
+const SOFT_FILL_START = "hsl(var(--primary) / 0.35)";
+const softFillDef = (
+  <defs>
+    <linearGradient id="soft-ping-fill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stopColor={SOFT_FILL_START} />
+      <stop offset="100%" stopColor="rgba(255, 71, 87, 0)" />
+    </linearGradient>
+  </defs>
+);
 
 const presetViews = [
   { key: "1h", hours: 1 },
@@ -95,7 +110,10 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
           records: PingRecord[];
           tasks?: TaskInfo[];
         };
-        const result = await call<any, RpcResp>("common:getRecords", {
+        const result = await call<
+          { uuid: string; type: "ping"; hours: number },
+          RpcResp
+        >("common:getRecords", {
           uuid,
           type: "ping",
           hours,
@@ -106,8 +124,8 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
         );
         setRemoteData(records);
         setTasks(result?.tasks || []);
-      } catch (err: any) {
-        setError(err?.message || "Error");
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Error");
       } finally {
         setLoading(false);
       }
@@ -128,7 +146,7 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
       Math.max(800, Math.floor(fallbackIntervalSec * 1000 * 0.25))
     );
 
-    const grouped: Record<number, any> = {};
+    const grouped: Record<number, PingRow> = {};
     const anchors: number[] = [];
 
     for (const rec of source) {
@@ -151,9 +169,8 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
     }
 
     const merged = Object.values(grouped).sort(
-      (a: any, b: any) =>
-        new Date(a.time).getTime() - new Date(b.time).getTime()
-    ) as any[];
+      (a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()
+    );
 
     const lastTs = new Date(merged[merged.length - 1].time).getTime();
     const fromTs = lastTs - hours * 3600_000;
@@ -206,8 +223,8 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
     return "";
   };
 
-  const labelFormatter = (value: string) => {
-    const date = new Date(value);
+  const labelFormatter = (value: React.ReactNode) => {
+    const date = new Date(String(value));
     if (hours < 24) {
       return date.toLocaleTimeString([], {
         hour: "2-digit",
@@ -224,7 +241,7 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
   };
 
   const chartConfig = useMemo(() => {
-    const config: Record<string, any> = {};
+    const config: ChartConfig = {};
     tasks.forEach((task, idx) => {
       config[String(task.id)] = {
         label: task.name,
@@ -253,8 +270,11 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
     }));
   }, [remoteData, tasks]);
 
-  const handleLegendClick = useCallback((entry: any) => {
-    const key = String(entry.dataKey);
+  const handleLegendClick = useCallback((entry: unknown) => {
+    if (typeof entry !== "object" || entry === null || !("dataKey" in entry)) {
+      return;
+    }
+    const key = String(entry.dataKey ?? "");
     setHiddenLines((prev) => ({ ...prev, [key]: !prev[key] }));
   }, []);
 
@@ -268,7 +288,7 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
   }, [hiddenLines, tasks]);
 
   const cardClass =
-    "w-full max-w-[1200px] rounded-2xl border border-border/20 bg-card/95 p-4 shadow-sm";
+    "w-full max-w-[1200px] rounded-2xl border border-border/20 bg-card/95 p-5 shadow-sm";
 
   return (
     <Flex direction="column" align="center" gap="4" className="w-full">
@@ -294,10 +314,10 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
                   style={{ backgroundColor: task.color }}
                 />
                 <div className="ml-1 flex flex-col items-start justify-center">
-                  <label className="text-md font-bold text-foreground">
+                  <label className="font-sans text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                     {task.name}
                   </label>
-                  <div className="flex gap-2 text-sm text-muted-foreground">
+                  <div className="flex gap-2 text-sm font-mono text-foreground">
                     <span>
                       {task.value !== null
                         ? `${Number(task.value).toFixed(0)} ms`
@@ -331,7 +351,12 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
               accessibilityLayer
               margin={{ top: 4, right: 16, bottom: 4, left: 12 }}
             >
-              <CartesianGrid vertical={false} />
+              {softFillDef}
+              <CartesianGrid
+                vertical={false}
+                stroke={SOFT_GRID_STROKE}
+                strokeDasharray="3 6"
+              />
               <XAxis
                 dataKey="time"
                 tickLine={false}
@@ -351,7 +376,7 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
               />
               <ChartTooltip
                 cursor={false}
-                formatter={((v: number) => `${Math.round(v)} ms`) as any}
+                formatter={(v) => `${Math.round(Number(v))} ms`}
                 content={
                   <ChartTooltipContent
                     labelFormatter={labelFormatter}
@@ -365,11 +390,10 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
                   key={`area-${task.id}`}
                   dataKey={String(task.id)}
                   stroke={colors[idx % colors.length]}
-                  fill={colors[idx % colors.length]}
-                  fillOpacity={0.12}
+                  fill="url(#soft-ping-fill)"
                   isAnimationActive={false}
                   connectNulls={false}
-                  type={cutPeak ? "basis" : "linear"}
+                  type="monotone"
                   hide={!!hiddenLines[String(task.id)]}
                 />,
                 <Line
@@ -381,7 +405,7 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
                   isAnimationActive={false}
                   strokeWidth={2}
                   connectNulls={false}
-                  type={cutPeak ? "basis" : "linear"}
+                  type="monotone"
                   hide={!!hiddenLines[String(task.id)]}
                 />,
               ])}
@@ -401,7 +425,7 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
             />
             <label
               htmlFor="cut-peak"
-              className="flex items-center gap-1 text-sm font-medium text-muted-foreground"
+              className="flex items-center gap-1 font-sans text-xs font-medium text-muted-foreground"
             >
               {t("chart.cutPeak")}
             </label>

@@ -2,7 +2,6 @@ import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useDebouncedCallback } from "@/lib/hooks";
 import type { ServerStats } from "@/lib/types/serverstatus";
-import { ServerCard } from "./ServerCard";
 
 const ESTIMATED_ROW_HEIGHT = 420;
 const VIRTUALIZER_OVERSCAN = 3;
@@ -120,7 +119,15 @@ export function VirtualizedServerGrid({ servers }: VirtualizedServerGridProps) {
                 }}
               >
                 {row.map((server) => (
-                  <ServerCard key={server.name} server={server} />
+                  <div
+                    key={server.name}
+                    className="rounded-2xl border border-border/20 bg-card/95 p-4"
+                  >
+                    <div className="text-sm font-semibold">{server.name}</div>
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      {server.location || server.alias || "Unknown"}
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>

@@ -8,16 +8,44 @@ interface LiveDataContextType {
   onRefresh: (callback: (data: LiveDataResponse) => void) => void;
 }
 
+type LatestStatusRecord = {
+  online?: boolean;
+  client?: string;
+  cpu?: number;
+  ram?: number;
+  swap?: number;
+  load?: number;
+  load5?: number;
+  load15?: number;
+  disk?: number;
+  net_out?: number;
+  net_in?: number;
+  net_total_out?: number;
+  net_total_up?: number;
+  net_total_in?: number;
+  net_total_down?: number;
+  connections?: number;
+  connections_udp?: number;
+  gpu?: number;
+  uptime?: number;
+  process?: number;
+  time?: string | number;
+};
+
 const LiveDataContext = createContext<LiveDataContextType>({
   live_data: null,
   showCallout: true,
-  onRefresh: () => { },
+  onRefresh: () => undefined,
 });
 
-export const LiveDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const LiveDataProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [live_data, setLiveData] = useState<LiveDataResponse | null>(null);
   const [showCallout, setShowCallout] = useState(false);
-  const [refreshCallbacks] = useState<Set<(data: LiveDataResponse) => void>>(new Set());
+  const [refreshCallbacks] = useState<Set<(data: LiveDataResponse) => void>>(
+    new Set()
+  );
   const { call } = useRPC2Call();
 
   const onRefresh = (callback: (data: LiveDataResponse) => void) => {
@@ -25,7 +53,7 @@ export const LiveDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const notifyRefreshCallbacks = (data: LiveDataResponse) => {
-    refreshCallbacks.forEach(callback => callback(data));
+    refreshCallbacks.forEach((callback) => callback(data));
   };
 
   useEffect(() => {
@@ -38,14 +66,17 @@ export const LiveDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (running) return;
       running = true;
       try {
-        const result: Record<string, any> = await call("common:getNodesLatestStatus");
+        const result = await call<
+          undefined,
+          Record<string, LatestStatusRecord>
+        >("common:getNodesLatestStatus");
         const online = Object.values(result)
-          .filter((v: any) => v?.online)
-          .map((v: any) => v.client as string);
+          .filter((v) => v?.online && typeof v.client === "string")
+          .map((v) => v.client as string);
 
-        const dataMap: Record<string, any> = {};
+        const dataMap: LiveDataResponse["data"]["data"] = {};
         for (const [uuid, v] of Object.entries(result)) {
-          const rec = v as any;
+          const rec = v;
           dataMap[uuid] = {
             cpu: { usage: typeof rec.cpu === "number" ? rec.cpu : 0 },
             ram: { used: rec.ram ?? 0 },
@@ -66,11 +97,14 @@ export const LiveDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
               tcp: rec.connections ?? 0,
               udp: rec.connections_udp ?? 0,
             },
-            gpu: rec.gpu !== undefined ? { count: 0, average_usage: rec.gpu, detailed_info: [] } : undefined,
+            gpu:
+              rec.gpu !== undefined
+                ? { count: 0, average_usage: rec.gpu, detailed_info: [] }
+                : undefined,
             uptime: rec.uptime ?? 0,
             process: rec.process ?? 0,
             message: "",
-            updated_at: rec.time ?? 0,
+            updated_at: String(rec.time ?? ""),
           };
         }
 

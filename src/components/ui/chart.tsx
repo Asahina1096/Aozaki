@@ -94,7 +94,40 @@ ${colorConfig
 
 const ChartTooltip = RechartsPrimitive.Tooltip;
 
-function ChartTooltipContent(props: any) {
+type TooltipPayloadItem = {
+  name?: string;
+  dataKey?: string | number;
+  value?: number | string;
+  color?: string;
+  payload?: Record<string, unknown> & { fill?: string };
+};
+
+type ChartTooltipContentProps = {
+  active?: boolean;
+  payload?: TooltipPayloadItem[];
+  className?: string;
+  indicator?: "line" | "dot" | "dashed";
+  hideLabel?: boolean;
+  hideIndicator?: boolean;
+  label?: React.ReactNode;
+  labelClassName?: string;
+  labelFormatter?: (
+    value: React.ReactNode,
+    payload: TooltipPayloadItem[]
+  ) => React.ReactNode;
+  formatter?: (
+    value: number | string,
+    name: string,
+    item: TooltipPayloadItem,
+    index: number,
+    payload: Record<string, unknown> | undefined
+  ) => React.ReactNode;
+  color?: string;
+  nameKey?: string;
+  labelKey?: string;
+};
+
+function ChartTooltipContent(props: ChartTooltipContentProps) {
   const {
     active,
     payload,
@@ -163,14 +196,14 @@ function ChartTooltipContent(props: any) {
     >
       {!nestLabel ? tooltipLabel : null}
       <div className="grid gap-1.5">
-        {payload.map((item: any, index: number) => {
+        {payload.map((item, index: number) => {
           const key = `${nameKey || item.name || item.dataKey || "value"}`;
           const itemConfig = getPayloadConfigFromPayload(config, item, key);
-          const indicatorColor = color || item.payload.fill || item.color;
+          const indicatorColor = color || item.payload?.fill || item.color;
 
           return (
             <div
-              key={item.dataKey}
+              key={String(item.dataKey ?? index)}
               className={cn(
                 "[&>svg]:text-zinc-500 dark:[&>svg]:text-zinc-400 flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5",
                 indicator === "dot" && "items-center"
@@ -212,7 +245,7 @@ function ChartTooltipContent(props: any) {
                     {itemConfig?.label || item.name}
                   </span>
                 </div>
-                {item.value && (
+                {item.value !== undefined && item.value !== null && (
                   <span className="text-zinc-900 font-mono font-medium tabular-nums dark:text-zinc-100">
                     {formatter
                       ? formatter(

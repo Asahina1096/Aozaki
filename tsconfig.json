@@ -1,5 +1,6 @@
 {
   "extends": "astro/tsconfigs/strict",
+  "include": [".astro/types.d.ts", "src/**/*", "astro.config.mjs"],
   "compilerOptions": {
     "jsx": "react-jsx",
     "jsxImportSource": "react",
@@ -10,5 +11,5 @@
     "incremental": false,
     "skipLibCheck": true
   },
-  "exclude": ["src/paraglide/**/*"]
+  "exclude": ["dist", "komari-web", "src/paraglide/**/*"]
 }

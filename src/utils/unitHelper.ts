@@ -73,7 +73,7 @@ export function formatBytes(bytes: number): string {
 
   if (unitIndex === 0) {
     return `${Math.round(size)} ${units[unitIndex]}`;
-  } else if (unitIndex >= 2 && bytes >= 1024**3) {
+  } else if (unitIndex >= 2 && bytes >= 1024 ** 3) {
     return `${size.toFixed(2)} ${units[unitIndex]}`;
   } else if (size > 99.99) {
     return `${size.toFixed(1)} ${units[unitIndex]}`;

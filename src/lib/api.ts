@@ -1,4 +1,22 @@
 import React from "react";
+import type { StatsResponse } from "./types/serverstatus";
+
+interface APIClient {
+  getStats: (signal?: AbortSignal) => Promise<StatsResponse>;
+}
+
+export function getAPIClient(): APIClient {
+  return {
+    async getStats(signal?: AbortSignal): Promise<StatsResponse> {
+      const response = await fetch("/json/stats.json", { signal });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return (await response.json()) as StatsResponse;
+    },
+  };
+}
 
 export interface SettingsResponse {
   sitename: string;
@@ -11,7 +29,7 @@ export interface SettingsResponse {
   custom_head: string;
   CreatedAt: string;
   UpdatedAt: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export async function getSettings(): Promise<SettingsResponse> {
@@ -48,11 +66,9 @@ export async function updateSettings(
     if (!response.ok) {
       try {
         const errorData = await response.json();
-        throw new Error(
-          `${errorData['message']}`
-        );
-      } catch (jsonError) {
-        throw jsonError
+        throw new Error(`${errorData["message"]}`);
+      } catch {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
     }
   } catch (error) {

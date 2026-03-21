@@ -1,6 +1,6 @@
 export type LiveData = {
-    online: string[];
-    data: { [key: string]: Record };
+  online: string[];
+  data: { [key: string]: Record };
 };
 
 export type Record = {
