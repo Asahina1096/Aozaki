@@ -40,52 +40,55 @@ export function liveDataToRecords(
   liveData: LiveRecord[]
 ): RecordFormat[] {
   if (!liveData) return [];
-  return liveData.map((data) => ({
-    client,
-    time: data.updated_at || "",
-    cpu: data.cpu.usage ?? 0,
-    gpu: 0,
-    gpu_usage: data.gpu?.average_usage ?? 0,
-    gpu_memory: data.gpu
-      ? data.gpu.detailed_info?.reduce(
-          (acc, gpu) => acc + (gpu.memory_used / gpu.memory_total) * 100,
-          0
-        ) / data.gpu.count || 0
-      : 0,
-    gpu_detailed:
-      data.gpu?.detailed_info?.reduce(
-        (acc, gpu, index) => {
-          acc[index] = {
-            usage: gpu.utilization ?? null,
-            memory: (gpu.memory_used / gpu.memory_total) * 100,
-            temperature: gpu.temperature ?? null,
-          };
-          return acc;
-        },
-        {} as {
-          [index: number]: {
-            usage: number | null;
-            memory: number | null;
-            temperature: number | null;
-          };
-        }
-      ) || undefined,
-    ram: data.ram.used ?? 0,
-    ram_total: 0,
-    swap: data.swap.used ?? 0,
-    swap_total: 0,
-    load: data.load.load1 ?? 0,
-    temp: 0,
-    disk: data.disk.used ?? 0,
-    disk_total: 0,
-    net_in: data.network?.down ?? 0,
-    net_out: data.network?.up ?? 0,
-    net_total_up: data.network?.totalUp ?? 0,
-    net_total_down: data.network?.totalDown ?? 0,
-    process: data.process ?? 0,
-    connections: data.connections.tcp ?? 0,
-    connections_udp: data.connections.udp ?? 0,
-  }));
+  return liveData.map((data) => {
+    let gpuMemorySum = 0;
+    let gpuCount = 0;
+    const gpuDetailed: {
+      [index: number]: {
+        usage: number | null;
+        memory: number | null;
+        temperature: number | null;
+      };
+    } = {};
+
+    if (data.gpu?.detailed_info) {
+      for (const gpu of data.gpu.detailed_info) {
+        const memPercent = (gpu.memory_used / gpu.memory_total) * 100;
+        gpuMemorySum += memPercent;
+        gpuCount++;
+        gpuDetailed[gpuCount - 1] = {
+          usage: gpu.utilization ?? null,
+          memory: memPercent,
+          temperature: gpu.temperature ?? null,
+        };
+      }
+    }
+
+    return {
+      client,
+      time: data.updated_at || "",
+      cpu: data.cpu.usage ?? 0,
+      gpu: 0,
+      gpu_usage: data.gpu?.average_usage ?? 0,
+      gpu_memory: gpuCount > 0 ? gpuMemorySum / gpuCount : 0,
+      gpu_detailed: gpuCount > 0 ? gpuDetailed : undefined,
+      ram: data.ram.used ?? 0,
+      ram_total: 0,
+      swap: data.swap.used ?? 0,
+      swap_total: 0,
+      load: data.load.load1 ?? 0,
+      temp: 0,
+      disk: data.disk.used ?? 0,
+      disk_total: 0,
+      net_in: data.network?.down ?? 0,
+      net_out: data.network?.up ?? 0,
+      net_total_up: data.network?.totalUp ?? 0,
+      net_total_down: data.network?.totalDown ?? 0,
+      process: data.process ?? 0,
+      connections: data.connections.tcp ?? 0,
+      connections_udp: data.connections.udp ?? 0,
+    };
+  });
 }
 
 function createNullTemplate(obj: unknown): unknown {

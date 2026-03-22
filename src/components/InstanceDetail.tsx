@@ -7,7 +7,7 @@ import { DetailsGrid } from "@/components/DetailsGrid";
 import LoadChart from "@/components/instance/LoadChart";
 import PingChart from "@/components/instance/PingChart";
 import { liveDataToRecords } from "@/utils/RecordHelper";
-import { useLiveData } from "../contexts/LiveDataContext";
+import { useLiveDataRefresh } from "../contexts/LiveDataContext";
 import { useNodeList } from "../contexts/NodeListContext";
 import type { Record as LiveRecord } from "../types/LiveData";
 
@@ -18,7 +18,7 @@ interface InstanceDetailProps {
 const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { onRefresh } = useLiveData();
+  const { onRefresh } = useLiveDataRefresh();
   const [recent, setRecent] = useState<LiveRecord[]>([]);
   const [chartView, setChartView] = useState<"load" | "ping">("load");
   const [loadView, setLoadView] = useState("real");
@@ -43,7 +43,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
   }, [uuid]);
 
   useEffect(() => {
-    onRefresh((resp) => {
+    const unsubscribe = onRefresh((resp) => {
       if (!uuid) return;
       const data = resp.data.data[uuid];
       if (!data) return;
@@ -59,6 +59,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
         return updated;
       });
     });
+    return () => unsubscribe();
   }, [onRefresh, uuid]);
 
   return (

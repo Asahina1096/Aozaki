@@ -159,36 +159,29 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
       .filter((v): v is number => typeof v === "number" && v > 0);
     const fallbackIntervalSec = intervals.length ? Math.min(...intervals) : 60;
 
-    const toleranceMs = Math.min(
-      6000,
-      Math.max(800, Math.floor(fallbackIntervalSec * 1000 * 0.25))
+    const bucketMs = Math.max(
+      1000,
+      Math.min(6000, Math.floor(fallbackIntervalSec * 1000 * 0.25))
     );
 
-    const grouped: Record<number, PingRow> = {};
-    const anchors: number[] = [];
+    const buckets = new Map<number, PingRow>();
 
     for (const rec of source) {
       const ts = new Date(rec.time).getTime();
-      let anchor: number | null = null;
+      const bucketKey = Math.floor(ts / bucketMs) * bucketMs;
+      const use = bucketKey;
 
-      for (const a of anchors) {
-        if (Math.abs(a - ts) <= toleranceMs) {
-          anchor = a;
-          break;
-        }
+      if (!buckets.has(use)) {
+        buckets.set(use, { time: new Date(use).toISOString() });
       }
-
-      const use = anchor ?? ts;
-      if (!grouped[use]) {
-        grouped[use] = { time: new Date(use).toISOString() };
-        if (anchor === null) anchors.push(use);
-      }
-      grouped[use][rec.task_id] = rec.value < 0 ? null : rec.value;
+      buckets.get(use)![rec.task_id] = rec.value < 0 ? null : rec.value;
     }
 
-    const merged = Object.values(grouped).sort(
+    const merged = Array.from(buckets.values()).sort(
       (a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()
     );
+
+    if (!merged.length) return [];
 
     const lastTs = new Date(merged[merged.length - 1].time).getTime();
     const fromTs = lastTs - hours * 3600_000;
@@ -271,19 +264,16 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
 
   const latestValues = useMemo(() => {
     if (!remoteData || !tasks.length) return [];
-    const map = new Map<number, PingRecord>();
-    for (const task of tasks) {
-      for (let i = remoteData.length - 1; i >= 0; i--) {
-        const rec = remoteData[i];
-        if (rec.task_id === task.id && rec.value >= 0) {
-          map.set(task.id, rec);
-          break;
-        }
+    const latestByTask = new Map<number, number>();
+    for (let i = remoteData.length - 1; i >= 0; i--) {
+      const rec = remoteData[i];
+      if (rec.value >= 0 && !latestByTask.has(rec.task_id)) {
+        latestByTask.set(rec.task_id, rec.value);
       }
     }
     return tasks.map((task, idx) => ({
       ...task,
-      value: map.get(task.id)?.value ?? null,
+      value: latestByTask.get(task.id) ?? null,
       color: colors[idx % colors.length],
     }));
   }, [remoteData, tasks]);

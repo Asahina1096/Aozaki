@@ -186,19 +186,30 @@
   }
 
   initThemeToggle();
+  document.addEventListener("astro:page-load", initThemeToggle);
+
+  const siteTitleCache = new Map<string, { value: string; timestamp: number }>();
+  const CACHE_TTL_MS = 60_000;
 
   async function initSiteTitle() {
     const titleEl = document.getElementById("site-title");
     if (!titleEl) return;
 
+    const cached = siteTitleCache.get("sitename");
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+      if (cached.value) titleEl.textContent = cached.value;
+      return;
+    }
+
     try {
-      const response = await fetch("/api/admin/settings");
+      const response = await fetch("/api/public");
       if (!response.ok) return;
 
       const result = await response.json();
       const sitename = result?.data?.sitename;
 
       if (typeof sitename === "string" && sitename.trim()) {
+        siteTitleCache.set("sitename", { value: sitename.trim(), timestamp: Date.now() });
         titleEl.textContent = sitename.trim();
       }
     } catch {
@@ -208,7 +219,6 @@
 
   initSiteTitle();
 
-  // 支持 Astro View Transitions
-  document.addEventListener("astro:page-load", initThemeToggle);
   document.addEventListener("astro:page-load", initSiteTitle);
+
 </script>

@@ -1,5 +1,5 @@
 import { Flex } from "@radix-ui/themes";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
@@ -172,6 +172,9 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
     [view]
   );
 
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const requestSeqRef = useRef(0);
+
   useEffect(() => {
     if (!uuid || !selected || selected.hours === 0) {
       setRemoteData(null);
@@ -179,23 +182,38 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
       return;
     }
 
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+
+    const currentSeq = ++requestSeqRef.current;
     setLoading(true);
     setError(null);
 
-    fetch(`/api/records/load?uuid=${uuid}&hours=${selected.hours}`)
+    fetch(`/api/records/load?uuid=${uuid}&hours=${selected.hours}`, {
+      signal: abortControllerRef.current.signal,
+    })
       .then((res) => {
         if (!res.ok) throw new Error(res.statusText);
         return res.json();
       })
       .then((resp) => {
+        if (currentSeq !== requestSeqRef.current) return;
         const records = (resp.data?.records || []) as RecordFormat[];
         records.sort(
           (a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()
         );
         setRemoteData(records);
       })
-      .catch((err) => setError(err?.message || "Error"))
-      .finally(() => setLoading(false));
+      .catch((err) => {
+        if (err instanceof Error && err.name === "AbortError") return;
+        if (currentSeq !== requestSeqRef.current) return;
+        setError(err?.message || "Error");
+      })
+      .finally(() => {
+        if (currentSeq === requestSeqRef.current) setLoading(false);
+      });
   }, [selected, uuid]);
 
   const minute = 60;
@@ -203,21 +221,36 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
   const isRealtime = view === "real";
   const realtimeData = Array.isArray(data) ? data.slice(-150) : [];
 
-  const chartData = isRealtime
-    ? realtimeData
-    : view === "4h"
-      ? fillMissingTimePoints(remoteData ?? [], minute, hour * 4, minute * 2)
-      : (() => {
-          const selectedHours = selected?.hours || 24;
-          const interval = selectedHours > 120 ? hour : minute * 15;
-          const maxGap = interval * 2;
-          return fillMissingTimePoints(
-            remoteData ?? [],
-            interval,
-            hour * selectedHours,
-            maxGap
-          );
-        })();
+  const chartData = useMemo(() => {
+    if (isRealtime) return realtimeData;
+    if (view === "4h") {
+      return fillMissingTimePoints(
+        remoteData ?? [],
+        minute,
+        hour * 4,
+        minute * 2
+      );
+    }
+    const selectedHours = selected?.hours || 24;
+    const interval = selectedHours > 120 ? hour : minute * 15;
+    const maxGap = interval * 2;
+    return fillMissingTimePoints(
+      remoteData ?? [],
+      interval,
+      hour * selectedHours,
+      maxGap
+    );
+  }, [isRealtime, realtimeData, view, remoteData, selected, hour, minute]);
+
+  const ramSwapChartData = useMemo(() => {
+    return chartData.map((item) => ({
+      time: item.time,
+      ram: ((item.ram ?? 0) / (node?.mem_total ?? 1)) * 100,
+      ram_raw: item.ram,
+      swap: ((item.swap ?? 0) / (node?.swap_total ?? 1)) * 100,
+      swap_raw: item.swap,
+    }));
+  }, [chartData, node?.mem_total, node?.swap_total]);
 
   const timeFormatter = (value: string, index: number) => {
     if (index === 0 || index === chartData.length - 1) {
@@ -355,13 +388,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
             className={chartBodyClass}
           >
             <AreaChart
-              data={chartData.map((item) => ({
-                time: item.time,
-                ram: ((item.ram ?? 0) / (node?.mem_total ?? 1)) * 100,
-                ram_raw: item.ram,
-                swap: ((item.swap ?? 0) / (node?.swap_total ?? 1)) * 100,
-                swap_raw: item.swap,
-              }))}
+              data={ramSwapChartData}
               accessibilityLayer
               margin={sixChartMargin}
             >

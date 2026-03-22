@@ -1,11 +1,21 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import type { LiveDataResponse } from "../types/LiveData";
 import { useRPC2Call } from "./RPC2Context";
 
 interface LiveDataContextType {
   live_data: LiveDataResponse | null;
   showCallout: boolean;
-  onRefresh: (callback: (data: LiveDataResponse) => void) => void;
+}
+
+interface LiveDataRefreshContextType {
+  onRefresh: (callback: (data: LiveDataResponse) => void) => () => void;
 }
 
 type LatestStatusRecord = {
@@ -35,7 +45,10 @@ type LatestStatusRecord = {
 const LiveDataContext = createContext<LiveDataContextType>({
   live_data: null,
   showCallout: true,
-  onRefresh: () => undefined,
+});
+
+const LiveDataRefreshContext = createContext<LiveDataRefreshContextType>({
+  onRefresh: () => () => undefined,
 });
 
 export const LiveDataProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -43,18 +56,22 @@ export const LiveDataProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [live_data, setLiveData] = useState<LiveDataResponse | null>(null);
   const [showCallout, setShowCallout] = useState(false);
-  const [refreshCallbacks] = useState<Set<(data: LiveDataResponse) => void>>(
-    new Set()
-  );
+  const callbacksRef = useRef<Set<(data: LiveDataResponse) => void>>(new Set());
   const { call } = useRPC2Call();
 
-  const onRefresh = (callback: (data: LiveDataResponse) => void) => {
-    refreshCallbacks.add(callback);
-  };
+  const onRefresh = useCallback(
+    (callback: (data: LiveDataResponse) => void) => {
+      callbacksRef.current.add(callback);
+      return () => {
+        callbacksRef.current.delete(callback);
+      };
+    },
+    []
+  );
 
-  const notifyRefreshCallbacks = (data: LiveDataResponse) => {
-    refreshCallbacks.forEach((callback) => callback(data));
-  };
+  const notifyRefreshCallbacks = useCallback((data: LiveDataResponse) => {
+    callbacksRef.current.forEach((callback) => callback(data));
+  }, []);
 
   useEffect(() => {
     let timer: number | undefined;
@@ -135,15 +152,19 @@ export const LiveDataProvider: React.FC<{ children: React.ReactNode }> = ({
       stopped = true;
       if (timer) window.clearTimeout(timer);
     };
-  }, [call]);
+  }, [call, notifyRefreshCallbacks]);
 
   return (
-    <LiveDataContext.Provider value={{ live_data, showCallout, onRefresh }}>
-      {children}
+    <LiveDataContext.Provider value={{ live_data, showCallout }}>
+      <LiveDataRefreshContext.Provider value={{ onRefresh }}>
+        {children}
+      </LiveDataRefreshContext.Provider>
     </LiveDataContext.Provider>
   );
 };
 
 export const useLiveData = () => useContext(LiveDataContext);
+
+export const useLiveDataRefresh = () => useContext(LiveDataRefreshContext);
 
 export default LiveDataContext;

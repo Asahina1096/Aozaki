@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { useRPC2Call } from "./RPC2Context";
 
 export type NodeBasicInfo = {
@@ -52,7 +52,7 @@ export const NodeListProvider: React.FC<{ children: React.ReactNode }> = ({
   const [error, setError] = React.useState<string | null>(null);
   const { call } = useRPC2Call();
 
-  const refresh = () => {
+  const refresh = useCallback(() => {
     setError(null);
     call<undefined, Record<string, NodePayload>>("common:getNodes")
       .then((result) => {
@@ -113,11 +113,11 @@ export const NodeListProvider: React.FC<{ children: React.ReactNode }> = ({
       .finally(() => {
         setIsLoading(false);
       });
-  };
+  }, [call]);
 
   React.useEffect(() => {
     refresh();
-  }, []);
+  }, [refresh]);
 
   return (
     <NodeListContext.Provider value={{ nodeList, isLoading, error, refresh }}>

@@ -27,7 +27,7 @@ export default function ServerList({
       refresh();
     }, refreshInterval);
     return () => clearInterval(interval);
-  }, [nodeList, refreshInterval]);
+  }, [refresh, refreshInterval]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const deferredSearchQuery = useDeferredValue(searchQuery);
