@@ -1,8 +1,6 @@
 import { Flex, Text } from "@radix-ui/themes";
-import { ArrowLeft } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
 import { DetailsGrid } from "@/components/DetailsGrid";
 import LoadChart from "@/components/instance/LoadChart";
 import PingChart from "@/components/instance/PingChart";
@@ -40,7 +38,6 @@ interface InstanceDetailProps {
 
 const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { onRefresh } = useLiveDataRefresh();
   const [recent, setRecent] = useState<LiveRecord[]>([]);
   const [chartView, setChartView] = useState<"load" | "ping">("load");
@@ -134,15 +131,6 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
       <div className="flex w-full max-w-[1200px] flex-col gap-4">
         <div className={sectionCardClass}>
           <div className="flex items-start gap-3">
-            <button
-              type="button"
-              onClick={() => navigate("/")}
-              aria-label="Back to list"
-              className="inline-flex h-9 w-10 shrink-0 items-center justify-center rounded-lg border border-input bg-background text-foreground transition hover:bg-accent"
-            >
-              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-            </button>
-
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-3">
                 <span className="inline-flex rounded-full border border-border/30 bg-muted px-2.5 py-0.5 text-xs font-semibold tracking-wide text-muted-foreground">
