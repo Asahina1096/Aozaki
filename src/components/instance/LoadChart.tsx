@@ -9,13 +9,43 @@ import {
 } from "@/components/ui/chart";
 import { useLiveData } from "@/contexts/LiveDataContext";
 import { useNodeList } from "@/contexts/NodeListContext";
-import { useRPC2Call } from "@/contexts/RPC2Context";
 import fillMissingTimePoints, { type RecordFormat } from "@/utils/RecordHelper";
 import { formatBytes } from "@/utils/unitHelper";
 
 type LoadChartProps = {
   data: RecordFormat[];
   view: string;
+};
+
+type LoadRecordAPI = {
+  client: string;
+  time: string;
+  cpu: number;
+  gpu: number;
+  ram: number;
+  ram_total: number;
+  swap: number;
+  swap_total: number;
+  load: number;
+  temp: number;
+  disk: number;
+  disk_total: number;
+  net_in: number;
+  net_out: number;
+  net_total_up: number;
+  net_total_down: number;
+  process: number;
+  connections: number;
+  connections_udp: number;
+};
+
+type LoadRecordsAPIResponse = {
+  status: string;
+  message: string;
+  data?: {
+    count: number;
+    records: LoadRecordAPI[];
+  };
 };
 
 const presetViews = [
@@ -89,6 +119,10 @@ const xAxisTickStyle = {
 } as const;
 
 const yAxisTickCount = 5;
+const NETWORK_Y_AXIS_WIDTH = 72;
+const PERCENT_Y_AXIS_WIDTH = 58;
+const STORAGE_Y_AXIS_WIDTH = 72;
+const COUNT_Y_AXIS_WIDTH = 72;
 
 const gpuAxisTickStyle = {
   fontSize: 10,
@@ -99,14 +133,14 @@ const gpuAxisTickStyle = {
 
 const formatPercentTick = (value: number) => `${Number(value).toFixed(1)}%`;
 
-const formatGigabytesTick = (value: number) => {
+const formatBytesCompactCore = (value: number, withPerSecond: boolean) => {
   const bytes = Number(value);
 
   if (!Number.isFinite(bytes) || bytes <= 0) {
-    return "0B";
+    return withPerSecond ? "0B/s" : "0B";
   }
 
-  const units = ["B", "KB", "MB", "GB", "TB", "PB"];
+  const units = ["B", "K", "M", "G", "T", "P"];
   let size = bytes;
   let unitIndex = 0;
 
@@ -117,32 +151,42 @@ const formatGigabytesTick = (value: number) => {
 
   const precision = size >= 100 ? 0 : size >= 10 ? 1 : 2;
   if (unitIndex === 0) {
-    return `${Math.round(size)}${units[unitIndex]}`;
+    return withPerSecond
+      ? `${Math.round(size)}${units[unitIndex]}/s`
+      : `${Math.round(size)}${units[unitIndex]}`;
   }
-  return `${size.toFixed(precision)}${units[unitIndex]}`;
+  return withPerSecond
+    ? `${size.toFixed(precision)}${units[unitIndex]}/s`
+    : `${size.toFixed(precision)}${units[unitIndex]}`;
 };
 
-const formatKilobytesPerSecTick = (value: number) => {
-  const bytes = Number(value);
+const formatBytesCompact = (value: number) =>
+  formatBytesCompactCore(value, false);
 
-  if (!Number.isFinite(bytes) || bytes <= 0) {
-    return "0B/s";
+const formatNetworkSpeed = (value: number) => {
+  return formatBytesCompactCore(value, true);
+};
+
+const formatCountCompact = (value: number) => {
+  const num = Number(value);
+
+  if (!Number.isFinite(num) || num <= 0) {
+    return "0";
   }
 
-  const units = ["B/s", "KB/s", "MB/s", "GB/s", "TB/s"];
-  let size = bytes;
-  let unitIndex = 0;
-
-  while (size >= 1024 && unitIndex < units.length - 1) {
-    size /= 1024;
-    unitIndex++;
+  if (num >= 1_000_000_000) {
+    return `${(num / 1_000_000_000).toFixed(num >= 10_000_000_000 ? 0 : 1)}B`;
   }
 
-  const precision = size >= 100 ? 0 : size >= 10 ? 1 : 2;
-  if (unitIndex === 0) {
-    return `${Math.round(size)}${units[unitIndex]}`;
+  if (num >= 1_000_000) {
+    return `${(num / 1_000_000).toFixed(num >= 10_000_000 ? 0 : 1)}M`;
   }
-  return `${size.toFixed(precision)}${units[unitIndex]}`;
+
+  if (num >= 1_000) {
+    return `${(num / 1_000).toFixed(num >= 10_000 ? 0 : 1)}K`;
+  }
+
+  return `${Math.round(num)}`;
 };
 
 const toNumeric = (value: unknown): number => {
@@ -152,11 +196,60 @@ const toNumeric = (value: unknown): number => {
   return Number(value);
 };
 
+const toFiniteNumber = (value: unknown): number => {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : 0;
+};
+
+const usageToBytes = (usage: unknown, total: unknown) => {
+  const usageValue = toFiniteNumber(usage);
+  const totalValue = toFiniteNumber(total);
+
+  if (usageValue <= 0) {
+    return 0;
+  }
+
+  if (totalValue > 0 && usageValue <= 100) {
+    return (usageValue / 100) * totalValue;
+  }
+
+  return usageValue;
+};
+
+const mapLoadRecordFromAPI = (record: LoadRecordAPI): RecordFormat => {
+  const ramTotal = toFiniteNumber(record.ram_total);
+  const swapTotal = toFiniteNumber(record.swap_total);
+  const diskTotal = toFiniteNumber(record.disk_total);
+
+  return {
+    client: record.client,
+    time: record.time,
+    cpu: toFiniteNumber(record.cpu),
+    gpu: toFiniteNumber(record.gpu),
+    gpu_usage: toFiniteNumber(record.gpu),
+    gpu_memory: null,
+    ram: usageToBytes(record.ram, ramTotal),
+    ram_total: ramTotal,
+    swap: usageToBytes(record.swap, swapTotal),
+    swap_total: swapTotal,
+    load: toFiniteNumber(record.load),
+    temp: toFiniteNumber(record.temp),
+    disk: usageToBytes(record.disk, diskTotal),
+    disk_total: diskTotal,
+    net_in: toFiniteNumber(record.net_in),
+    net_out: toFiniteNumber(record.net_out),
+    net_total_up: toFiniteNumber(record.net_total_up),
+    net_total_down: toFiniteNumber(record.net_total_down),
+    process: toFiniteNumber(record.process),
+    connections: toFiniteNumber(record.connections),
+    connections_udp: toFiniteNumber(record.connections_udp),
+  };
+};
+
 const LoadChart = ({ data = [], view }: LoadChartProps) => {
   const { t } = useTranslation();
   const { nodeList } = useNodeList();
   const { live_data } = useLiveData();
-  const { callViaHTTP } = useRPC2Call();
   const [remoteData, setRemoteData] = useState<RecordFormat[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -189,13 +282,29 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
 
     const currentSeq = ++requestSeqRef.current;
 
-    callViaHTTP<
-      { uuid: string; type: string; hours: number },
-      { count: number; records: RecordFormat[] }
-    >("common:getRecords", { uuid, type: "load", hours: selected.hours })
-      .then((resp) => {
+    const query = new URLSearchParams({
+      uuid,
+      hours: String(selected.hours),
+    });
+
+    fetch(`/api/records/load?${query.toString()}`)
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const payload = (await response.json()) as LoadRecordsAPIResponse;
+
+        if (payload.status !== "success") {
+          throw new Error(payload.message || "Failed to fetch load records");
+        }
+
+        return payload;
+      })
+      .then((payload) => {
         if (currentSeq !== requestSeqRef.current) return;
-        const records = (resp?.records || []) as RecordFormat[];
+
+        const records = (payload.data?.records || []).map(mapLoadRecordFromAPI);
         records.sort(
           (a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()
         );
@@ -208,7 +317,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
       .finally(() => {
         if (currentSeq === requestSeqRef.current) setLoading(false);
       });
-  }, [selected, uuid, callViaHTTP]);
+  }, [selected, uuid]);
 
   const minute = 60;
   const hour = minute * 60;
@@ -239,12 +348,35 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
   const ramSwapChartData = useMemo(() => {
     return chartData.map((item) => ({
       time: item.time,
-      ram: ((item.ram ?? 0) / (node?.mem_total ?? 1)) * 100,
+      ram:
+        ((item.ram ?? 0) /
+          ((item.ram_total ?? 0) > 0
+            ? (item.ram_total ?? 1)
+            : (node?.mem_total ?? 1))) *
+        100,
       ram_raw: item.ram,
-      swap: ((item.swap ?? 0) / (node?.swap_total ?? 1)) * 100,
+      swap:
+        ((item.swap ?? 0) /
+          ((item.swap_total ?? 0) > 0
+            ? (item.swap_total ?? 1)
+            : (node?.swap_total ?? 1))) *
+        100,
       swap_raw: item.swap,
     }));
   }, [chartData, node?.mem_total, node?.swap_total]);
+
+  const diskYAxisMax = useMemo(() => {
+    const historyMax = chartData.reduce((max, item) => {
+      const total = toFiniteNumber(item.disk_total);
+      return total > max ? total : max;
+    }, 0);
+
+    if (historyMax > 0) {
+      return historyMax;
+    }
+
+    return toFiniteNumber(node?.disk_total) || 100;
+  }, [chartData, node?.disk_total]);
 
   const timeFormatter = (value: string, index: number) => {
     if (index === 0 || index === chartData.length - 1) {
@@ -336,7 +468,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                 padding={xAxisPadding}
               />
               <YAxis
-                width={50}
+                width={PERCENT_Y_AXIS_WIDTH}
                 tickLine={false}
                 axisLine={false}
                 domain={[0, 100]}
@@ -372,7 +504,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
         <div className={cardClass}>
           {chartTitle(
             "内存",
-            `Used: ${formatBytes(current?.ram?.used || 0)} | Swap: ${formatBytes(current?.swap?.used || 0)}`
+            `RAM ${formatBytesCompact(current?.ram?.used || 0)} | SWP ${formatBytesCompact(current?.swap?.used || 0)}`
           )}
           <ChartContainer
             config={{
@@ -402,7 +534,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                 padding={xAxisPadding}
               />
               <YAxis
-                width={50}
+                width={PERCENT_Y_AXIS_WIDTH}
                 tickLine={false}
                 axisLine={false}
                 domain={[0, 100]}
@@ -465,7 +597,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
         <div className={cardClass}>
           {chartTitle(
             t("nodeCard.networkSpeed"),
-            `↑ ${formatBytes(current?.network?.up || 0)}/s | ↓ ${formatBytes(current?.network?.down || 0)}/s`
+            `↑ ${formatNetworkSpeed(current?.network?.up || 0)} | ↓ ${formatNetworkSpeed(current?.network?.down || 0)}`
           )}
           <ChartContainer
             config={{
@@ -495,11 +627,11 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                 padding={xAxisPadding}
               />
               <YAxis
-                width={50}
+                width={NETWORK_Y_AXIS_WIDTH}
                 tickLine={false}
                 axisLine={false}
                 tickCount={yAxisTickCount}
-                tickFormatter={formatKilobytesPerSecTick}
+                tickFormatter={formatNetworkSpeed}
                 tick={axisTickStyle}
                 orientation="left"
                 type="number"
@@ -539,9 +671,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
         <div className={cardClass}>
           {chartTitle(
             "磁盘",
-            current?.disk?.used
-              ? `Used: ${formatBytes(current.disk.used)}`
-              : "-"
+            current?.disk?.used ? formatBytesCompact(current.disk.used) : "-"
           )}
           <ChartContainer
             config={{ disk: { label: "磁盘", color: colors[0] } }}
@@ -568,12 +698,12 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                 padding={xAxisPadding}
               />
               <YAxis
-                width={50}
+                width={STORAGE_Y_AXIS_WIDTH}
                 tickLine={false}
                 axisLine={false}
-                domain={[0, node?.disk_total || 100]}
+                domain={[0, diskYAxisMax]}
                 tickCount={yAxisTickCount}
-                tickFormatter={formatGigabytesTick}
+                tickFormatter={formatBytesCompact}
                 tick={axisTickStyle}
                 orientation="left"
                 type="number"
@@ -604,7 +734,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
         <div className={cardClass}>
           {chartTitle(
             t("chart.connections"),
-            `TCP: ${current?.connections?.tcp ?? 0} | UDP: ${current?.connections?.udp ?? 0}`
+            `TCP ${formatCountCompact(current?.connections?.tcp ?? 0)} | UDP ${formatCountCompact(current?.connections?.udp ?? 0)}`
           )}
           <ChartContainer
             config={{
@@ -634,11 +764,11 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                 padding={xAxisPadding}
               />
               <YAxis
-                width={50}
+                width={COUNT_Y_AXIS_WIDTH}
                 tickLine={false}
                 axisLine={false}
                 tickCount={yAxisTickCount}
-                tickFormatter={(value: number) => `${Math.round(value)}`}
+                tickFormatter={formatCountCompact}
                 tick={axisTickStyle}
                 orientation="left"
                 type="number"
@@ -675,7 +805,10 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
         </div>
 
         <div className={cardClass}>
-          {chartTitle(t("chart.process"), current?.process ?? 0)}
+          {chartTitle(
+            t("chart.process"),
+            formatCountCompact(current?.process ?? 0)
+          )}
           <ChartContainer
             config={{
               process: { label: t("chart.process"), color: colors[0] },
@@ -703,12 +836,12 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                 padding={xAxisPadding}
               />
               <YAxis
-                width={50}
+                width={COUNT_Y_AXIS_WIDTH}
                 tickLine={false}
                 axisLine={false}
                 domain={[0, 100]}
                 tickCount={yAxisTickCount}
-                tickFormatter={(value: number) => `${Math.round(value)}`}
+                tickFormatter={formatCountCompact}
                 tick={axisTickStyle}
                 orientation="left"
                 type="number"
