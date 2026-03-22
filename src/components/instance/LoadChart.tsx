@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/chart";
 import { useLiveData } from "@/contexts/LiveDataContext";
 import { useNodeList } from "@/contexts/NodeListContext";
+import { useRPC2Call } from "@/contexts/RPC2Context";
 import fillMissingTimePoints, { type RecordFormat } from "@/utils/RecordHelper";
 import { formatBytes } from "@/utils/unitHelper";
 
@@ -155,9 +156,11 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
   const { t } = useTranslation();
   const { nodeList } = useNodeList();
   const { live_data } = useLiveData();
+  const { callViaHTTP } = useRPC2Call();
   const [remoteData, setRemoteData] = useState<RecordFormat[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const requestSeqRef = useRef(0);
 
   const uuid =
     typeof window === "undefined"
@@ -172,49 +175,40 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
     [view]
   );
 
-  const abortControllerRef = useRef<AbortController | null>(null);
-  const requestSeqRef = useRef(0);
-
   useEffect(() => {
     if (!uuid || !selected || selected.hours === 0) {
+      ++requestSeqRef.current;
       setRemoteData(null);
       setError(null);
+      setLoading(false);
       return;
     }
 
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    abortControllerRef.current = new AbortController();
-
-    const currentSeq = ++requestSeqRef.current;
     setLoading(true);
     setError(null);
 
-    fetch(`/api/records/load?uuid=${uuid}&hours=${selected.hours}`, {
-      signal: abortControllerRef.current.signal,
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error(res.statusText);
-        return res.json();
-      })
+    const currentSeq = ++requestSeqRef.current;
+
+    callViaHTTP<
+      { uuid: string; type: string; hours: number },
+      { count: number; records: RecordFormat[] }
+    >("common:getRecords", { uuid, type: "load", hours: selected.hours })
       .then((resp) => {
         if (currentSeq !== requestSeqRef.current) return;
-        const records = (resp.data?.records || []) as RecordFormat[];
+        const records = (resp?.records || []) as RecordFormat[];
         records.sort(
           (a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()
         );
         setRemoteData(records);
       })
       .catch((err) => {
-        if (err instanceof Error && err.name === "AbortError") return;
         if (currentSeq !== requestSeqRef.current) return;
-        setError(err?.message || "Error");
+        setError(err instanceof Error ? err.message : "Error");
       })
       .finally(() => {
         if (currentSeq === requestSeqRef.current) setLoading(false);
       });
-  }, [selected, uuid]);
+  }, [selected, uuid, callViaHTTP]);
 
   const minute = 60;
   const hour = minute * 60;

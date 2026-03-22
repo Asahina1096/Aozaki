@@ -1,15 +1,38 @@
 import { Flex, Text } from "@radix-ui/themes";
 import { ArrowLeft } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { DetailsGrid } from "@/components/DetailsGrid";
 import LoadChart from "@/components/instance/LoadChart";
 import PingChart from "@/components/instance/PingChart";
+import { useRPC2Call } from "@/contexts/RPC2Context";
 import { liveDataToRecords } from "@/utils/RecordHelper";
 import { useLiveDataRefresh } from "../contexts/LiveDataContext";
 import { useNodeList } from "../contexts/NodeListContext";
 import type { Record as LiveRecord } from "../types/LiveData";
+
+type StatusRecordRPC = {
+  client: string;
+  time: string;
+  cpu: number;
+  gpu: number;
+  ram: number;
+  ram_total: number;
+  swap: number;
+  swap_total: number;
+  load: number;
+  temp: number;
+  disk: number;
+  disk_total: number;
+  net_in: number;
+  net_out: number;
+  net_total_up: number;
+  net_total_down: number;
+  process: number;
+  connections: number;
+  connections_udp: number;
+};
 
 interface InstanceDetailProps {
   uuid: string;
@@ -35,12 +58,52 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
   const node = nodeList?.find((n) => n.uuid === uuid);
   const serverName = node?.name?.trim() || uuid;
   const region = (node?.region || "Unknown").toUpperCase();
+  const { call } = useRPC2Call();
+  const requestSeqRef = useRef(0);
+
   useEffect(() => {
-    fetch(`/api/recent/${uuid}`)
-      .then((res) => res.json())
-      .then((data) => setRecent(data.data?.slice(-length) || []))
+    if (!uuid) return;
+
+    const currentSeq = ++requestSeqRef.current;
+    setRecent([]);
+
+    call<{ uuid: string }, { count: number; records: StatusRecordRPC[] }>(
+      "common:getNodeRecentStatus",
+      { uuid }
+    )
+      .then((result) => {
+        if (currentSeq !== requestSeqRef.current) return;
+
+        const raw = result?.records || [];
+        const mapped: LiveRecord[] = raw.map((r) => ({
+          cpu: { usage: r.cpu ?? 0 },
+          ram: { used: r.ram ?? 0 },
+          swap: { used: r.swap ?? 0 },
+          load: {
+            load1: r.load ?? 0,
+            load5: 0,
+            load15: 0,
+          },
+          disk: { used: r.disk ?? 0 },
+          network: {
+            up: r.net_out ?? 0,
+            down: r.net_in ?? 0,
+            totalUp: r.net_total_up ?? 0,
+            totalDown: r.net_total_down ?? 0,
+          },
+          connections: {
+            tcp: r.connections ?? 0,
+            udp: r.connections_udp ?? 0,
+          },
+          uptime: 0,
+          process: r.process ?? 0,
+          message: "",
+          updated_at: r.time ?? "",
+        }));
+        setRecent(mapped.slice(-length));
+      })
       .catch((err) => console.error("Failed to fetch recent data:", err));
-  }, [uuid]);
+  }, [uuid, call]);
 
   useEffect(() => {
     const unsubscribe = onRefresh((resp) => {

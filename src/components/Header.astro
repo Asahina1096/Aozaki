@@ -202,11 +202,21 @@
     }
 
     try {
-      const response = await fetch("/api/public");
+      const response = await fetch("/api/rpc2", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          method: "common:getPublicInfo",
+          params: {},
+          id: 1,
+        }),
+      });
       if (!response.ok) return;
 
-      const result = await response.json();
-      const sitename = result?.data?.sitename;
+      const json = await response.json();
+      if (json?.error) return;
+      const sitename = json?.result?.sitename;
 
       if (typeof sitename === "string" && sitename.trim()) {
         siteTitleCache.set("sitename", { value: sitename.trim(), timestamp: Date.now() });
