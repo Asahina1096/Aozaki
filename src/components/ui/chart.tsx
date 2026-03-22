@@ -235,7 +235,7 @@ function ChartTooltipContent(props: ChartTooltipContentProps) {
               )}
               <div
                 className={cn(
-                  "flex flex-1 justify-between leading-none",
+                  "flex flex-1 justify-between gap-3 leading-none",
                   nestLabel ? "items-end" : "items-center"
                 )}
               >
@@ -246,7 +246,7 @@ function ChartTooltipContent(props: ChartTooltipContentProps) {
                   </span>
                 </div>
                 {item.value !== undefined && item.value !== null && (
-                  <span className="text-zinc-900 font-mono font-medium tabular-nums dark:text-zinc-100">
+                  <span className="ml-2 text-zinc-900 font-mono font-medium tabular-nums dark:text-zinc-100">
                     {formatter
                       ? formatter(
                           item.value,

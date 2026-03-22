@@ -27,40 +27,63 @@ const presetViews = [
 
 const colors = ["#FF8A98", "#8FD6FF", "#9DE8C9", "#B7C4FF"];
 const SOFT_GRID_STROKE = "hsl(var(--border) / 0.55)";
-const SOFT_FILL_START = "hsl(var(--primary) / 0.35)";
+const SOFT_FILL_END = "#ffffff";
+const AREA_GRADIENT_IDS = [
+  "soft-chart-fill-0",
+  "soft-chart-fill-1",
+  "soft-chart-fill-2",
+  "soft-chart-fill-3",
+] as const;
 const softFillDef = (
   <defs>
-    <linearGradient id="soft-chart-fill" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stopColor={SOFT_FILL_START} />
-      <stop offset="100%" stopColor="rgba(255, 71, 87, 0)" />
-    </linearGradient>
+    {colors.map((color, idx) => (
+      <linearGradient
+        key={AREA_GRADIENT_IDS[idx]}
+        id={AREA_GRADIENT_IDS[idx]}
+        x1="0"
+        y1="0"
+        x2="0"
+        y2="1"
+      >
+        <stop offset="5%" stopColor={color} stopOpacity={0.4} />
+        <stop offset="95%" stopColor={SOFT_FILL_END} stopOpacity={0.05} />
+      </linearGradient>
+    ))}
   </defs>
 );
 
+const areaFill = (idx: number) =>
+  `url(#${AREA_GRADIENT_IDS[idx % AREA_GRADIENT_IDS.length]})`;
+
 const sixChartMargin = {
   top: 10,
-  right: 10,
-  bottom: 0,
-  left: 0,
+  right: 18,
+  bottom: 12,
+  left: 4,
 };
 
 const gpuChartMargin = {
   top: 10,
-  right: 10,
-  bottom: 0,
+  right: 18,
+  bottom: 12,
   left: 20,
+};
+
+const xAxisPadding = {
+  left: 8,
+  right: 14,
 };
 
 const axisTickStyle = {
   fontSize: 10,
-  fill: "hsl(var(--muted-foreground))",
+  fill: "var(--foreground)",
   textAnchor: "end",
   dx: -5,
 } as const;
 
 const xAxisTickStyle = {
   fontSize: 10,
-  fill: "hsl(var(--muted-foreground))",
+  fill: "var(--muted-foreground)",
   dy: 10,
 } as const;
 
@@ -68,7 +91,7 @@ const yAxisTickCount = 5;
 
 const gpuAxisTickStyle = {
   fontSize: 10,
-  fill: "hsl(var(--muted-foreground))",
+  fill: "var(--muted-foreground)",
   textAnchor: "start",
   dx: -15,
 } as const;
@@ -76,13 +99,49 @@ const gpuAxisTickStyle = {
 const formatPercentTick = (value: number) => `${Number(value).toFixed(1)}%`;
 
 const formatGigabytesTick = (value: number) => {
-  const gb = Number(value) / 1024 / 1024 / 1024;
-  return `${gb.toFixed(2)} GB`;
+  const bytes = Number(value);
+
+  if (!Number.isFinite(bytes) || bytes <= 0) {
+    return "0B";
+  }
+
+  const units = ["B", "KB", "MB", "GB", "TB", "PB"];
+  let size = bytes;
+  let unitIndex = 0;
+
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024;
+    unitIndex++;
+  }
+
+  const precision = size >= 100 ? 0 : size >= 10 ? 1 : 2;
+  if (unitIndex === 0) {
+    return `${Math.round(size)}${units[unitIndex]}`;
+  }
+  return `${size.toFixed(precision)}${units[unitIndex]}`;
 };
 
 const formatKilobytesPerSecTick = (value: number) => {
-  const kb = Number(value) / 1024;
-  return `${kb.toFixed(2)} KB/s`;
+  const bytes = Number(value);
+
+  if (!Number.isFinite(bytes) || bytes <= 0) {
+    return "0B/s";
+  }
+
+  const units = ["B/s", "KB/s", "MB/s", "GB/s", "TB/s"];
+  let size = bytes;
+  let unitIndex = 0;
+
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024;
+    unitIndex++;
+  }
+
+  const precision = size >= 100 ? 0 : size >= 10 ? 1 : 2;
+  if (unitIndex === 0) {
+    return `${Math.round(size)}${units[unitIndex]}`;
+  }
+  return `${size.toFixed(precision)}${units[unitIndex]}`;
 };
 
 const toNumeric = (value: unknown): number => {
@@ -247,6 +306,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                 tickFormatter={timeFormatter}
                 tick={xAxisTickStyle}
                 interval={0}
+                padding={xAxisPadding}
               />
               <YAxis
                 width={50}
@@ -273,7 +333,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                 dataKey="cpu"
                 animationDuration={0}
                 stroke={colors[0]}
-                fill="url(#soft-chart-fill)"
+                fill={areaFill(0)}
                 strokeWidth={2}
                 dot={false}
                 type="monotone"
@@ -284,12 +344,12 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
 
         <div className={cardClass}>
           {chartTitle(
-            "RAM",
+            "内存",
             `Used: ${formatBytes(current?.ram?.used || 0)} | Swap: ${formatBytes(current?.swap?.used || 0)}`
           )}
           <ChartContainer
             config={{
-              ram: { label: "Ram", color: colors[0] },
+              ram: { label: "内存", color: colors[0] },
               swap: { label: "Swap", color: colors[1] },
             }}
             className={chartBodyClass}
@@ -318,6 +378,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                 tickFormatter={timeFormatter}
                 tick={xAxisTickStyle}
                 interval={0}
+                padding={xAxisPadding}
               />
               <YAxis
                 width={50}
@@ -362,7 +423,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                 dataKey="ram"
                 animationDuration={0}
                 stroke={colors[0]}
-                fill="url(#soft-chart-fill)"
+                fill={areaFill(0)}
                 strokeWidth={2}
                 dot={false}
                 type="monotone"
@@ -371,7 +432,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                 dataKey="swap"
                 animationDuration={0}
                 stroke={colors[1]}
-                fill="url(#soft-chart-fill)"
+                fill={areaFill(1)}
                 strokeWidth={2}
                 dot={false}
                 type="monotone"
@@ -410,6 +471,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                 tickFormatter={timeFormatter}
                 tick={xAxisTickStyle}
                 interval={0}
+                padding={xAxisPadding}
               />
               <YAxis
                 width={50}
@@ -423,7 +485,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
               />
               <ChartTooltip
                 cursor={false}
-                formatter={(value) => formatBytes(Number(value))}
+                formatter={(value) => `${formatBytes(Number(value))}/s`}
                 content={
                   <ChartTooltipContent
                     labelFormatter={labelFormatter}
@@ -435,7 +497,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                 dataKey="net_in"
                 animationDuration={0}
                 stroke={colors[0]}
-                fill="url(#soft-chart-fill)"
+                fill={areaFill(0)}
                 strokeWidth={2}
                 dot={false}
                 type="monotone"
@@ -444,7 +506,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                 dataKey="net_out"
                 animationDuration={0}
                 stroke={colors[3]}
-                fill="url(#soft-chart-fill)"
+                fill={areaFill(3)}
                 strokeWidth={2}
                 dot={false}
                 type="monotone"
@@ -455,13 +517,13 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
 
         <div className={cardClass}>
           {chartTitle(
-            "Disk",
+            "磁盘",
             current?.disk?.used
               ? `Used: ${formatBytes(current.disk.used)}`
               : "-"
           )}
           <ChartContainer
-            config={{ disk: { label: "Disk", color: colors[0] } }}
+            config={{ disk: { label: "磁盘", color: colors[0] } }}
             className={chartBodyClass}
           >
             <AreaChart
@@ -482,6 +544,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                 tickFormatter={timeFormatter}
                 tick={xAxisTickStyle}
                 interval={0}
+                padding={xAxisPadding}
               />
               <YAxis
                 width={50}
@@ -508,7 +571,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                 dataKey="disk"
                 animationDuration={0}
                 stroke={colors[0]}
-                fill="url(#soft-chart-fill)"
+                fill={areaFill(0)}
                 strokeWidth={2}
                 dot={false}
                 type="monotone"
@@ -547,6 +610,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                 tickFormatter={timeFormatter}
                 tick={xAxisTickStyle}
                 interval={0}
+                padding={xAxisPadding}
               />
               <YAxis
                 width={50}
@@ -571,7 +635,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                 dataKey="connections"
                 animationDuration={0}
                 stroke={colors[0]}
-                fill="url(#soft-chart-fill)"
+                fill={areaFill(0)}
                 strokeWidth={2}
                 dot={false}
                 type="monotone"
@@ -580,7 +644,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                 dataKey="connections_udp"
                 animationDuration={0}
                 stroke={colors[3]}
-                fill="url(#soft-chart-fill)"
+                fill={areaFill(3)}
                 strokeWidth={2}
                 dot={false}
                 type="monotone"
@@ -615,6 +679,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                 tickFormatter={timeFormatter}
                 tick={xAxisTickStyle}
                 interval={0}
+                padding={xAxisPadding}
               />
               <YAxis
                 width={50}
@@ -640,7 +705,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                 dataKey="process"
                 animationDuration={0}
                 stroke={colors[0]}
-                fill="url(#soft-chart-fill)"
+                fill={areaFill(0)}
                 strokeWidth={2}
                 dot={false}
                 type="monotone"
@@ -727,6 +792,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                     tickLine={false}
                     tickFormatter={timeFormatter}
                     interval={0}
+                    padding={xAxisPadding}
                   />
                   <YAxis
                     tickLine={false}
@@ -775,7 +841,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                     dataKey="gpu_usage"
                     animationDuration={0}
                     stroke={colors[0]}
-                    fill="url(#soft-chart-fill)"
+                    fill={areaFill(0)}
                     strokeWidth={2}
                     dot={false}
                     type="monotone"
@@ -784,7 +850,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                     dataKey="gpu_memory"
                     animationDuration={0}
                     stroke={colors[1]}
-                    fill="url(#soft-chart-fill)"
+                    fill={areaFill(1)}
                     strokeWidth={2}
                     dot={false}
                     type="monotone"
@@ -793,7 +859,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                     dataKey="gpu_temp"
                     animationDuration={0}
                     stroke={colors[2]}
-                    fill="url(#soft-chart-fill)"
+                    fill={areaFill(2)}
                     strokeWidth={2}
                     dot={false}
                     type="monotone"

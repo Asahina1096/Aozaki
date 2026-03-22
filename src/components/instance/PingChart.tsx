@@ -58,15 +58,28 @@ const colors = [
   "#FBD89A",
 ];
 const SOFT_GRID_STROKE = "hsl(var(--border) / 0.55)";
-const SOFT_FILL_START = "hsl(var(--primary) / 0.35)";
+const SOFT_FILL_END = "#ffffff";
+const AREA_GRADIENT_IDS = colors.map((_, idx) => `soft-ping-fill-${idx}`);
 const softFillDef = (
   <defs>
-    <linearGradient id="soft-ping-fill" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stopColor={SOFT_FILL_START} />
-      <stop offset="100%" stopColor="rgba(255, 71, 87, 0)" />
-    </linearGradient>
+    {colors.map((color, idx) => (
+      <linearGradient
+        key={AREA_GRADIENT_IDS[idx]}
+        id={AREA_GRADIENT_IDS[idx]}
+        x1="0"
+        y1="0"
+        x2="0"
+        y2="1"
+      >
+        <stop offset="5%" stopColor={color} stopOpacity={0.4} />
+        <stop offset="95%" stopColor={SOFT_FILL_END} stopOpacity={0.05} />
+      </linearGradient>
+    ))}
   </defs>
 );
+
+const areaFill = (idx: number) =>
+  `url(#${AREA_GRADIENT_IDS[idx % AREA_GRADIENT_IDS.length]})`;
 
 const presetViews = [
   { key: "1h", hours: 1 },
@@ -76,6 +89,11 @@ const presetViews = [
 ];
 
 const Y_AXIS_WIDTH = 82;
+
+const yAxisTickStyle = {
+  fill: "hsl(var(--foreground))",
+  fontSize: 11,
+} as const;
 
 const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
   const { t } = useTranslation();
@@ -373,6 +391,7 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
                 orientation="left"
                 type="number"
                 width={Y_AXIS_WIDTH}
+                tick={yAxisTickStyle}
               />
               <ChartTooltip
                 cursor={false}
@@ -390,7 +409,7 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
                   key={`area-${task.id}`}
                   dataKey={String(task.id)}
                   stroke={colors[idx % colors.length]}
-                  fill="url(#soft-ping-fill)"
+                  fill={areaFill(idx)}
                   isAnimationActive={false}
                   connectNulls={false}
                   type="monotone"
