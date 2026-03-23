@@ -2,11 +2,7 @@ import { Flex } from "@radix-ui/themes";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { useLiveData } from "@/contexts/LiveDataContext";
 import { useNodeList } from "@/contexts/NodeListContext";
 import fillMissingTimePoints, { type RecordFormat } from "@/utils/RecordHelper";
@@ -83,8 +79,7 @@ const softFillDef = (
   </defs>
 );
 
-const areaFill = (idx: number) =>
-  `url(#${AREA_GRADIENT_IDS[idx % AREA_GRADIENT_IDS.length]})`;
+const areaFill = (idx: number) => `url(#${AREA_GRADIENT_IDS[idx % AREA_GRADIENT_IDS.length]})`;
 
 const sixChartMargin = {
   top: 10,
@@ -160,8 +155,7 @@ const formatBytesCompactCore = (value: number, withPerSecond: boolean) => {
     : `${size.toFixed(precision)}${units[unitIndex]}`;
 };
 
-const formatBytesCompact = (value: number) =>
-  formatBytesCompactCore(value, false);
+const formatBytesCompact = (value: number) => formatBytesCompactCore(value, false);
 
 const formatNetworkSpeed = (value: number) => {
   return formatBytesCompactCore(value, true);
@@ -263,10 +257,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
   const node = nodeList?.find((n) => n.uuid === uuid);
   const current = live_data?.data?.data?.[uuid];
 
-  const selected = useMemo(
-    () => presetViews.find((v) => v.key === view),
-    [view]
-  );
+  const selected = useMemo(() => presetViews.find((v) => v.key === view), [view]);
 
   useEffect(() => {
     if (!uuid || !selected || selected.hours === 0) {
@@ -305,9 +296,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
         if (currentSeq !== requestSeqRef.current) return;
 
         const records = (payload.data?.records || []).map(mapLoadRecordFromAPI);
-        records.sort(
-          (a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()
-        );
+        records.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
         setRemoteData(records);
       })
       .catch((err) => {
@@ -327,22 +316,12 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
   const chartData = useMemo(() => {
     if (isRealtime) return realtimeData;
     if (view === "4h") {
-      return fillMissingTimePoints(
-        remoteData ?? [],
-        minute,
-        hour * 4,
-        minute * 2
-      );
+      return fillMissingTimePoints(remoteData ?? [], minute, hour * 4, minute * 2);
     }
     const selectedHours = selected?.hours || 24;
     const interval = selectedHours > 120 ? hour : minute * 15;
     const maxGap = interval * 2;
-    return fillMissingTimePoints(
-      remoteData ?? [],
-      interval,
-      hour * selectedHours,
-      maxGap
-    );
+    return fillMissingTimePoints(remoteData ?? [], interval, hour * selectedHours, maxGap);
   }, [isRealtime, realtimeData, view, remoteData, selected, hour, minute]);
 
   const ramSwapChartData = useMemo(() => {
@@ -350,16 +329,12 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
       time: item.time,
       ram:
         ((item.ram ?? 0) /
-          ((item.ram_total ?? 0) > 0
-            ? (item.ram_total ?? 1)
-            : (node?.mem_total ?? 1))) *
+          ((item.ram_total ?? 0) > 0 ? (item.ram_total ?? 1) : (node?.mem_total ?? 1))) *
         100,
       ram_raw: item.ram,
       swap:
         ((item.swap ?? 0) /
-          ((item.swap_total ?? 0) > 0
-            ? (item.swap_total ?? 1)
-            : (node?.swap_total ?? 1))) *
+          ((item.swap_total ?? 0) > 0 ? (item.swap_total ?? 1) : (node?.swap_total ?? 1))) *
         100,
       swap_raw: item.swap,
     }));
@@ -411,8 +386,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
     });
   };
 
-  const percentageFormatter = (value: unknown) =>
-    `${toNumeric(value).toFixed(2)}%`;
+  const percentageFormatter = (value: unknown) => `${toNumeric(value).toFixed(2)}%`;
   const cardClass =
     "flex h-full w-full flex-col rounded-2xl border border-border/20 bg-card/95 p-5 shadow-sm";
   const chartBodyClass = "h-40 w-full aspect-auto";
@@ -422,42 +396,25 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
       <label className="font-sans text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground md:text-sm">
         {text}
       </label>
-      <div className="text-right font-mono text-sm text-foreground">
-        {right}
-      </div>
+      <div className="text-right font-mono text-sm text-foreground">{right}</div>
     </div>
   );
 
   return (
     <Flex direction="column" align="center" gap="4" className="w-full">
-      {loading && (
-        <div className="text-center text-muted-foreground">Loading...</div>
-      )}
-      {error && (
-        <div className="w-full text-center text-destructive">{error}</div>
-      )}
+      {loading && <div className="text-center text-muted-foreground">Loading...</div>}
+      {error && <div className="w-full text-center text-destructive">{error}</div>}
 
       <div className="mx-auto mt-2 grid w-full max-w-[1200px] grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         <div className={cardClass}>
-          {chartTitle(
-            "CPU",
-            current?.cpu?.usage ? `${current.cpu.usage.toFixed(2)}%` : "-"
-          )}
+          {chartTitle("CPU", current?.cpu?.usage ? `${current.cpu.usage.toFixed(2)}%` : "-")}
           <ChartContainer
             config={{ cpu: { label: "CPU", color: colors[0] } }}
             className={chartBodyClass}
           >
-            <AreaChart
-              data={chartData}
-              accessibilityLayer
-              margin={sixChartMargin}
-            >
+            <AreaChart data={chartData} accessibilityLayer margin={sixChartMargin}>
               {softFillDef}
-              <CartesianGrid
-                vertical={false}
-                stroke={SOFT_GRID_STROKE}
-                strokeDasharray="3 6"
-              />
+              <CartesianGrid vertical={false} stroke={SOFT_GRID_STROKE} strokeDasharray="3 6" />
               <XAxis
                 dataKey="time"
                 axisLine={false}
@@ -481,12 +438,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
               <ChartTooltip
                 cursor={false}
                 formatter={percentageFormatter}
-                content={
-                  <ChartTooltipContent
-                    labelFormatter={labelFormatter}
-                    indicator="dot"
-                  />
-                }
+                content={<ChartTooltipContent labelFormatter={labelFormatter} indicator="dot" />}
               />
               <Area
                 dataKey="cpu"
@@ -504,7 +456,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
         <div className={cardClass}>
           {chartTitle(
             "内存",
-            `RAM ${formatBytesCompact(current?.ram?.used || 0)} | SWP ${formatBytesCompact(current?.swap?.used || 0)}`
+            `RAM ${formatBytesCompact(current?.ram?.used || 0)} | SWP ${formatBytesCompact(current?.swap?.used || 0)}`,
           )}
           <ChartContainer
             config={{
@@ -513,17 +465,9 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
             }}
             className={chartBodyClass}
           >
-            <AreaChart
-              data={ramSwapChartData}
-              accessibilityLayer
-              margin={sixChartMargin}
-            >
+            <AreaChart data={ramSwapChartData} accessibilityLayer margin={sixChartMargin}>
               {softFillDef}
-              <CartesianGrid
-                vertical={false}
-                stroke={SOFT_GRID_STROKE}
-                strokeDasharray="3 6"
-              />
+              <CartesianGrid vertical={false} stroke={SOFT_GRID_STROKE} strokeDasharray="3 6" />
               <XAxis
                 dataKey="time"
                 axisLine={false}
@@ -559,18 +503,11 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                         })
                       : undefined;
                   const raw =
-                    String(name) === "ram"
-                      ? (payload?.ram_raw ?? 0)
-                      : (payload?.swap_raw ?? 0);
+                    String(name) === "ram" ? (payload?.ram_raw ?? 0) : (payload?.swap_raw ?? 0);
                   const percent = toNumeric(value) || 0;
                   return `${formatBytes(raw)} (${percent.toFixed(0)}%)`;
                 }}
-                content={
-                  <ChartTooltipContent
-                    labelFormatter={labelFormatter}
-                    indicator="dot"
-                  />
-                }
+                content={<ChartTooltipContent labelFormatter={labelFormatter} indicator="dot" />}
               />
               <Area
                 dataKey="ram"
@@ -597,7 +534,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
         <div className={cardClass}>
           {chartTitle(
             t("nodeCard.networkSpeed"),
-            `↑ ${formatNetworkSpeed(current?.network?.up || 0)} | ↓ ${formatNetworkSpeed(current?.network?.down || 0)}`
+            `↑ ${formatNetworkSpeed(current?.network?.up || 0)} | ↓ ${formatNetworkSpeed(current?.network?.down || 0)}`,
           )}
           <ChartContainer
             config={{
@@ -606,17 +543,9 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
             }}
             className={chartBodyClass}
           >
-            <AreaChart
-              data={chartData}
-              accessibilityLayer
-              margin={sixChartMargin}
-            >
+            <AreaChart data={chartData} accessibilityLayer margin={sixChartMargin}>
               {softFillDef}
-              <CartesianGrid
-                vertical={false}
-                stroke={SOFT_GRID_STROKE}
-                strokeDasharray="3 6"
-              />
+              <CartesianGrid vertical={false} stroke={SOFT_GRID_STROKE} strokeDasharray="3 6" />
               <XAxis
                 dataKey="time"
                 axisLine={false}
@@ -639,12 +568,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
               <ChartTooltip
                 cursor={false}
                 formatter={(value) => `${formatBytes(Number(value))}/s`}
-                content={
-                  <ChartTooltipContent
-                    labelFormatter={labelFormatter}
-                    indicator="dot"
-                  />
-                }
+                content={<ChartTooltipContent labelFormatter={labelFormatter} indicator="dot" />}
               />
               <Area
                 dataKey="net_in"
@@ -669,25 +593,14 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
         </div>
 
         <div className={cardClass}>
-          {chartTitle(
-            "磁盘",
-            current?.disk?.used ? formatBytesCompact(current.disk.used) : "-"
-          )}
+          {chartTitle("磁盘", current?.disk?.used ? formatBytesCompact(current.disk.used) : "-")}
           <ChartContainer
             config={{ disk: { label: "磁盘", color: colors[0] } }}
             className={chartBodyClass}
           >
-            <AreaChart
-              data={chartData}
-              accessibilityLayer
-              margin={sixChartMargin}
-            >
+            <AreaChart data={chartData} accessibilityLayer margin={sixChartMargin}>
               {softFillDef}
-              <CartesianGrid
-                vertical={false}
-                stroke={SOFT_GRID_STROKE}
-                strokeDasharray="3 6"
-              />
+              <CartesianGrid vertical={false} stroke={SOFT_GRID_STROKE} strokeDasharray="3 6" />
               <XAxis
                 dataKey="time"
                 axisLine={false}
@@ -711,12 +624,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
               <ChartTooltip
                 cursor={false}
                 formatter={(value) => formatBytes(Number(value))}
-                content={
-                  <ChartTooltipContent
-                    labelFormatter={labelFormatter}
-                    indicator="dot"
-                  />
-                }
+                content={<ChartTooltipContent labelFormatter={labelFormatter} indicator="dot" />}
               />
               <Area
                 dataKey="disk"
@@ -734,7 +642,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
         <div className={cardClass}>
           {chartTitle(
             t("chart.connections"),
-            `TCP ${formatCountCompact(current?.connections?.tcp ?? 0)} | UDP ${formatCountCompact(current?.connections?.udp ?? 0)}`
+            `TCP ${formatCountCompact(current?.connections?.tcp ?? 0)} | UDP ${formatCountCompact(current?.connections?.udp ?? 0)}`,
           )}
           <ChartContainer
             config={{
@@ -743,17 +651,9 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
             }}
             className={chartBodyClass}
           >
-            <AreaChart
-              data={chartData}
-              accessibilityLayer
-              margin={sixChartMargin}
-            >
+            <AreaChart data={chartData} accessibilityLayer margin={sixChartMargin}>
               {softFillDef}
-              <CartesianGrid
-                vertical={false}
-                stroke={SOFT_GRID_STROKE}
-                strokeDasharray="3 6"
-              />
+              <CartesianGrid vertical={false} stroke={SOFT_GRID_STROKE} strokeDasharray="3 6" />
               <XAxis
                 dataKey="time"
                 axisLine={false}
@@ -775,12 +675,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
               />
               <ChartTooltip
                 cursor={false}
-                content={
-                  <ChartTooltipContent
-                    labelFormatter={labelFormatter}
-                    indicator="dot"
-                  />
-                }
+                content={<ChartTooltipContent labelFormatter={labelFormatter} indicator="dot" />}
               />
               <Area
                 dataKey="connections"
@@ -805,27 +700,16 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
         </div>
 
         <div className={cardClass}>
-          {chartTitle(
-            t("chart.process"),
-            formatCountCompact(current?.process ?? 0)
-          )}
+          {chartTitle(t("chart.process"), formatCountCompact(current?.process ?? 0))}
           <ChartContainer
             config={{
               process: { label: t("chart.process"), color: colors[0] },
             }}
             className={chartBodyClass}
           >
-            <AreaChart
-              data={chartData}
-              accessibilityLayer
-              margin={sixChartMargin}
-            >
+            <AreaChart data={chartData} accessibilityLayer margin={sixChartMargin}>
               {softFillDef}
-              <CartesianGrid
-                vertical={false}
-                stroke={SOFT_GRID_STROKE}
-                strokeDasharray="3 6"
-              />
+              <CartesianGrid vertical={false} stroke={SOFT_GRID_STROKE} strokeDasharray="3 6" />
               <XAxis
                 dataKey="time"
                 axisLine={false}
@@ -848,12 +732,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
               />
               <ChartTooltip
                 cursor={false}
-                content={
-                  <ChartTooltipContent
-                    labelFormatter={labelFormatter}
-                    indicator="dot"
-                  />
-                }
+                content={<ChartTooltipContent labelFormatter={labelFormatter} indicator="dot" />}
               />
               <Area
                 dataKey="process"
@@ -893,9 +772,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                     </div>
                   </div>
                   <div className="text-center">
-                    <div className="font-medium">
-                      {t("nodeCard.temperature")}
-                    </div>
+                    <div className="font-medium">{t("nodeCard.temperature")}</div>
                     <div className="text-lg font-mono font-bold text-foreground">
                       {gpu.temperature}°C
                     </div>
@@ -919,28 +796,18 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                 <AreaChart
                   data={chartData.map((item) => ({
                     time: item.time,
-                    gpu_usage:
-                      item.gpu_detailed?.[index]?.usage ?? item.gpu_usage ?? 0,
-                    gpu_memory:
-                      item.gpu_detailed?.[index]?.memory ??
-                      item.gpu_memory ??
-                      0,
+                    gpu_usage: item.gpu_detailed?.[index]?.usage ?? item.gpu_usage ?? 0,
+                    gpu_memory: item.gpu_detailed?.[index]?.memory ?? item.gpu_memory ?? 0,
                     gpu_memory_raw:
                       item.gpu_detailed?.[index]?.mem_used ??
-                      (gpu.memory_total *
-                        (item.gpu_detailed?.[index]?.memory || 0)) /
-                        100,
+                      (gpu.memory_total * (item.gpu_detailed?.[index]?.memory || 0)) / 100,
                     gpu_temp: item.gpu_detailed?.[index]?.temperature ?? 0,
                   }))}
                   accessibilityLayer
                   margin={gpuChartMargin}
                 >
                   {softFillDef}
-                  <CartesianGrid
-                    vertical={false}
-                    stroke={SOFT_GRID_STROKE}
-                    strokeDasharray="3 6"
-                  />
+                  <CartesianGrid vertical={false} stroke={SOFT_GRID_STROKE} strokeDasharray="3 6" />
                   <XAxis
                     dataKey="time"
                     tickLine={false}
@@ -952,20 +819,14 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                     tickLine={false}
                     axisLine={false}
                     domain={[0, 100]}
-                    tickFormatter={(value: number, i: number) =>
-                      i !== 0 ? `${value}%` : ""
-                    }
+                    tickFormatter={(value: number, i: number) => (i !== 0 ? `${value}%` : "")}
                     tick={gpuAxisTickStyle}
                     orientation="left"
                     type="number"
                   />
                   <ChartTooltip
                     cursor={false}
-                    formatter={(
-                      value: unknown,
-                      name: unknown,
-                      props: unknown
-                    ) => {
+                    formatter={(value: unknown, name: unknown, props: unknown) => {
                       const payload =
                         typeof props === "object" &&
                         props !== null &&
@@ -975,8 +836,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                           ? (props.payload as { gpu_memory_raw?: number })
                           : undefined;
                       if (String(name) === "gpu_temp") return `${value}°C`;
-                      if (String(name) === "gpu_usage")
-                        return `${toNumeric(value).toFixed(1)}%`;
+                      if (String(name) === "gpu_usage") return `${toNumeric(value).toFixed(1)}%`;
                       if (String(name) === "gpu_memory") {
                         const percentage = toNumeric(value).toFixed(1);
                         const raw = payload?.gpu_memory_raw || 0;
@@ -985,10 +845,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                       return `${toNumeric(value).toFixed(1)}`;
                     }}
                     content={
-                      <ChartTooltipContent
-                        labelFormatter={labelFormatter}
-                        indicator="dot"
-                      />
+                      <ChartTooltipContent labelFormatter={labelFormatter} indicator="dot" />
                     }
                   />
                   <Area

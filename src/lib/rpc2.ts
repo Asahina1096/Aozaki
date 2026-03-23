@@ -12,8 +12,7 @@ import { RPC2ConnectionState } from "../types/rpc2";
 
 export class RPC2Client {
   private ws: WebSocket | null = null;
-  private connectionState: RPC2ConnectionStateType =
-    RPC2ConnectionState.DISCONNECTED;
+  private connectionState: RPC2ConnectionStateType = RPC2ConnectionState.DISCONNECTED;
   private requestId = 0;
   private pendingRequests = new Map<
     string | number,
@@ -140,7 +139,7 @@ export class RPC2Client {
   async callViaWebSocket<TParams = unknown, TResult = unknown>(
     method: string,
     params?: TParams,
-    options: RPC2CallOptions = {}
+    options: RPC2CallOptions = {},
   ): Promise<TResult> {
     if (this.connectionState !== RPC2ConnectionState.CONNECTED) {
       throw new Error("WebSocket 未连接");
@@ -177,7 +176,7 @@ export class RPC2Client {
   async callViaHTTP<TParams = unknown, TResult = unknown>(
     method: string,
     params?: TParams,
-    options: RPC2CallOptions = {}
+    options: RPC2CallOptions = {},
   ): Promise<TResult> {
     const request: JSONRPC2Request<TParams> = {
       jsonrpc: "2.0",
@@ -191,9 +190,7 @@ export class RPC2Client {
         method: "POST",
         headers: this.options.headers,
         body: JSON.stringify(request),
-        signal: options.timeout
-          ? AbortSignal.timeout(options.timeout)
-          : undefined,
+        signal: options.timeout ? AbortSignal.timeout(options.timeout) : undefined,
       });
 
       if (!response.ok) {
@@ -207,9 +204,7 @@ export class RPC2Client {
       const jsonResponse: JSONRPC2Response<TResult> = await response.json();
 
       if ("error" in jsonResponse) {
-        throw new Error(
-          `RPC Error ${jsonResponse.error.code}: ${jsonResponse.error.message}`
-        );
+        throw new Error(`RPC Error ${jsonResponse.error.code}: ${jsonResponse.error.message}`);
       }
 
       return jsonResponse.result;
@@ -226,7 +221,7 @@ export class RPC2Client {
       method: string;
       params?: unknown;
       notification?: boolean;
-    }>
+    }>,
   ): Promise<unknown[]> {
     const batchRequest: JSONRPC2BatchRequest = requests.map((req) => ({
       jsonrpc: "2.0",
@@ -265,12 +260,9 @@ export class RPC2Client {
   async call<TParams = unknown, TResult = unknown>(
     method: string,
     params?: TParams,
-    options: RPC2CallOptions = {}
+    options: RPC2CallOptions = {},
   ): Promise<TResult> {
-    if (
-      this.options.autoConnect &&
-      this.connectionState === RPC2ConnectionState.DISCONNECTED
-    ) {
+    if (this.options.autoConnect && this.connectionState === RPC2ConnectionState.DISCONNECTED) {
       this.autoConnect();
     }
 
@@ -343,9 +335,7 @@ export class RPC2Client {
     }
 
     if ("error" in data) {
-      pending.reject(
-        new Error(`RPC Error ${data.error.code}: ${data.error.message}`)
-      );
+      pending.reject(new Error(`RPC Error ${data.error.code}: ${data.error.message}`));
     } else {
       pending.resolve(data.result);
     }

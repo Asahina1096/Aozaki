@@ -35,10 +35,7 @@ export interface RecordFormat {
   connections_udp: number | null;
 }
 
-export function liveDataToRecords(
-  client: string,
-  liveData: LiveRecord[]
-): RecordFormat[] {
+export function liveDataToRecords(client: string, liveData: LiveRecord[]): RecordFormat[] {
   if (!liveData) return [];
   return liveData.map((data) => {
     let gpuMemorySum = 0;
@@ -107,18 +104,15 @@ function createNullTemplate(obj: unknown): unknown {
   return null;
 }
 
-export default function fillMissingTimePoints<
-  T extends { time?: string; updated_at?: string },
->(
+export default function fillMissingTimePoints<T extends { time?: string; updated_at?: string }>(
   data: T[],
   intervalSec: number = 10,
   totalSeconds: number | null = 180,
-  matchToleranceSec?: number
+  matchToleranceSec?: number,
 ): T[] {
   if (!data.length) return [];
 
-  const getTime = (item: T) =>
-    new Date(item.time ?? item.updated_at ?? "").getTime();
+  const getTime = (item: T) => new Date(item.time ?? item.updated_at ?? "").getTime();
 
   const timedData = data.map((item) => ({ item, timeMs: getTime(item) }));
   timedData.sort((a, b) => a.timeMs - b.timeMs);
@@ -138,27 +132,18 @@ export default function fillMissingTimePoints<
     timePoints.push(t);
   }
 
-  const nullTemplate = createNullTemplate(lastItem.item) as Record<
-    string,
-    unknown
-  >;
+  const nullTemplate = createNullTemplate(lastItem.item) as Record<string, unknown>;
   let dataIdx = 0;
   const matchToleranceMs = (matchToleranceSec ?? intervalSec) * 1000;
 
   return timePoints.map((t) => {
     let found: T | undefined;
 
-    while (
-      dataIdx < timedData.length &&
-      timedData[dataIdx].timeMs < t - matchToleranceMs
-    ) {
+    while (dataIdx < timedData.length && timedData[dataIdx].timeMs < t - matchToleranceMs) {
       dataIdx++;
     }
 
-    if (
-      dataIdx < timedData.length &&
-      Math.abs(timedData[dataIdx].timeMs - t) <= matchToleranceMs
-    ) {
+    if (dataIdx < timedData.length && Math.abs(timedData[dataIdx].timeMs - t) <= matchToleranceMs) {
       found = timedData[dataIdx].item;
     }
 
@@ -182,24 +167,20 @@ export function interpolateNullsLinear<
         maxGapMultiplier?: number;
         minCapMs?: number;
         maxCapMs?: number;
-      }
+      },
 ): T[] {
   if (!rows || rows.length === 0 || !keys.length) return rows;
 
-  const times = rows.map((r) =>
-    new Date(r.time ?? r.updated_at ?? "").getTime()
-  );
+  const times = rows.map((r) => new Date(r.time ?? r.updated_at ?? "").getTime());
   const out = rows.map((r) => ({ ...r }));
 
-  const opts =
-    typeof options === "number" ? { maxGapMs: options } : options || {};
+  const opts = typeof options === "number" ? { maxGapMs: options } : options || {};
   const maxGapMsUnified = opts.maxGapMs;
   const multiplier = opts.maxGapMultiplier ?? 6;
   const minCap = opts.minCapMs ?? 2 * 60_000;
   const maxCap = opts.maxCapMs ?? 30 * 60_000;
 
-  const clamp = (v: number, lo: number, hi: number) =>
-    Math.max(lo, Math.min(hi, v));
+  const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
   for (const key of keys) {
     const validIdx: number[] = [];
@@ -256,7 +237,7 @@ export function cutPeakValues<T extends Record<string, unknown>>(
   keys: string[],
   alpha: number = 0.3,
   windowSize: number = 15,
-  spikeThreshold: number = 0.3
+  spikeThreshold: number = 0.3,
 ): T[] {
   if (!data || data.length === 0) return data;
 
@@ -283,12 +264,10 @@ export function cutPeakValues<T extends Record<string, unknown>>(
 
         if (neighborValues.length >= 2) {
           const neighborSum = neighborValues.reduce((sum, val) => sum + val, 0);
-          const neighborMean =
-            neighborValues.length > 0 ? neighborSum / neighborValues.length : 0;
+          const neighborMean = neighborValues.length > 0 ? neighborSum / neighborValues.length : 0;
 
           if (neighborMean > 0) {
-            const relativeChange =
-              Math.abs(currentValue - neighborMean) / neighborMean;
+            const relativeChange = Math.abs(currentValue - neighborMean) / neighborMean;
             if (relativeChange > spikeThreshold) {
               result[i] = { ...result[i], [key]: null };
             }

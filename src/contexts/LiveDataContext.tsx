@@ -1,11 +1,4 @@
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import type { LiveDataResponse } from "../types/LiveData";
 import { useRPC2Call } from "./RPC2Context";
 
@@ -51,23 +44,18 @@ const LiveDataRefreshContext = createContext<LiveDataRefreshContextType>({
   onRefresh: () => () => undefined,
 });
 
-export const LiveDataProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export const LiveDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [live_data, setLiveData] = useState<LiveDataResponse | null>(null);
   const [showCallout, setShowCallout] = useState(false);
   const callbacksRef = useRef<Set<(data: LiveDataResponse) => void>>(new Set());
   const { call } = useRPC2Call();
 
-  const onRefresh = useCallback(
-    (callback: (data: LiveDataResponse) => void) => {
-      callbacksRef.current.add(callback);
-      return () => {
-        callbacksRef.current.delete(callback);
-      };
-    },
-    []
-  );
+  const onRefresh = useCallback((callback: (data: LiveDataResponse) => void) => {
+    callbacksRef.current.add(callback);
+    return () => {
+      callbacksRef.current.delete(callback);
+    };
+  }, []);
 
   const notifyRefreshCallbacks = useCallback((data: LiveDataResponse) => {
     callbacksRef.current.forEach((callback) => callback(data));
@@ -83,10 +71,9 @@ export const LiveDataProvider: React.FC<{ children: React.ReactNode }> = ({
       if (running) return;
       running = true;
       try {
-        const result = await call<
-          undefined,
-          Record<string, LatestStatusRecord>
-        >("common:getNodesLatestStatus");
+        const result = await call<undefined, Record<string, LatestStatusRecord>>(
+          "common:getNodesLatestStatus",
+        );
         const online = Object.values(result)
           .filter((v) => v?.online && typeof v.client === "string")
           .map((v) => v.client as string);

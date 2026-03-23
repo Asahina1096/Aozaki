@@ -51,9 +51,7 @@ export async function getSettings(): Promise<SettingsResponse> {
   }
 }
 
-export async function updateSettings(
-  settings: Partial<SettingsResponse>
-): Promise<void> {
+export async function updateSettings(settings: Partial<SettingsResponse>): Promise<void> {
   try {
     const response = await fetch("/api/admin/settings", {
       method: "POST",
@@ -102,9 +100,7 @@ export function useSettings() {
         const data = await getSettings();
         setSettings(data);
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to fetch settings"
-        );
+        setError(err instanceof Error ? err.message : "Failed to fetch settings");
       } finally {
         setLoading(false);
       }
@@ -115,30 +111,24 @@ export function useSettings() {
 
   const updateSetting = async <K extends keyof SettingsResponse>(
     key: K,
-    value: SettingsResponse[K]
+    value: SettingsResponse[K],
   ) => {
     try {
       await updateSettings({ [key]: value });
       setSettings((prev) => ({ ...prev, [key]: value }));
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : `Failed to update ${String(key)}`
-      );
+      setError(err instanceof Error ? err.message : `Failed to update ${String(key)}`);
       throw err;
     }
   };
 
-  const updateMultipleSettings = async (
-    newSettings: Partial<SettingsResponse>
-  ) => {
+  const updateMultipleSettings = async (newSettings: Partial<SettingsResponse>) => {
     try {
       const updatedSettings = { ...settings, ...newSettings };
       await updateSettings(updatedSettings);
       setSettings(updatedSettings);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to update settings"
-      );
+      setError(err instanceof Error ? err.message : "Failed to update settings");
       throw err;
     }
   };

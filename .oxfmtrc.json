@@ -1,0 +1,6 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "indentWidth": 2,
+  "lineWidth": 80,
+  "ignorePatterns": ["dist/**", ".astro/**", "node_modules/**", "*.md"]
+}

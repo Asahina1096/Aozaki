@@ -29,9 +29,7 @@ export default defineConfig({
                 const filePattern = path.basename(pattern);
                 if (fs.existsSync(dir)) {
                   const files = fs.readdirSync(dir);
-                  const regex = new RegExp(
-                    `^${filePattern.replace(/\*/g, ".*")}$`
-                  );
+                  const regex = new RegExp(`^${filePattern.replace(/\*/g, ".*")}$`);
                   for (const file of files) {
                     if (regex.test(file)) {
                       const filePath = path.join(dir, file);

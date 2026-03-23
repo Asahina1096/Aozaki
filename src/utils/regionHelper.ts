@@ -1,8 +1,5 @@
 // 地区emoji到名称的映射
-export const emojiToRegionMap: Record<
-  string,
-  { en: string; zh: string; aliases: string[] }
-> = {
+export const emojiToRegionMap: Record<string, { en: string; zh: string; aliases: string[] }> = {
   "🇭🇰": {
     en: "Hong Kong",
     zh: "香港",
@@ -16,16 +13,7 @@ export const emojiToRegionMap: Record<
   "🇺🇸": {
     en: "United States",
     zh: "美国",
-    aliases: [
-      "us",
-      "usa",
-      "united states",
-      "america",
-      "美国",
-      "美利坚",
-      "US",
-      "USA",
-    ],
+    aliases: ["us", "usa", "united states", "america", "美国", "美利坚", "US", "USA"],
   },
   "🇯🇵": {
     en: "Japan",
@@ -50,16 +38,7 @@ export const emojiToRegionMap: Record<
   "🇬🇧": {
     en: "United Kingdom",
     zh: "英国",
-    aliases: [
-      "gb",
-      "uk",
-      "united kingdom",
-      "britain",
-      "英国",
-      "英國",
-      "GB",
-      "UK",
-    ],
+    aliases: ["gb", "uk", "united kingdom", "britain", "英国", "英國", "GB", "UK"],
   },
   "🇩🇪": {
     en: "Germany",
@@ -584,10 +563,7 @@ export const emojiToRegionMap: Record<
  * @param searchTerm 搜索词
  * @returns 是否匹配
  */
-export const isRegionMatch = (
-  regionEmoji: string,
-  searchTerm: string
-): boolean => {
+export const isRegionMatch = (regionEmoji: string, searchTerm: string): boolean => {
   const lowerSearchTerm = searchTerm.toLowerCase().trim();
 
   // 直接匹配emoji
@@ -613,9 +589,7 @@ export const isRegionMatch = (
   }
 
   // 检查别名
-  return regionInfo.aliases.some((alias) =>
-    alias.toLowerCase().includes(lowerSearchTerm)
-  );
+  return regionInfo.aliases.some((alias) => alias.toLowerCase().includes(lowerSearchTerm));
 };
 
 /**
@@ -624,10 +598,7 @@ export const isRegionMatch = (
  * @param language 语言 ('en' | 'zh')
  * @returns 地区名称
  */
-export const getRegionDisplayName = (
-  regionEmoji: string,
-  language: "en" | "zh" = "zh"
-): string => {
+export const getRegionDisplayName = (regionEmoji: string, language: "en" | "zh" = "zh"): string => {
   const regionInfo = emojiToRegionMap[regionEmoji];
   if (!regionInfo) {
     return regionEmoji;

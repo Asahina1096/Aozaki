@@ -28,7 +28,7 @@ export function ServerOverview({ servers }: ServerOverviewProps) {
       totalRealtimeUpload: 0,
       totalDataDownloaded: 0,
       totalDataUploaded: 0,
-    }
+    },
   );
 
   const totalServers = servers.length;
@@ -36,9 +36,7 @@ export function ServerOverview({ servers }: ServerOverviewProps) {
   const offlineServers = totalServers - onlineServers;
 
   const avgCpu =
-    stats.onlineCount > 0
-      ? Math.round((stats.totalCpu / stats.onlineCount) * 10) / 10
-      : 0;
+    stats.onlineCount > 0 ? Math.round((stats.totalCpu / stats.onlineCount) * 10) / 10 : 0;
 
   return (
     <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -73,9 +71,7 @@ export function ServerOverview({ servers }: ServerOverviewProps) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            {formatSpeed(
-              stats.totalRealtimeUpload + stats.totalRealtimeDownload
-            )}
+            {formatSpeed(stats.totalRealtimeUpload + stats.totalRealtimeDownload)}
           </div>
           <div className="mt-2 flex flex-wrap gap-2">
             <span className={PILL_STYLES.capsule}>

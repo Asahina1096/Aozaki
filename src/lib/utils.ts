@@ -25,11 +25,7 @@ export function formatBytes(bytes: number, decimals: number = 2): string {
   return `${size} ${sizes[i]}`;
 }
 
-export function formatPercent(
-  value: number,
-  total: number,
-  decimals: number = 1
-): string {
+export function formatPercent(value: number, total: number, decimals: number = 1): string {
   if (total === 0) return "0%";
   const percent = (value / total) * 100;
   const multiplier = Math.pow(10, decimals);

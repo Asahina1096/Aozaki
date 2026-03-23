@@ -17,10 +17,7 @@ type DetailsGridProps = {
   uuid: string;
 };
 
-function formatUptime(
-  seconds: number,
-  t: (key: string, opts?: Record<string, unknown>) => string
-) {
+function formatUptime(seconds: number, t: (key: string, opts?: Record<string, unknown>) => string) {
   if (!seconds || seconds < 0) return t("nodeCard.time_second", { val: 0 });
   const d = Math.floor(seconds / 86400);
   const h = Math.floor((seconds % 86400) / 3600);
@@ -40,18 +37,14 @@ export const DetailsGrid = ({ uuid }: DetailsGridProps) => {
   const { live_data } = useLiveData();
   const node = nodeList?.find((n) => n.uuid === uuid);
   const base = live_data?.data.data[uuid];
-  const cpuModel = node?.cpu_name
-    ? `${node.cpu_name} (x${node.cpu_cores || 0})`
-    : "Unknown";
+  const cpuModel = node?.cpu_name ? `${node.cpu_name} (x${node.cpu_cores || 0})` : "Unknown";
   const cpuUsage = Math.min(Math.max(base?.cpu?.usage ?? 0, 0), 100);
   const memoryUsage = Math.min(
     Math.max(
-      node?.mem_total && node.mem_total > 0
-        ? ((base?.ram?.used ?? 0) / node.mem_total) * 100
-        : 0,
-      0
+      node?.mem_total && node.mem_total > 0 ? ((base?.ram?.used ?? 0) / node.mem_total) * 100 : 0,
+      0,
     ),
-    100
+    100,
   );
   const isOnline = Boolean(live_data?.data?.online?.includes(uuid));
 
@@ -143,15 +136,10 @@ export const DetailsGrid = ({ uuid }: DetailsGridProps) => {
                 className="min-w-0 rounded-lg border border-border/20 bg-muted/30 px-3 py-2"
               >
                 <div className="mb-1 flex items-center gap-2 font-sans text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
-                  <Icon
-                    className="h-3.5 w-3.5 text-muted-foreground"
-                    aria-hidden="true"
-                  />
+                  <Icon className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
                   <span>{item.label}</span>
                 </div>
-                <div className="truncate text-sm font-medium text-foreground">
-                  {item.value}
-                </div>
+                <div className="truncate text-sm font-medium text-foreground">{item.value}</div>
               </div>
             );
           })}

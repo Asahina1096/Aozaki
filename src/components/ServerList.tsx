@@ -7,8 +7,7 @@ import { ServerCard } from "./ServerCard";
 import { ServerListSkeleton } from "./ServerListSkeleton";
 
 const DEFAULT_REFRESH_INTERVAL = 2000;
-const OVERVIEW_CARD_CLASS =
-  "rounded-2xl border border-border/20 bg-card/95 p-5 shadow-sm";
+const OVERVIEW_CARD_CLASS = "rounded-2xl border border-border/20 bg-card/95 p-5 shadow-sm";
 const OVERVIEW_VALUE_CLASS =
   "text-xl font-semibold leading-none tabular-nums text-foreground whitespace-nowrap";
 
@@ -55,7 +54,7 @@ export default function ServerList({
       (node) =>
         node.name?.toLowerCase().includes(query) ||
         node.region?.toLowerCase().includes(query) ||
-        node.group?.toLowerCase().includes(query)
+        node.group?.toLowerCase().includes(query),
     );
   }, [sortedNodes, deferredSearchQuery]);
 
@@ -106,9 +105,7 @@ export default function ServerList({
         <p className="text-lg font-semibold text-muted-foreground">
           {error ? "无法加载节点数据" : "暂无节点数据"}
         </p>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {error || "请稍后再试。"}
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">{error || "请稍后再试。"}</p>
         {error && (
           <button
             type="button"
@@ -140,17 +137,13 @@ export default function ServerList({
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <div className={OVERVIEW_CARD_CLASS}>
           <div className="mb-3 flex items-center justify-between">
-            <div className="text-xs tracking-wide text-muted-foreground">
-              在线节点
-            </div>
+            <div className="text-xs tracking-wide text-muted-foreground">在线节点</div>
             <div className="flex items-center gap-2">
               <PlugZap className="h-4 w-4 text-muted-foreground" />
             </div>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className={OVERVIEW_VALUE_CLASS}>
-              {overviewStats.onlineNodes}
-            </span>
+            <span className={OVERVIEW_VALUE_CLASS}>{overviewStats.onlineNodes}</span>
             <span className="text-sm tabular-nums text-muted-foreground">
               / {overviewStats.totalNodes}
             </span>
@@ -159,16 +152,12 @@ export default function ServerList({
 
         <div className={OVERVIEW_CARD_CLASS}>
           <div className="mb-3 flex items-center justify-between">
-            <div className="text-xs tracking-wide text-muted-foreground">
-              平均 CPU 使用率
-            </div>
+            <div className="text-xs tracking-wide text-muted-foreground">平均 CPU 使用率</div>
             <Cpu className="h-4 w-4 text-muted-foreground" />
           </div>
           <div className="flex items-baseline gap-2">
             <span className={OVERVIEW_VALUE_CLASS}>
-              {overviewStats.avgCpu === null
-                ? "-"
-                : `${overviewStats.avgCpu.toFixed(1)}%`}
+              {overviewStats.avgCpu === null ? "-" : `${overviewStats.avgCpu.toFixed(1)}%`}
             </span>
           </div>
         </div>
@@ -181,9 +170,7 @@ export default function ServerList({
           }}
         >
           <div className="mb-3 flex items-center justify-between">
-            <div className="text-xs tracking-wide text-muted-foreground">
-              实时网络速率
-            </div>
+            <div className="text-xs tracking-wide text-muted-foreground">实时网络速率</div>
             <Network className="h-4 w-4 text-muted-foreground" />
           </div>
           <div className="grid grid-cols-2 gap-3 text-sm">
@@ -206,9 +193,7 @@ export default function ServerList({
 
         <div className={OVERVIEW_CARD_CLASS}>
           <div className="mb-3 flex items-center justify-between">
-            <div className="text-xs tracking-wide text-muted-foreground">
-              总流量
-            </div>
+            <div className="text-xs tracking-wide text-muted-foreground">总流量</div>
             <Wifi className="h-4 w-4 text-muted-foreground" />
           </div>
           <div className="grid grid-cols-2 gap-3 text-sm">
@@ -230,9 +215,7 @@ export default function ServerList({
 
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
-          <span className="text-xl md:text-2xl font-bold text-primary">
-            节点列表
-          </span>
+          <span className="text-xl md:text-2xl font-bold text-primary">节点列表</span>
           <div className="relative">
             <input
               type="search"

@@ -1,10 +1,4 @@
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { RPC2Client } from "../lib/rpc2";
 import type { RPC2CallOptions, RPC2ConnectionStateType } from "../types/rpc2";
 
@@ -22,9 +16,7 @@ const RPC2Context = createContext<RPC2ContextType | undefined>(undefined);
 let __rpc2_singleton__: RPC2Client | null = null;
 let __rpc2_refcount = 0;
 
-export const RPC2Provider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export const RPC2Provider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [client] = useState(() => {
     if (!__rpc2_singleton__) {
       __rpc2_singleton__ = new RPC2Client("/api/rpc2", { autoConnect: true });
@@ -112,27 +104,27 @@ export const useRPC2Call = () => {
     <TParams = unknown, TResult = unknown>(
       method: string,
       params?: TParams,
-      options?: RPC2CallOptions
+      options?: RPC2CallOptions,
     ): Promise<TResult> => client.call(method, params, options),
-    [client]
+    [client],
   );
 
   const callViaWebSocket = useCallback(
     <TParams = unknown, TResult = unknown>(
       method: string,
       params?: TParams,
-      options?: RPC2CallOptions
+      options?: RPC2CallOptions,
     ): Promise<TResult> => client.callViaWebSocket(method, params, options),
-    [client]
+    [client],
   );
 
   const callViaHTTP = useCallback(
     <TParams = unknown, TResult = unknown>(
       method: string,
       params?: TParams,
-      options?: RPC2CallOptions
+      options?: RPC2CallOptions,
     ): Promise<TResult> => client.callViaHTTP(method, params, options),
-    [client]
+    [client],
   );
 
   const batchCall = useCallback(
@@ -141,9 +133,9 @@ export const useRPC2Call = () => {
         method: string;
         params?: unknown;
         notification?: boolean;
-      }>
+      }>,
     ) => client.batchCall(requests),
-    [client]
+    [client],
   );
 
   return {

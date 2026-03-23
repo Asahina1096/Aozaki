@@ -9,9 +9,7 @@ interface AppProvidersProps {
   refreshInterval?: number;
 }
 
-export const AppProviders: React.FC<AppProvidersProps> = ({
-  refreshInterval = 2000,
-}) => {
+export const AppProviders: React.FC<AppProvidersProps> = ({ refreshInterval = 2000 }) => {
   return (
     <RPC2Provider>
       <NodeListProvider>

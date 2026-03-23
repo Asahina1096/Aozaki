@@ -28,10 +28,7 @@ function useResponsiveColumns(): number {
     setColumns(getColumns(window.innerWidth));
   }, [getColumns]);
 
-  const debouncedUpdate = useDebouncedCallback(
-    updateColumns,
-    RESIZE_DEBOUNCE_MS
-  );
+  const debouncedUpdate = useDebouncedCallback(updateColumns, RESIZE_DEBOUNCE_MS);
 
   useLayoutEffect(() => {
     window.addEventListener("resize", debouncedUpdate);
@@ -52,10 +49,7 @@ export function VirtualizedServerGrid({ servers }: VirtualizedServerGridProps) {
     parentOffsetRef.current = parentRef.current?.offsetTop ?? 0;
   }, []);
 
-  const debouncedUpdateOffset = useDebouncedCallback(
-    updateOffset,
-    RESIZE_DEBOUNCE_MS
-  );
+  const debouncedUpdateOffset = useDebouncedCallback(updateOffset, RESIZE_DEBOUNCE_MS);
 
   useLayoutEffect(() => {
     updateOffset();
@@ -80,8 +74,7 @@ export function VirtualizedServerGrid({ servers }: VirtualizedServerGridProps) {
     overscan: VIRTUALIZER_OVERSCAN,
     scrollMargin: parentOffsetRef.current,
     measureElement:
-      typeof window !== "undefined" &&
-      navigator.userAgent.indexOf("Firefox") === -1
+      typeof window !== "undefined" && navigator.userAgent.indexOf("Firefox") === -1
         ? (element) => element?.getBoundingClientRect().height
         : undefined,
   });

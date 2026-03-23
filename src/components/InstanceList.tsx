@@ -9,9 +9,7 @@ import Flag from "./Flag";
 export const InstanceList: React.FC = () => {
   const { live_data } = useLiveData();
   const { nodeList } = useNodeList();
-  const [currentTime, setCurrentTime] = React.useState(
-    new Date().toLocaleTimeString()
-  );
+  const [currentTime, setCurrentTime] = React.useState(new Date().toLocaleTimeString());
 
   React.useEffect(() => {
     const timer = setInterval(() => {
@@ -80,9 +78,7 @@ export const InstanceList: React.FC = () => {
                     <Text size="1" color="gray">
                       CPU
                     </Text>
-                    <Text size="1">
-                      {liveData?.cpu?.usage?.toFixed(1) || 0}%
-                    </Text>
+                    <Text size="1">{liveData?.cpu?.usage?.toFixed(1) || 0}%</Text>
                   </Flex>
                   <Flex justify="between">
                     <Text size="1" color="gray">

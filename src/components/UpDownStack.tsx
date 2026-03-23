@@ -22,9 +22,7 @@ export function UpDownStack({
       <label className="shrink-0 text-xs uppercase tracking-wide text-muted-foreground">
         {up}:
       </label>
-      <label className="min-w-0 truncate text-sm font-medium text-foreground">
-        {down}
-      </label>
+      <label className="min-w-0 truncate text-sm font-medium text-foreground">{down}</label>
     </div>
   );
 }

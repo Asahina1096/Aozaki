@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { getAPIClient } from "./api";
 import type { StatsResponse } from "./types/serverstatus";
 
@@ -22,11 +16,9 @@ function useEvent<T extends (...args: never[]) => unknown>(callback: T): T {
 
 export function useDebouncedCallback<T extends (...args: never[]) => void>(
   callback: T,
-  delay: number
+  delay: number,
 ): T {
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(
-    undefined
-  );
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const debouncedCallback = useEvent(callback);
 
@@ -39,7 +31,7 @@ export function useDebouncedCallback<T extends (...args: never[]) => void>(
         debouncedCallback(...args);
       }, delay);
     },
-    [delay, debouncedCallback]
+    [delay, debouncedCallback],
   ) as T;
 
   useEffect(() => {
@@ -76,10 +68,7 @@ export function useAbortController() {
   return { controllerRef, reset };
 }
 
-export function usePollingStats(options: {
-  refreshInterval?: number;
-  enabled?: boolean;
-}) {
+export function usePollingStats(options: { refreshInterval?: number; enabled?: boolean }) {
   const { refreshInterval = 2000, enabled = true } = options;
   const { reset: resetAbortController } = useAbortController();
   const lastFetchTimeRef = useRef<number>(0);
@@ -90,30 +79,28 @@ export function usePollingStats(options: {
   const [error, setError] = useState<Error | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
   const [isPageVisible, setIsPageVisible] = useState(
-    typeof document !== "undefined" ? !document.hidden : true
+    typeof document !== "undefined" ? !document.hidden : true,
   );
   const [hasFocus, setHasFocus] = useState(
-    typeof document !== "undefined" ? document.hasFocus() : true
+    typeof document !== "undefined" ? document.hasFocus() : true,
   );
 
-  const fetchServers = useEvent(
-    async (signal?: AbortSignal): Promise<StatsResponse | null> => {
-      try {
-        const client = getAPIClient();
-        const data = await client.getStats(signal);
-        setStats(data);
-        setError(null);
-        lastFetchTimeRef.current = Date.now();
-        return data;
-      } catch (err) {
-        if (err instanceof Error && err.name === "AbortError") {
-          return null;
-        }
-        setError(err instanceof Error ? err : new Error("未知错误"));
-        throw err;
+  const fetchServers = useEvent(async (signal?: AbortSignal): Promise<StatsResponse | null> => {
+    try {
+      const client = getAPIClient();
+      const data = await client.getStats(signal);
+      setStats(data);
+      setError(null);
+      lastFetchTimeRef.current = Date.now();
+      return data;
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") {
+        return null;
       }
+      setError(err instanceof Error ? err : new Error("未知错误"));
+      throw err;
     }
-  );
+  });
 
   const safeFetch = useEvent(async (signal?: AbortSignal): Promise<void> => {
     if (isFetchingRef.current) return;

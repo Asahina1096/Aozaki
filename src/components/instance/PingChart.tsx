@@ -2,14 +2,7 @@ import { Button, Flex, Switch } from "@radix-ui/themes";
 import { Eye, EyeOff } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  Area,
-  CartesianGrid,
-  ComposedChart,
-  Line,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Area, CartesianGrid, ComposedChart, Line, XAxis, YAxis } from "recharts";
 import type { ChartConfig } from "@/components/ui/chart";
 import {
   ChartContainer,
@@ -78,8 +71,7 @@ const softFillDef = (
   </defs>
 );
 
-const areaFill = (idx: number) =>
-  `url(#${AREA_GRADIENT_IDS[idx % AREA_GRADIENT_IDS.length]})`;
+const areaFill = (idx: number) => `url(#${AREA_GRADIENT_IDS[idx % AREA_GRADIENT_IDS.length]})`;
 
 const presetViews = [
   { key: "1h", hours: 1 },
@@ -128,18 +120,16 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
           records: PingRecord[];
           tasks?: TaskInfo[];
         };
-        const result = await call<
-          { uuid: string; type: "ping"; hours: number },
-          RpcResp
-        >("common:getRecords", {
-          uuid,
-          type: "ping",
-          hours,
-        });
-        const records = result?.records || [];
-        records.sort(
-          (a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()
+        const result = await call<{ uuid: string; type: "ping"; hours: number }, RpcResp>(
+          "common:getRecords",
+          {
+            uuid,
+            type: "ping",
+            hours,
+          },
         );
+        const records = result?.records || [];
+        records.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
         setRemoteData(records);
         setTasks(result?.tasks || []);
       } catch (err: unknown) {
@@ -159,10 +149,7 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
       .filter((v): v is number => typeof v === "number" && v > 0);
     const fallbackIntervalSec = intervals.length ? Math.min(...intervals) : 60;
 
-    const bucketMs = Math.max(
-      1000,
-      Math.min(6000, Math.floor(fallbackIntervalSec * 1000 * 0.25))
-    );
+    const bucketMs = Math.max(1000, Math.min(6000, Math.floor(fallbackIntervalSec * 1000 * 0.25)));
 
     const buckets = new Map<number, PingRow>();
 
@@ -178,7 +165,7 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
     }
 
     const merged = Array.from(buckets.values()).sort(
-      (a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()
+      (a, b) => new Date(a.time).getTime() - new Date(b.time).getTime(),
     );
 
     if (!merged.length) return [];
@@ -211,7 +198,7 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
           maxGapMultiplier: 6,
           minCapMs: 2 * 60_000,
           maxCapMs: 30 * 60_000,
-        }
+        },
       );
     }
     return output;
@@ -300,12 +287,8 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
 
   return (
     <Flex direction="column" align="center" gap="4" className="w-full">
-      {loading && (
-        <div className="text-center text-muted-foreground">Loading...</div>
-      )}
-      {error && (
-        <div className="w-full text-center text-destructive">{error}</div>
-      )}
+      {loading && <div className="text-center text-muted-foreground">Loading...</div>}
+      {error && <div className="w-full text-center text-destructive">{error}</div>}
 
       {latestValues.length > 0 ? (
         <div className={`mb-3 ${cardClass}`}>
@@ -317,20 +300,13 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
           >
             {latestValues.map((task) => (
               <div key={task.id} className="flex items-center rounded">
-                <div
-                  className="h-6 w-1 rounded-xs"
-                  style={{ backgroundColor: task.color }}
-                />
+                <div className="h-6 w-1 rounded-xs" style={{ backgroundColor: task.color }} />
                 <div className="ml-1 flex flex-col items-start justify-center">
                   <label className="font-sans text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                     {task.name}
                   </label>
                   <div className="flex gap-2 text-sm font-mono text-foreground">
-                    <span>
-                      {task.value !== null
-                        ? `${Number(task.value).toFixed(0)} ms`
-                        : "-"}
-                    </span>
+                    <span>{task.value !== null ? `${Number(task.value).toFixed(0)} ms` : "-"}</span>
                     <span>{`${Number(task.loss).toFixed(1)}%${t("chart.lossRate")}`}</span>
                   </div>
                 </div>
@@ -350,21 +326,14 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
             {t("common.none")}
           </div>
         ) : (
-          <ChartContainer
-            config={chartConfig}
-            className="h-40 w-full aspect-auto"
-          >
+          <ChartContainer config={chartConfig} className="h-40 w-full aspect-auto">
             <ComposedChart
               data={chartData}
               accessibilityLayer
               margin={{ top: 4, right: 16, bottom: 4, left: 12 }}
             >
               {softFillDef}
-              <CartesianGrid
-                vertical={false}
-                stroke={SOFT_GRID_STROKE}
-                strokeDasharray="3 6"
-              />
+              <CartesianGrid vertical={false} stroke={SOFT_GRID_STROKE} strokeDasharray="3 6" />
               <XAxis
                 dataKey="time"
                 tickLine={false}
@@ -386,12 +355,7 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
               <ChartTooltip
                 cursor={false}
                 formatter={(v) => `${Math.round(Number(v))} ms`}
-                content={
-                  <ChartTooltipContent
-                    labelFormatter={labelFormatter}
-                    indicator="dot"
-                  />
-                }
+                content={<ChartTooltipContent labelFormatter={labelFormatter} indicator="dot" />}
               />
               <ChartLegend onClick={handleLegendClick} />
               {tasks.map((task, idx) => [
@@ -427,11 +391,7 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
           style={{ display: loading ? "none" : "flex" }}
         >
           <div className="flex items-center gap-2">
-            <Switch
-              id="cut-peak"
-              checked={cutPeak}
-              onCheckedChange={setCutPeak}
-            />
+            <Switch id="cut-peak" checked={cutPeak} onCheckedChange={setCutPeak} />
             <label
               htmlFor="cut-peak"
               className="flex items-center gap-1 font-sans text-xs font-medium text-muted-foreground"

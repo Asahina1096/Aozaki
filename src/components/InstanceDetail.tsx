@@ -45,8 +45,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
   const [pingView, setPingView] = useState("1h");
   const { nodeList } = useNodeList();
   const length = 30 * 5;
-  const sectionCardClass =
-    "rounded-2xl border border-border/20 bg-card/95 p-5 shadow-sm";
+  const sectionCardClass = "rounded-2xl border border-border/20 bg-card/95 p-5 shadow-sm";
   const controlBaseClass =
     "rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-accent-foreground sm:px-4";
   const controlActiveClass =
@@ -66,7 +65,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
 
     call<{ uuid: string }, { count: number; records: StatusRecordRPC[] }>(
       "common:getNodeRecentStatus",
-      { uuid }
+      { uuid },
     )
       .then((result) => {
         if (currentSeq !== requestSeqRef.current) return;
@@ -110,9 +109,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
 
       setRecent((prev) => {
         const newRecord = data;
-        const exists = prev.some(
-          (item) => item.updated_at === newRecord.updated_at
-        );
+        const exists = prev.some((item) => item.updated_at === newRecord.updated_at);
         if (exists) return prev;
 
         const updated = [...prev, newRecord].slice(-length);
@@ -123,11 +120,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
   }, [onRefresh, uuid]);
 
   return (
-    <Flex
-      className="items-center px-2 pb-10 pt-2 md:px-4"
-      direction="column"
-      gap="4"
-    >
+    <Flex className="items-center px-2 pb-10 pt-2 md:px-4" direction="column" gap="4">
       <div className="flex w-full max-w-[1200px] flex-col gap-4">
         <div className={sectionCardClass}>
           <div className="flex items-start gap-3">
@@ -171,9 +164,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
                 type="button"
                 key={item.key}
                 onClick={() =>
-                  chartView === "load"
-                    ? setLoadView(item.key)
-                    : setPingView(item.key)
+                  chartView === "load" ? setLoadView(item.key) : setPingView(item.key)
                 }
                 className={`${controlBaseClass} ${(chartView === "load" ? loadView : pingView) === item.key ? controlActiveClass : ""}`}
               >
@@ -203,10 +194,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
 
       {(() => {
         return chartView === "load" ? (
-          <LoadChart
-            data={liveDataToRecords(uuid ?? "", recent)}
-            view={loadView}
-          />
+          <LoadChart data={liveDataToRecords(uuid ?? "", recent)} view={loadView} />
         ) : (
           <PingChart uuid={uuid} view={pingView} />
         );

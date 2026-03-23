@@ -23,9 +23,7 @@ export interface JSONRPC2ErrorResponse {
   id: string | number | null;
 }
 
-export type JSONRPC2Response<T = unknown> =
-  | JSONRPC2SuccessResponse<T>
-  | JSONRPC2ErrorResponse;
+export type JSONRPC2Response<T = unknown> = JSONRPC2SuccessResponse<T> | JSONRPC2ErrorResponse;
 
 export type JSONRPC2BatchRequest = JSONRPC2Request[];
 export type JSONRPC2BatchResponse = JSONRPC2Response[];
@@ -38,8 +36,7 @@ export const JSONRPC2ErrorCode = {
   INTERNAL_ERROR: -32603,
 } as const;
 
-export type JSONRPC2ErrorCodeType =
-  (typeof JSONRPC2ErrorCode)[keyof typeof JSONRPC2ErrorCode];
+export type JSONRPC2ErrorCodeType = (typeof JSONRPC2ErrorCode)[keyof typeof JSONRPC2ErrorCode];
 
 export const RPC2ConnectionState = {
   DISCONNECTED: "disconnected",

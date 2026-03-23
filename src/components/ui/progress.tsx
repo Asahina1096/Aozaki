@@ -25,8 +25,7 @@ const Progress = React.forwardRef<
 >(({ className, value = 0, max = 100, variant = "default", ...props }, ref) => {
   const safeMax = typeof max === "number" && max > 0 ? max : 0;
   const safeValue = typeof value === "number" ? value : 0;
-  const percentage =
-    safeMax === 0 ? 0 : Math.min(Math.max((safeValue / safeMax) * 100, 0), 100);
+  const percentage = safeMax === 0 ? 0 : Math.min(Math.max((safeValue / safeMax) * 100, 0), 100);
 
   const variantClasses = {
     default: "bg-gradient-to-r from-primary/80 via-primary to-primary/80",
@@ -45,14 +44,14 @@ const Progress = React.forwardRef<
       ref={ref}
       className={cn(
         "relative h-2 w-full overflow-hidden rounded-full bg-secondary/50 shadow-inner",
-        className
+        className,
       )}
       {...props}
     >
       <div
         className={cn(
           "h-full w-full flex-1 rounded-full shadow-sm transition-transform duration-150 ease-out",
-          variantClasses[actualVariant]
+          variantClasses[actualVariant],
         )}
         style={{
           transform: `translateX(-${100 - percentage}%)`,

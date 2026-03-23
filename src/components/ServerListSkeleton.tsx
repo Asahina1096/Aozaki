@@ -13,9 +13,7 @@ export function ServerListSkeleton() {
         ))}
       </div>
       <div className="flex items-center">
-        <span className="text-xl md:text-2xl font-bold text-primary">
-          节点列表
-        </span>
+        <span className="text-xl md:text-2xl font-bold text-primary">节点列表</span>
       </div>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {Array.from({ length: SERVER_SKELETON_COUNT }, (_, i) => (

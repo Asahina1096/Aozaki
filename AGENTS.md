@@ -5,7 +5,7 @@ Practical instructions for coding agents operating in `/home/mihari/Aozaki`.
 ## 1) Repository Scope
 - Primary package: `aozaki` (repo root).
 - Stack: Astro 6, React 19, TypeScript (strict), TailwindCSS 4.
-- Tooling: Bun runtime/package manager, Biome 2 for format/lint.
+- Tooling: Bun runtime/package manager, Oxfmt for formatting, Biome for linting.
 - Build target: static site output in `dist/`.
 - Path alias: `@/*` maps to `./src/*`.
 
@@ -43,10 +43,6 @@ bun run preview
 Quality commands:
 
 ```bash
-bun run biome:check
-bun run biome:fix
-bun run lint
-bun run lint:fix
 bun run format
 bun run format:check
 bun run check
@@ -55,15 +51,14 @@ bun run check:all
 
 Command notes:
 - `bun run check` removes `dist`, `.astro`, and cache before `astro check`.
-- `bun run check:all` runs `check` then `biome:check`.
+- `bun run check:all` runs `check` then `format:check`.
 - Use targeted file checks while iterating; run broader checks before handoff.
 
 Single-file quick checks:
 
 ```bash
-bunx biome check src/components/ServerList.tsx
-bunx biome lint src/lib/api.ts
-bunx biome format --write src/components/ServerCard.tsx
+bunx oxfmt --write src/components/ServerList.tsx
+bunx oxfmt --check src/components/ServerCard.tsx
 ```
 
 Test status in this repository (current):
@@ -88,7 +83,7 @@ bunx playwright test path/to/spec.test.ts
 ```
 
 ## 4) Code Style and Conventions
-Formatting baseline (`biome.json` + `.editorconfig`):
+Formatting baseline (`oxfmt` + `.editorconfig`):
 - Indentation: 2 spaces.
 - Line endings: LF.
 - Preferred print width: 80.
@@ -102,7 +97,7 @@ Imports and module conventions:
 - Use relative imports only when clearly shorter and local.
 - Use `import type` for type-only imports.
 - ESM only (`import`/`export`); avoid CommonJS `require`.
-- Let Biome organize imports instead of manual sorting.
+- Let Oxfmt organize imports instead of manual sorting.
 
 TypeScript conventions:
 - Keep strict typing (`extends: astro/tsconfigs/strict`).
@@ -133,12 +128,6 @@ Error handling and resilience:
 - Re-throw errors when caller/UI must decide recovery.
 - Handle aborted/cancelled async flows safely.
 
-Lint expectations from current Biome setup:
-- Use `const` by default; use `let` only for reassignment.
-- `noVar` is enforced for TS files.
-- Keep hooks at top level (`useHookAtTopLevel` is error).
-- Avoid dead code, suspicious control flow, and unsafe patterns.
-
 ## 5) Agent Workflow Expectations
 1. Read nearby files before editing; match existing patterns first.
 2. Make the smallest safe change that solves the requested task.
@@ -148,7 +137,7 @@ Lint expectations from current Biome setup:
 6. If new conventions are introduced, update this file in the same PR.
 
 Suggested validation order:
-1. Run single-file Biome checks on modified files.
+1. Run single-file Oxfmt checks on modified files.
 2. Run `bun run check` when type-level behavior could be affected.
 3. Run `bun run check:all` for larger or risky changes.
 4. If tests exist, run the relevant single-test command and report results.

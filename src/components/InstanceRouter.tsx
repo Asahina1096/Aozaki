@@ -72,12 +72,8 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
         value={chartView}
         onValueChange={(value) => setChartView(value as "load" | "ping")}
       >
-        <SegmentedControl.Item value="load">
-          {t("nodeCard.load")}
-        </SegmentedControl.Item>
-        <SegmentedControl.Item value="ping">
-          {t("nodeCard.ping")}
-        </SegmentedControl.Item>
+        <SegmentedControl.Item value="load">{t("nodeCard.load")}</SegmentedControl.Item>
+        <SegmentedControl.Item value="ping">{t("nodeCard.ping")}</SegmentedControl.Item>
       </SegmentedControl.Root>
 
       {chartView === "load" ? (
@@ -115,9 +111,7 @@ const InstanceRouter: React.FC = () => {
 
   return (
     <div className="text-center py-8">
-      <p className="text-muted-foreground">
-        Select an instance to view details
-      </p>
+      <p className="text-muted-foreground">Select an instance to view details</p>
     </div>
   );
 };

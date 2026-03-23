@@ -14,10 +14,7 @@ const Flag: React.FC<FlagProps> = ({ flag, size = 20 }) => {
   const regionInfo = emojiToRegionMap[flag];
   if (regionInfo) {
     return (
-      <span
-        style={{ fontSize: size }}
-        title={`${regionInfo.zh} (${regionInfo.en})`}
-      >
+      <span style={{ fontSize: size }} title={`${regionInfo.zh} (${regionInfo.en})`}>
         {flag}
       </span>
     );

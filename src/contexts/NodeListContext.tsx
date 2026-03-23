@@ -40,13 +40,9 @@ interface NodeListContextType {
   refresh: () => void;
 }
 
-const NodeListContext = React.createContext<NodeListContextType | undefined>(
-  undefined
-);
+const NodeListContext = React.createContext<NodeListContextType | undefined>(undefined);
 
-export const NodeListProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export const NodeListProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [nodeList, setNodeList] = React.useState<NodeBasicInfo[] | null>(null);
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -64,13 +60,11 @@ export const NodeListProvider: React.FC<{ children: React.ReactNode }> = ({
           uuid: typeof n.uuid === "string" ? n.uuid : "",
           name: typeof n.name === "string" ? n.name : "",
           cpu_name: typeof n.cpu_name === "string" ? n.cpu_name : "",
-          virtualization:
-            typeof n.virtualization === "string" ? n.virtualization : "",
+          virtualization: typeof n.virtualization === "string" ? n.virtualization : "",
           arch: typeof n.arch === "string" ? n.arch : "",
           cpu_cores: typeof n.cpu_cores === "number" ? n.cpu_cores : 0,
           os: typeof n.os === "string" ? n.os : "",
-          kernel_version:
-            typeof n.kernel_version === "string" ? n.kernel_version : "",
+          kernel_version: typeof n.kernel_version === "string" ? n.kernel_version : "",
           gpu_name: typeof n.gpu_name === "string" ? n.gpu_name : "",
           region: typeof n.region === "string" ? n.region : "",
           mem_total: typeof n.mem_total === "number" ? n.mem_total : 0,
@@ -80,12 +74,10 @@ export const NodeListProvider: React.FC<{ children: React.ReactNode }> = ({
           weight: typeof n.weight === "number" ? n.weight : 0,
           price: typeof n.price === "number" ? n.price : 0,
           tags: typeof n.tags === "string" ? n.tags : "",
-          billing_cycle:
-            typeof n.billing_cycle === "number" ? n.billing_cycle : 0,
+          billing_cycle: typeof n.billing_cycle === "number" ? n.billing_cycle : 0,
           currency: typeof n.currency === "string" ? n.currency : "",
           group: typeof n.group === "string" ? n.group : "",
-          traffic_limit:
-            typeof n.traffic_limit === "number" ? n.traffic_limit : 0,
+          traffic_limit: typeof n.traffic_limit === "number" ? n.traffic_limit : 0,
           traffic_limit_type:
             n.traffic_limit_type === "sum" ||
             n.traffic_limit_type === "max" ||
@@ -103,11 +95,7 @@ export const NodeListProvider: React.FC<{ children: React.ReactNode }> = ({
         setNodeList(list);
       })
       .catch((err: unknown) => {
-        setError(
-          err instanceof Error
-            ? err.message
-            : "An error occurred while fetching data"
-        );
+        setError(err instanceof Error ? err.message : "An error occurred while fetching data");
         setNodeList([]);
       })
       .finally(() => {

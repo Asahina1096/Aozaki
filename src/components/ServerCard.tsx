@@ -1,24 +1,10 @@
-import {
-  Clock4,
-  Cpu,
-  HardDrive,
-  MapPin,
-  MemoryStick,
-  Network,
-  Server,
-} from "lucide-react";
+import { Clock4, Cpu, HardDrive, MapPin, MemoryStick, Network, Server } from "lucide-react";
 import { memo } from "react";
 import type { NodeBasicInfo } from "@/contexts/NodeListContext";
 import { CARD_CONTAINMENT_STYLE, PILL_STYLES } from "@/lib/constants";
 import { formatBytes } from "@/lib/utils";
 import type { Record } from "@/types/LiveData";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "./ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Progress } from "./ui/progress";
 import { Separator } from "./ui/separator";
 
@@ -104,11 +90,7 @@ function ServerCardComponent({ node, liveData, isOnline }: ServerCardProps) {
             </div>
             <span>{cpuUsage.toFixed(1)}%</span>
           </div>
-          <Progress
-            value={cpuUsage}
-            max={100}
-            variant={isOnline ? "auto" : "muted"}
-          />
+          <Progress value={cpuUsage} max={100} variant={isOnline ? "auto" : "muted"} />
           <p className="text-xs text-muted-foreground">
             负载: {load1.toFixed(2)} / {load5.toFixed(2)} / {load15.toFixed(2)}
           </p>
@@ -124,11 +106,7 @@ function ServerCardComponent({ node, liveData, isOnline }: ServerCardProps) {
             </div>
             <span>{ramPercent.toFixed(1)}%</span>
           </div>
-          <Progress
-            value={ramPercent}
-            max={100}
-            variant={isOnline ? "auto" : "muted"}
-          />
+          <Progress value={ramPercent} max={100} variant={isOnline ? "auto" : "muted"} />
           <p className="text-xs text-muted-foreground">
             {formatBytes(ramUsed)} / {formatBytes(memTotal)}
           </p>
@@ -144,11 +122,7 @@ function ServerCardComponent({ node, liveData, isOnline }: ServerCardProps) {
             </div>
             <span>{diskPercent.toFixed(1)}%</span>
           </div>
-          <Progress
-            value={diskPercent}
-            max={100}
-            variant={isOnline ? "auto" : "muted"}
-          />
+          <Progress value={diskPercent} max={100} variant={isOnline ? "auto" : "muted"} />
           <p className="text-xs text-muted-foreground">
             {formatBytes(diskUsed)} / {formatBytes(diskTotal)}
           </p>
