@@ -45,7 +45,8 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
   const [pingView, setPingView] = useState("1h");
   const { nodeList } = useNodeList();
   const length = 30 * 5;
-  const sectionCardClass = "rounded-2xl border border-border/20 bg-card/95 p-5 shadow-sm";
+  const sectionCardClass =
+    "card-blur-target rounded-2xl border border-border/20 bg-card/95 p-5 shadow-sm";
   const controlBaseClass =
     "rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-accent-foreground sm:px-4";
   const controlActiveClass =

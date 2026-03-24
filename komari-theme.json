@@ -5,5 +5,208 @@
   "version": "0.1",
   "author": "Asahina1096",
   "url": "https://github.com/Asahina1096/Aozaki",
-  "preview": "dist/assets/edit_117847723_p0.png"
+  "preview": "dist/assets/edit_117847723_p0.png",
+  "configuration": {
+    "type": "managed",
+    "data": [
+      {
+        "name": {
+          "en": "Theme Settings",
+          "zh-CN": "主题设置",
+          "ja": "テーマ設定"
+        },
+        "type": "title"
+      },
+      {
+        "key": "forceThemeMode",
+        "type": "select",
+        "default": "none",
+        "options": "none,dark,light",
+        "name": {
+          "en": "Force Theme Mode",
+          "zh-CN": "强制主题模式",
+          "ja": "テーマ強制モード"
+        },
+        "help": {
+          "en": "Force a specific theme mode, hiding the theme toggle button.",
+          "zh-CN": "强制使用特定主题模式，同时隐藏主题切换按钮。",
+          "ja": "特定のテーマモードを強制し、テーマ切り替えボタンを非表示にします。"
+        }
+      },
+      {
+        "name": {
+          "en": "Background Settings",
+          "zh-CN": "背景设置",
+          "ja": "背景設定"
+        },
+        "type": "title"
+      },
+      {
+        "key": "backgroundImageEnabled",
+        "type": "switch",
+        "default": false,
+        "name": {
+          "en": "Enable Background Image",
+          "zh-CN": "启用背景图片",
+          "ja": "背景画像有効"
+        },
+        "help": {
+          "en": "Toggle the background image on or off.",
+          "zh-CN": "开启或关闭背景图片。",
+          "ja": "背景画像を表示または非表示にします。"
+        }
+      },
+      {
+        "key": "backgroundImageUrlDesktop",
+        "type": "string",
+        "default": "",
+        "name": {
+          "en": "Background Image URL (Desktop)",
+          "zh-CN": "背景图片URL（桌面端）",
+          "ja": "背景画像のURL（デスクトップ）"
+        },
+        "help": {
+          "en": "Set a custom background image for the homepage on desktop devices.",
+          "zh-CN": "为桌面端首页设置自定义背景图片。",
+          "ja": "デスクトップデバイスのホームページのカスタム背景画像を設定します。"
+        }
+      },
+      {
+        "key": "backgroundImageUrlMobile",
+        "type": "string",
+        "default": "",
+        "name": {
+          "en": "Background Image URL (Mobile)",
+          "zh-CN": "背景图片URL（移动端）",
+          "ja": "背景画像のURL（モバイル）"
+        },
+        "help": {
+          "en": "Set a custom background image for the homepage on mobile devices. If empty, the desktop background will be used.",
+          "zh-CN": "为移动端首页设置自定义背景图片。如果为空，将使用桌面端背景。",
+          "ja": "モバイルデバイスのホームページのカスタム背景画像を設定します。空の場合、デスクトップの背景が使用されます。"
+        }
+      },
+      {
+        "name": {
+          "en": "Background Appearance",
+          "zh-CN": "背景外观",
+          "ja": "背景外観"
+        },
+        "type": "title"
+      },
+      {
+        "key": "backgroundImageOverlayEnabled",
+        "type": "switch",
+        "default": false,
+        "name": {
+          "en": "Enable Background Blur",
+          "zh-CN": "启用背景模糊",
+          "ja": "背景ブラーを有効にする"
+        },
+        "help": {
+          "en": "Apply a Gaussian blur and darkening overlay on top of the background image.",
+          "zh-CN": "在背景图片上应用高斯模糊和调暗遮罩层。",
+          "ja": "背景画像の上にガウスブラーと比較明オーバーレイを適用します。"
+        }
+      },
+      {
+        "key": "backgroundImageOverlayBlur",
+        "type": "number",
+        "default": 0,
+        "name": {
+          "en": "Overlay Blur Intensity",
+          "zh-CN": "遮罩模糊强度",
+          "ja": "オーバーレイブラー強度"
+        },
+        "help": {
+          "en": "Gaussian blur intensity in pixels (0-20).",
+          "zh-CN": "高斯模糊强度，单位为像素（0-20）。",
+          "ja": "ガウスブラー強度（ピクセル、0-20）。"
+        }
+      },
+      {
+        "key": "backgroundImageOverlayDarkness",
+        "type": "number",
+        "default": 50,
+        "name": {
+          "en": "Overlay Darkening",
+          "zh-CN": "遮罩调暗程度",
+          "ja": "オーバーレイ暗さ"
+        },
+        "help": {
+          "en": "Darkness level as a percentage (0-100). Higher values mean more darkening.",
+          "zh-CN": "调暗程度，百分比（0-100）。数值越高越暗。",
+          "ja": "暗さのレベルをパーセンテージで指定（0-100）。値が大きいほど暗くなります。"
+        }
+      },
+      {
+        "key": "backgroundImageOverlayDarknessOnlyDark",
+        "type": "switch",
+        "default": false,
+        "name": {
+          "en": "Darkening Only in Dark Mode",
+          "zh-CN": "调暗仅在暗色模式生效",
+          "ja": "暗さをダークモードのみに適用"
+        },
+        "help": {
+          "en": "When enabled, the darkening effect will only apply in dark mode.",
+          "zh-CN": "启用后，调暗效果将仅在暗色模式下应用。",
+          "ja": "有効にすると、暗さの効果するのはダークモードのみになります。"
+        }
+      },
+      {
+        "key": "backgroundImageReadabilityOverlayOpacity",
+        "type": "number",
+        "default": 50,
+        "name": {
+          "en": "Readability Overlay Opacity",
+          "zh-CN": "可读性遮罩透明度",
+          "ja": "読み取りオーバーレイ不透明度"
+        },
+        "help": {
+          "en": "Adds a semi-transparent layer between background and content to improve text readability (0-100).",
+          "zh-CN": "在背景和内容之间添加半透明层以提高文字可读性（0-100）。",
+          "ja": "背景とコンテンツの間に半透明レイヤーを追加し、テキストの読み取りやすさを向上（0-100）。"
+        }
+      },
+      {
+        "name": {
+          "en": "Card Appearance",
+          "zh-CN": "卡片外观",
+          "ja": "カード外観"
+        },
+        "type": "title"
+      },
+      {
+        "key": "cardBlurEnabled",
+        "type": "switch",
+        "default": false,
+        "name": {
+          "en": "Enable Card Blur",
+          "zh-CN": "启用卡片模糊",
+          "ja": "カードブラーを有効化"
+        },
+        "help": {
+          "en": "Apply a blur effect to cards. Only works when Background Blur is enabled.",
+          "zh-CN": "为卡片应用模糊效果。仅在启用背景模糊时生效。",
+          "ja": "カードにブラー効果を適用します。背景ブラーが有効な場合のみ動作します。"
+        }
+      },
+      {
+        "key": "cardBlurIntensity",
+        "type": "number",
+        "default": 0,
+        "name": {
+          "en": "Card Blur Intensity",
+          "zh-CN": "卡片模糊强度",
+          "ja": "カードブラー強度"
+        },
+        "help": {
+          "en": "Blur intensity in pixels (0-20).",
+          "zh-CN": "模糊强度，单位为像素（0-20）。",
+          "ja": "ブラー強度（ピクセル、0-20）。"
+        }
+      }
+    ]
+  }
 }

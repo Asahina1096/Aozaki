@@ -34,6 +34,95 @@ const {
         const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
         const root = document.documentElement;
 
+        function isMobile() {
+          return window.matchMedia("(max-width: 768px)").matches;
+        }
+
+        function applyBackgroundImage(settings) {
+          if (!settings) return;
+          const backgroundImageEnabled = settings.backgroundImageEnabled ?? false;
+          const desktopUrl = settings.backgroundImageUrlDesktop;
+          const mobileUrl = settings.backgroundImageUrlMobile;
+          const bgUrl = isMobile() ? (mobileUrl || desktopUrl) : desktopUrl;
+
+          const overlayEnabled = settings.backgroundImageOverlayEnabled;
+          const overlayBlur = settings.backgroundImageOverlayBlur ?? 0;
+          const overlayDarkness = settings.backgroundImageOverlayDarkness ?? 50;
+          const darknessOnlyDark = settings.backgroundImageOverlayDarknessOnlyDark ?? false;
+
+          const cardBlurEnabled = settings.cardBlurEnabled ?? false;
+          const cardBlurIntensity = settings.cardBlurIntensity ?? 0;
+
+          const readabilityOverlayOpacity = settings.backgroundImageReadabilityOverlayOpacity ?? 50;
+
+          const forceThemeMode = settings.forceThemeMode ?? "none";
+
+          root.classList.remove("bg-overlay-enabled");
+          root.classList.remove("card-blur-enabled");
+          root.classList.remove("blur-style-frosted");
+          root.classList.remove("blur-style-acrylic");
+          root.classList.remove("theme-forced");
+          root.classList.remove("theme-forced-dark");
+          root.classList.remove("theme-forced-light");
+          root.style.removeProperty("--overlay-blur");
+          root.style.removeProperty("--overlay-darkness");
+          root.style.removeProperty("--card-blur");
+          root.style.removeProperty("--bg-image-url");
+          root.style.removeProperty("--readability-overlay-opacity");
+
+          window.__aozakiForceThemeMode = forceThemeMode !== "none" ? forceThemeMode : null;
+
+          if (forceThemeMode !== "none") {
+            root.classList.add("theme-forced");
+            root.classList.add("theme-forced-" + forceThemeMode);
+            apply(forceThemeMode);
+          }
+
+          if (bgUrl) {
+            root.style.setProperty("--bg-image-url", "url(" + bgUrl + ")");
+            root.style.setProperty("--readability-overlay-opacity", readabilityOverlayOpacity / 100);
+          }
+
+          const useOverlay = overlayEnabled && bgUrl;
+
+          if (useOverlay) {
+            let effectiveDarkness = overlayDarkness;
+            if (darknessOnlyDark) {
+              effectiveDarkness = root.classList.contains("dark") ? overlayDarkness : 0;
+            }
+            const effectiveOverlayBlur = overlayBlur === 0 ? cardBlurIntensity : overlayBlur;
+            root.style.setProperty("--overlay-blur", effectiveOverlayBlur + "px");
+            root.style.setProperty("--overlay-darkness", effectiveDarkness / 100);
+            root.classList.add("bg-overlay-enabled");
+            root.classList.add("blur-style-frosted");
+            if (cardBlurEnabled) {
+              root.style.setProperty("--card-blur", cardBlurIntensity + "px");
+              root.classList.add("card-blur-enabled");
+              root.classList.add("blur-style-frosted");
+            }
+          } else if (bgUrl && backgroundImageEnabled) {
+            root.style.backgroundImage = "url(" + bgUrl + ")";
+            root.style.backgroundSize = "cover";
+            root.style.backgroundPosition = "center";
+            root.style.backgroundRepeat = "no-repeat";
+            root.style.backgroundAttachment = "fixed";
+          }
+        }
+
+        function fetchAndApplyBackground() {
+          fetch("/api/public")
+            .then(function (response) {
+              if (!response.ok) return null;
+              return response.json();
+            })
+            .then(function (resp) {
+              if (resp && resp.data && resp.data.theme_settings) {
+                applyBackgroundImage(resp.data.theme_settings);
+              }
+            })
+            .catch(function () {});
+        }
+
         const isValid = (value) =>
           value === "light" || value === "dark" || value === "system";
 
@@ -59,6 +148,11 @@ const {
         }
 
         function apply(mode) {
+          const forcedMode = window.__aozakiForceThemeMode;
+          if (forcedMode) {
+            mode = forcedMode;
+          }
+
           const resolved = resolveMode(mode);
           root.dataset.appearance = mode;
 
@@ -99,10 +193,14 @@ const {
 
         // 初始化应用主题
         apply(getStoredMode());
+
+        // 应用背景图片
+        fetchAndApplyBackground();
       })();
     </script>
   </head>
   <body>
+    <div id="readability-overlay"></div>
     <slot />
   </body>
 </html>

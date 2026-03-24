@@ -320,7 +320,97 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
+  html {
+    background-color: var(--background);
   }
+  body {
+    @apply bg-transparent text-foreground;
+  }
+}
+
+#readability-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: rgba(255, 255, 255, var(--readability-overlay-opacity, 0.5));
+}
+
+html.dark #readability-overlay {
+  background-color: rgba(0, 0, 0, var(--readability-overlay-opacity, 0.5));
+}
+
+html.bg-overlay-enabled::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background-image: var(--bg-image-url);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  pointer-events: none;
+}
+
+html.blur-style-frosted.bg-overlay-enabled::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: rgba(0, 0, 0, var(--overlay-darkness, 0));
+  -webkit-backdrop-filter: blur(var(--overlay-blur, 0px));
+  backdrop-filter: blur(var(--overlay-blur, 0px));
+}
+
+html.blur-style-acrylic.bg-overlay-enabled::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: rgba(0, 0, 0, var(--overlay-darkness, 0));
+  -webkit-backdrop-filter: blur(var(--overlay-blur, 0px)) saturate(150%);
+  backdrop-filter: blur(var(--overlay-blur, 0px)) saturate(150%);
+}
+
+html.card-blur-enabled .card-blur-target {
+  position: relative;
+}
+
+html.card-blur-enabled .card-blur-target::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: -1;
+}
+
+html.blur-style-frosted.card-blur-enabled .card-blur-target::before {
+  background-color: var(--color-card);
+  opacity: 0.5;
+}
+
+html.blur-style-frosted.card-blur-enabled .card-blur-target {
+  background-color: transparent !important;
+  -webkit-backdrop-filter: blur(var(--card-blur, 0px));
+  backdrop-filter: blur(var(--card-blur, 0px));
+}
+
+html.blur-style-acrylic.card-blur-enabled .card-blur-target::before {
+  background-color: var(--color-card);
+  opacity: 0.6;
+  filter: blur(var(--card-blur, 0px))
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E#n");
+}
+
+html.blur-style-acrylic.card-blur-enabled .card-blur-target {
+  background-color: transparent !important;
+  -webkit-backdrop-filter: blur(var(--card-blur, 0px)) saturate(150%);
+  backdrop-filter: blur(var(--card-blur, 0px)) saturate(150%);
+}
+
+html.theme-forced #theme-toggle {
+  display: none !important;
 }

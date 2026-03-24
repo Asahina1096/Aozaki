@@ -107,7 +107,7 @@ export const DetailsGrid = ({ uuid }: DetailsGridProps) => {
           {statBars.map((item) => (
             <div
               key={item.key}
-              className="rounded-lg border border-border/20 bg-muted/40 px-3 py-2"
+              className="card-blur-target rounded-lg border border-border/20 bg-muted/40 px-3 py-2"
             >
               <div className="mb-1 flex items-center justify-between">
                 <span className="font-sans text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
@@ -133,7 +133,7 @@ export const DetailsGrid = ({ uuid }: DetailsGridProps) => {
             return (
               <div
                 key={item.key}
-                className="min-w-0 rounded-lg border border-border/20 bg-muted/30 px-3 py-2"
+                className="card-blur-target min-w-0 rounded-lg border border-border/20 bg-muted/30 px-3 py-2"
               >
                 <div className="mb-1 flex items-center gap-2 font-sans text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
                   <Icon className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />

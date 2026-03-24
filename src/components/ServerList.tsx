@@ -1,15 +1,13 @@
-import { Cpu, Network, PlugZap, Wifi } from "lucide-react";
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useLiveData } from "../contexts/LiveDataContext";
 import { useNodeList } from "../contexts/NodeListContext";
+import type { ServerStats } from "@/lib/types/serverstatus";
 import { ServerCard } from "./ServerCard";
+import { ServerOverview } from "./ServerOverview";
 import { ServerListSkeleton } from "./ServerListSkeleton";
 
 const DEFAULT_REFRESH_INTERVAL = 2000;
-const OVERVIEW_CARD_CLASS = "rounded-2xl border border-border/20 bg-card/95 p-5 shadow-sm";
-const OVERVIEW_VALUE_CLASS =
-  "text-xl font-semibold leading-none tabular-nums text-foreground whitespace-nowrap";
 
 interface ServerListProps {
   refreshInterval?: number;
@@ -58,39 +56,31 @@ export default function ServerList({
     );
   }, [sortedNodes, deferredSearchQuery]);
 
-  const overviewStats = useMemo(() => {
-    const totalNodes = nodeList?.length ?? 0;
-    const onlineNodes = onlineSet.size;
-    let totalCpu = 0;
-    let cpuCount = 0;
-    let totalUpRate = 0;
-    let totalDownRate = 0;
-    let totalUpTraffic = 0;
-    let totalDownTraffic = 0;
-
-    (nodeList || []).forEach((node) => {
+  const serverStats = useMemo((): ServerStats[] => {
+    return (nodeList || []).map((node) => {
       const data = live_data?.data?.data?.[node.uuid];
-      if (typeof data?.cpu?.usage === "number") {
-        totalCpu += data.cpu.usage;
-        cpuCount++;
-      }
-      if (data?.network) {
-        totalUpRate += data.network.up || 0;
-        totalDownRate += data.network.down || 0;
-        totalUpTraffic += data.network.totalUp || 0;
-        totalDownTraffic += data.network.totalDown || 0;
-      }
+      const isOnline = onlineSet.has(node.uuid);
+      return {
+        name: node.uuid,
+        online4: isOnline,
+        online6: false,
+        uptime: "",
+        load_1: 0,
+        load_5: 0,
+        load_15: 0,
+        cpu: data?.cpu?.usage ?? 0,
+        memory_total: 0,
+        memory_used: 0,
+        swap_total: 0,
+        swap_used: 0,
+        hdd_total: 0,
+        hdd_used: 0,
+        network_rx: data?.network?.down ?? 0,
+        network_tx: data?.network?.up ?? 0,
+        network_in: data?.network?.totalDown ?? 0,
+        network_out: data?.network?.totalUp ?? 0,
+      };
     });
-
-    return {
-      totalNodes,
-      onlineNodes,
-      avgCpu: cpuCount > 0 ? totalCpu / cpuCount : null,
-      totalUpRate,
-      totalDownRate,
-      totalUpTraffic,
-      totalDownTraffic,
-    };
   }, [nodeList, live_data, onlineSet]);
 
   const hasNodes = nodeList && nodeList.length > 0;
@@ -134,84 +124,7 @@ export default function ServerList({
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <div className={OVERVIEW_CARD_CLASS}>
-          <div className="mb-3 flex items-center justify-between">
-            <div className="text-xs tracking-wide text-muted-foreground">在线节点</div>
-            <div className="flex items-center gap-2">
-              <PlugZap className="h-4 w-4 text-muted-foreground" />
-            </div>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className={OVERVIEW_VALUE_CLASS}>{overviewStats.onlineNodes}</span>
-            <span className="text-sm tabular-nums text-muted-foreground">
-              / {overviewStats.totalNodes}
-            </span>
-          </div>
-        </div>
-
-        <div className={OVERVIEW_CARD_CLASS}>
-          <div className="mb-3 flex items-center justify-between">
-            <div className="text-xs tracking-wide text-muted-foreground">平均 CPU 使用率</div>
-            <Cpu className="h-4 w-4 text-muted-foreground" />
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className={OVERVIEW_VALUE_CLASS}>
-              {overviewStats.avgCpu === null ? "-" : `${overviewStats.avgCpu.toFixed(1)}%`}
-            </span>
-          </div>
-        </div>
-
-        <div
-          className={OVERVIEW_CARD_CLASS}
-          style={{
-            backgroundImage:
-              "linear-gradient(120deg, transparent 0%, rgba(59,130,246,0.04) 50%, transparent 100%)",
-          }}
-        >
-          <div className="mb-3 flex items-center justify-between">
-            <div className="text-xs tracking-wide text-muted-foreground">实时网络速率</div>
-            <Network className="h-4 w-4 text-muted-foreground" />
-          </div>
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className="flex items-baseline gap-2 text-foreground">
-              <span className="text-base font-semibold leading-none">↑</span>
-              <span className={OVERVIEW_VALUE_CLASS}>
-                {formatBytes(overviewStats.totalUpRate)}
-                <span className="ml-1 text-xs text-muted-foreground">/s</span>
-              </span>
-            </div>
-            <div className="flex items-baseline gap-2 text-foreground justify-self-end">
-              <span className="text-base font-semibold leading-none">↓</span>
-              <span className={OVERVIEW_VALUE_CLASS}>
-                {formatBytes(overviewStats.totalDownRate)}
-                <span className="ml-1 text-xs text-muted-foreground">/s</span>
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className={OVERVIEW_CARD_CLASS}>
-          <div className="mb-3 flex items-center justify-between">
-            <div className="text-xs tracking-wide text-muted-foreground">总流量</div>
-            <Wifi className="h-4 w-4 text-muted-foreground" />
-          </div>
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className="flex items-baseline gap-2 text-foreground">
-              <span className="text-base font-semibold leading-none">↑</span>
-              <span className={OVERVIEW_VALUE_CLASS}>
-                {formatBytes(overviewStats.totalUpTraffic)}
-              </span>
-            </div>
-            <div className="flex items-baseline gap-2 text-foreground justify-self-end">
-              <span className="text-base font-semibold leading-none">↓</span>
-              <span className={OVERVIEW_VALUE_CLASS}>
-                {formatBytes(overviewStats.totalDownTraffic)}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ServerOverview servers={serverStats} />
 
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
@@ -252,12 +165,4 @@ export default function ServerList({
       </div>
     </div>
   );
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB", "TB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
 }

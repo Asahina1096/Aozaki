@@ -44,7 +44,7 @@ function ServerCardComponent({ node, liveData, isOnline }: ServerCardProps) {
   const totalDown = liveData?.network?.totalDown ?? 0;
 
   return (
-    <Card className="overflow-hidden" style={CARD_CONTAINMENT_STYLE}>
+    <Card className="card-blur-target overflow-hidden" style={CARD_CONTAINMENT_STYLE}>
       <CardHeader className="p-5 pb-3 md:p-4 md:pb-2 space-y-0.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 ml-1">

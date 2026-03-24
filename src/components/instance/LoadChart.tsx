@@ -388,7 +388,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
 
   const percentageFormatter = (value: unknown) => `${toNumeric(value).toFixed(2)}%`;
   const cardClass =
-    "flex h-full w-full flex-col rounded-2xl border border-border/20 bg-card/95 p-5 shadow-sm";
+    "card-blur-target flex h-full w-full flex-col rounded-2xl border border-border/20 bg-card/95 p-5 shadow-sm";
   const chartBodyClass = "h-40 w-full aspect-auto";
 
   const chartTitle = (text: string, right: React.ReactNode) => (
