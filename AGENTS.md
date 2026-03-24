@@ -1,46 +1,47 @@
 # AGENTS.md
 
-Practical instructions for coding agents operating in `/home/mihari/Aozaki`.
+Operational guidance for coding agents working in `/home/mihari/Aozaki`.
 
-## 1) Repository Scope
-- Primary package: `aozaki` (repo root).
+## 1) Repository Overview
+- Project: Aozaki theme for Komari Monitor.
 - Stack: Astro 6, React 19, TypeScript (strict), TailwindCSS 4.
-- Tooling: Bun runtime/package manager, Oxfmt for formatting, Biome for linting.
+- Package manager and runtime: Bun (`bun@1.3.11`).
 - Build target: static site output in `dist/`.
-- Path alias: `@/*` maps to `./src/*`.
+- TS path alias: `@/*` maps to `src/*`.
 
-Common folders:
+Key areas:
 - `src/pages/*.astro`: page entrypoints and static shell.
-- `src/components/*.tsx`: interactive UI components.
-- `src/contexts/*.tsx`: shared client state/providers.
-- `src/lib/*`: helpers, API clients, shared app logic.
-- `src/types/*`: TypeScript data models.
-- `src/styles/globals.css`: global styles and Tailwind layers.
+- `src/components/**/*.tsx` and `src/contexts/**/*.tsx`: UI, routing, and provider logic.
+- `src/lib/**`, `src/types/**`, `src/styles/**`: shared logic, app types, and theme styles.
 
-## 2) Environment and Setup
-Run all commands from repository root.
+## 2) Setup and Environment
+Run all commands from repository root:
 
 ```bash
 bun install
 cp .env.example .env
 ```
 
-Environment variables:
-- `PUBLIC_API_URL` (required by app runtime).
-- Use a full `http://` or `https://` URL.
-- Do not use a trailing slash in production URLs.
-- Dev proxy fallback is configured in `astro.config.mjs` via `VITE_API_TARGET`.
+Environment expectations:
+- `PUBLIC_API_URL` is required at runtime.
+- Use full URLs (`http://` or `https://`).
+- Prefer no trailing slash for production URLs.
+- Dev proxy target can be overridden via `VITE_API_TARGET`.
+- Default proxy target in `astro.config.mjs`: `http://127.0.0.1:25774`.
 
-## 3) Build, Lint, Check, and Test Commands
-Core commands:
+## 3) Build, Check, and Test Commands
+Primary scripts (`package.json`):
 
 ```bash
 bun run dev
 bun run build
 bun run preview
+bun run package
+bun run clean
+bun run clean:all
 ```
 
-Quality commands:
+Code quality scripts:
 
 ```bash
 bun run format
@@ -49,107 +50,105 @@ bun run check
 bun run check:all
 ```
 
-Command notes:
-- `bun run check` removes `dist`, `.astro`, and cache before `astro check`.
-- `bun run check:all` runs `check` then `format:check`.
-- Use targeted file checks while iterating; run broader checks before handoff.
+How these behave:
+- `format`: `oxfmt --write .`
+- `format:check`: `oxfmt --check .`
+- `check`: clean artifacts, then `astro check`
+- `check:all`: `check`, then `format:check`
 
-Single-file quick checks:
+Lint status:
+- No dedicated `lint` script exists.
+- No Biome/ESLint config is present in repo root.
+- Use `bun run check:all` as the baseline quality gate.
 
-```bash
-bunx oxfmt --write src/components/ServerList.tsx
-bunx oxfmt --check src/components/ServerCard.tsx
-```
-
-Test status in this repository (current):
+Test status right now:
 - No `test` script exists in `package.json`.
-- No `*.test.*` or `*.spec.*` files are present.
-- Validation baseline today: `bun run check` + Biome checks.
+- No `*.test.*` or `*.spec.*` files currently exist under `src/`.
 
-If tests are introduced later, use single-test execution patterns:
+Single-test commands to use once tests are added:
 
 ```bash
-# Bun test runner (single file)
-bun test path/to/file.test.ts
+# Bun test runner: one test file
+bun test src/foo/bar.test.ts
 
-# Vitest (single file)
-bunx vitest run path/to/file.test.ts
+# Vitest: one test file
+bunx vitest run src/foo/bar.test.ts
 
-# Jest (single file)
-bunx jest path/to/file.test.ts
+# Jest: one test file
+bunx jest src/foo/bar.test.ts
 
-# Playwright (single spec)
-bunx playwright test path/to/spec.test.ts
+# Playwright: one spec file
+bunx playwright test tests/example.spec.ts
 ```
+
+Agent rule for tests:
+- Run the smallest relevant single test first, then `bun run check` or `bun run check:all`.
 
 ## 4) Code Style and Conventions
-Formatting baseline (`oxfmt` + `.editorconfig`):
-- Indentation: 2 spaces.
-- Line endings: LF.
-- Preferred print width: 80.
-- Semicolons: always.
-- Quotes in JS/TS/JSX: double quotes.
-- Trailing commas: ES5.
-- Insert final newline; trim trailing whitespace (except Markdown).
+Formatting baseline (`.editorconfig` + formatter behavior):
+- UTF-8, LF, 2-space indentation.
+- Always keep a final newline.
+- Trim trailing whitespace (except Markdown).
+- Let formatter own spacing and line wrapping.
 
-Imports and module conventions:
-- Prefer `@/` imports for modules under `src`.
-- Use relative imports only when clearly shorter and local.
-- Use `import type` for type-only imports.
-- ESM only (`import`/`export`); avoid CommonJS `require`.
-- Let Oxfmt organize imports instead of manual sorting.
+Imports and module rules:
+- Prefer `@/` alias for imports from `src`.
+- Use relative imports only when very local.
+- Use `import type` for type-only symbols.
+- Keep ESM syntax only (`import` / `export`).
+- Follow local import ordering in touched files.
 
-TypeScript conventions:
-- Keep strict typing (`extends: astro/tsconfigs/strict`).
-- Avoid `any`; if unavoidable, narrow immediately and isolate scope.
-- Prefer explicit interfaces/types for API payloads and context values.
-- Preserve backend field names at API boundaries (including snake_case).
-- Use unions/literals/`as const` for finite state values.
+TypeScript rules:
+- Keep strict typing compatible with `astro/tsconfigs/strict`.
+- Avoid `any`; prefer explicit interfaces, narrow unions, and generics.
+- Preserve backend field naming at boundaries (`snake_case` is valid).
+- Validate unknown payloads before converting to app-level types.
+- Prefer `as const` for finite constant maps when useful.
 
-Naming and files:
-- Components, interfaces, types, classes: `PascalCase`.
+React and Astro patterns:
+- Keep static structure and layout in `.astro` files.
+- Keep interactivity in React components/contexts.
+- Compose providers through the existing `AppProviders` chain.
+- Clean up timers/listeners/subscriptions in effects.
+- Use stable keys (`uuid` or backend identifiers), never array indices for dynamic lists.
+
+Naming conventions observed in repo:
+- Components, types, interfaces: `PascalCase`.
 - Variables, functions, hooks: `camelCase`.
-- Hook names start with `use`.
-- Module constants: `UPPER_SNAKE_CASE`.
-- Component files: `PascalCase.tsx`.
-- Utility files: lowercase names like `api.ts`, `utils.ts`.
+- Hooks start with `use`.
+- Constants: `UPPER_SNAKE_CASE`.
+- Component files are mostly `PascalCase.tsx`; preserve local folder patterns.
 
-React/Astro patterns:
-- Keep page structure/static concerns in `.astro` files.
-- Keep stateful/interactive behavior in React components and contexts.
-- Follow existing provider composition patterns (`AppProviders`, etc.).
-- Effects with timers/polling must always clean up on unmount.
-- Prefer stable backend identifiers (`uuid`) for React list keys.
+Error handling:
+- Wrap async API/RPC operations in `try/catch` when caller needs error state.
+- Check `response.ok` before treating fetch as success.
+- Include operation context in thrown/logged errors.
+- Re-throw when higher layers need to decide recovery/UI behavior.
+- Handle cancellation/abort cases safely when `AbortSignal` is used.
 
-Error handling and resilience:
-- Wrap async network calls in `try/catch`.
-- Check `response.ok` before using response payloads.
-- Provide actionable error messages with context (status/operation).
-- Re-throw errors when caller/UI must decide recovery.
-- Handle aborted/cancelled async flows safely.
+## 5) Editing and Review Expectations
+- Read nearby files before editing; align with existing architecture.
+- Prefer minimal, scoped edits over broad refactors.
+- Do not revert unrelated user changes.
+- Add dependencies only when required by the task.
+- Keep comments minimal and only for non-obvious intent.
 
-## 5) Agent Workflow Expectations
-1. Read nearby files before editing; match existing patterns first.
-2. Make the smallest safe change that solves the requested task.
-3. Avoid unrelated refactors or cleanup not required by the task.
-4. Do not overwrite user-authored changes you did not create.
-5. Validate touched files with targeted checks, then broader checks.
-6. If new conventions are introduced, update this file in the same PR.
-
-Suggested validation order:
-1. Run single-file Oxfmt checks on modified files.
-2. Run `bun run check` when type-level behavior could be affected.
-3. Run `bun run check:all` for larger or risky changes.
-4. If tests exist, run the relevant single-test command and report results.
+Suggested validation order after edits:
+1. Run targeted formatter/type checks for changed files.
+2. Run `bun run check` when type or runtime surfaces changed.
+3. Run `bun run check:all` before handoff when feasible.
 
 ## 6) Cursor and Copilot Rule Files
-Checked paths:
+Checked rule paths:
 - `.cursor/rules/`
 - `.cursorrules`
 - `.github/copilot-instructions.md`
 
-Current status:
-- No Cursor or Copilot rule files were found.
+Current repository status:
+- No Cursor rule files found.
+- No Copilot instructions file found.
 
-If these files are added later, treat them as higher-priority instructions and
-sync this `AGENTS.md` accordingly.
+If these rule files are added later:
+- Treat them as high-priority repo instructions.
+- Reconcile conflicts in favor of explicit repository rule files.
+- Keep this `AGENTS.md` updated to mirror those rules.

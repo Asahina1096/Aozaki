@@ -21,7 +21,7 @@ const {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light dark" />
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link id="site-favicon" rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/site.webmanifest" />
     <title>{title}</title>
     <!--
@@ -40,18 +40,23 @@ const {
 
         function applyBackgroundImage(settings) {
           if (!settings) return;
+          const clampBlur = function (value) {
+            const n = Number(value);
+            if (!Number.isFinite(n)) return 0;
+            return Math.min(Math.max(n, 0), 8);
+          };
           const backgroundImageEnabled = settings.backgroundImageEnabled ?? false;
           const desktopUrl = settings.backgroundImageUrlDesktop;
           const mobileUrl = settings.backgroundImageUrlMobile;
           const bgUrl = isMobile() ? (mobileUrl || desktopUrl) : desktopUrl;
 
           const overlayEnabled = settings.backgroundImageOverlayEnabled;
-          const overlayBlur = settings.backgroundImageOverlayBlur ?? 0;
+          const overlayBlur = clampBlur(settings.backgroundImageOverlayBlur ?? 0);
           const overlayDarkness = settings.backgroundImageOverlayDarkness ?? 50;
           const darknessOnlyDark = settings.backgroundImageOverlayDarknessOnlyDark ?? false;
 
           const cardBlurEnabled = settings.cardBlurEnabled ?? false;
-          const cardBlurIntensity = settings.cardBlurIntensity ?? 0;
+          const cardBlurIntensity = clampBlur(settings.cardBlurIntensity ?? 0);
 
           const readabilityOverlayOpacity = settings.backgroundImageReadabilityOverlayOpacity ?? 50;
 
@@ -69,6 +74,11 @@ const {
           root.style.removeProperty("--card-blur");
           root.style.removeProperty("--bg-image-url");
           root.style.removeProperty("--readability-overlay-opacity");
+          root.style.removeProperty("background-image");
+          root.style.removeProperty("background-size");
+          root.style.removeProperty("background-position");
+          root.style.removeProperty("background-repeat");
+          root.style.removeProperty("background-attachment");
 
           window.__aozakiForceThemeMode = forceThemeMode !== "none" ? forceThemeMode : null;
 
@@ -103,9 +113,9 @@ const {
           } else if (bgUrl && backgroundImageEnabled) {
             root.style.backgroundImage = "url(" + bgUrl + ")";
             root.style.backgroundSize = "cover";
-            root.style.backgroundPosition = "center";
+            root.style.backgroundPosition = "center top";
             root.style.backgroundRepeat = "no-repeat";
-            root.style.backgroundAttachment = "fixed";
+            root.style.backgroundAttachment = isMobile() ? "scroll" : "fixed";
           }
         }
 
@@ -116,9 +126,32 @@ const {
               return response.json();
             })
             .then(function (resp) {
-              if (resp && resp.data && resp.data.theme_settings) {
+              if (!resp || !resp.data) return;
+
+              const sitename = resp.data.sitename;
+              if (typeof sitename === "string" && sitename.trim()) {
+                document.title = sitename.trim();
+              }
+
+              if (resp.data.theme_settings) {
                 applyBackgroundImage(resp.data.theme_settings);
               }
+            })
+            .catch(function () {});
+        }
+
+        function applyFavicon() {
+          const faviconEl = document.getElementById("site-favicon");
+          if (!(faviconEl instanceof HTMLLinkElement)) return;
+
+          fetch("/favicon.ico", {
+            method: "HEAD",
+            cache: "no-store",
+          })
+            .then(function (response) {
+              if (!response.ok) return;
+              faviconEl.href = "/favicon.ico";
+              faviconEl.type = "image/x-icon";
             })
             .catch(function () {});
         }
@@ -196,6 +229,9 @@ const {
 
         // 应用背景图片
         fetchAndApplyBackground();
+
+        // 应用后台自定义 favicon
+        applyFavicon();
       })();
     </script>
   </head>

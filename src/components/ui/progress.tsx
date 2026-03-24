@@ -1,18 +1,14 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-// 将渐变计算移到组件外部，避免每次渲染都创建新函数
 const getAutoGradient = (percentage: number) => {
-  if (percentage >= 80) {
-    // 80-100%: 橙红到红色渐变
-    return "bg-gradient-to-r from-orange-500 via-red-500 to-red-600";
+  if (percentage >= 90) {
+    return "bg-gradient-to-r from-rose-400 via-rose-500 to-red-500";
   }
-  if (percentage >= 60) {
-    // 60-80%: 黄色到橙色渐变
-    return "bg-gradient-to-r from-yellow-400 via-yellow-500 to-orange-500";
+  if (percentage >= 70) {
+    return "bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500";
   }
-  // 0-59%: 绿青渐变（绿色为主）
-  return "bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500";
+  return "bg-gradient-to-r from-emerald-400 via-emerald-500 to-cyan-500";
 };
 
 const Progress = React.forwardRef<
@@ -28,12 +24,12 @@ const Progress = React.forwardRef<
   const percentage = safeMax === 0 ? 0 : Math.min(Math.max((safeValue / safeMax) * 100, 0), 100);
 
   const variantClasses = {
-    default: "bg-gradient-to-r from-primary/80 via-primary to-primary/80",
-    success: "bg-gradient-to-r from-emerald-400 via-green-500 to-green-600",
-    warning: "bg-gradient-to-r from-yellow-400 via-yellow-500 to-orange-500",
-    danger: "bg-gradient-to-r from-orange-500 via-red-500 to-red-600",
+    default: "bg-gradient-to-r from-emerald-400 via-emerald-500 to-cyan-500",
+    success: "bg-gradient-to-r from-emerald-400 via-emerald-500 to-cyan-500",
+    warning: "bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500",
+    danger: "bg-gradient-to-r from-rose-400 via-rose-500 to-red-500",
     muted:
-      "bg-gradient-to-r from-gray-300 via-gray-400 to-gray-500 dark:from-gray-600 dark:via-gray-700 dark:to-gray-800",
+      "bg-gradient-to-r from-slate-400 via-slate-500 to-slate-600 dark:from-slate-500 dark:via-slate-600 dark:to-slate-700",
     auto: getAutoGradient(percentage),
   };
 

@@ -112,7 +112,7 @@ export default function ServerList({
   return (
     <div className="space-y-6">
       {error && (
-        <div className="rounded-2xl border border-destructive/20 bg-destructive/10 backdrop-blur-sm p-4 text-sm text-destructive shadow-sm">
+        <div className="rounded-2xl border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive shadow-sm">
           <p>数据刷新失败：{error || "请稍后再试。"}</p>
           <button
             type="button"

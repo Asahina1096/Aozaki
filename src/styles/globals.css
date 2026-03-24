@@ -347,9 +347,8 @@ html.bg-overlay-enabled::before {
   z-index: -2;
   background-image: var(--bg-image-url);
   background-size: cover;
-  background-position: center;
+  background-position: center top;
   background-repeat: no-repeat;
-  background-attachment: fixed;
   pointer-events: none;
 }
 
@@ -360,8 +359,8 @@ html.blur-style-frosted.bg-overlay-enabled::after {
   z-index: -1;
   pointer-events: none;
   background-color: rgba(0, 0, 0, var(--overlay-darkness, 0));
-  -webkit-backdrop-filter: blur(var(--overlay-blur, 0px));
-  backdrop-filter: blur(var(--overlay-blur, 0px));
+  -webkit-backdrop-filter: blur(clamp(0px, var(--overlay-blur, 0px), 8px));
+  backdrop-filter: blur(clamp(0px, var(--overlay-blur, 0px), 8px));
 }
 
 html.blur-style-acrylic.bg-overlay-enabled::after {
@@ -371,12 +370,14 @@ html.blur-style-acrylic.bg-overlay-enabled::after {
   z-index: -1;
   pointer-events: none;
   background-color: rgba(0, 0, 0, var(--overlay-darkness, 0));
-  -webkit-backdrop-filter: blur(var(--overlay-blur, 0px)) saturate(150%);
-  backdrop-filter: blur(var(--overlay-blur, 0px)) saturate(150%);
+  -webkit-backdrop-filter: blur(clamp(0px, var(--overlay-blur, 0px), 8px));
+  backdrop-filter: blur(clamp(0px, var(--overlay-blur, 0px), 8px));
 }
 
 html.card-blur-enabled .card-blur-target {
   position: relative;
+  background-color: transparent !important;
+  isolation: isolate;
 }
 
 html.card-blur-enabled .card-blur-target::before {
@@ -385,30 +386,8 @@ html.card-blur-enabled .card-blur-target::before {
   inset: 0;
   border-radius: inherit;
   z-index: -1;
-}
-
-html.blur-style-frosted.card-blur-enabled .card-blur-target::before {
   background-color: var(--color-card);
-  opacity: 0.5;
-}
-
-html.blur-style-frosted.card-blur-enabled .card-blur-target {
-  background-color: transparent !important;
-  -webkit-backdrop-filter: blur(var(--card-blur, 0px));
-  backdrop-filter: blur(var(--card-blur, 0px));
-}
-
-html.blur-style-acrylic.card-blur-enabled .card-blur-target::before {
-  background-color: var(--color-card);
-  opacity: 0.6;
-  filter: blur(var(--card-blur, 0px))
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E#n");
-}
-
-html.blur-style-acrylic.card-blur-enabled .card-blur-target {
-  background-color: transparent !important;
-  -webkit-backdrop-filter: blur(var(--card-blur, 0px)) saturate(150%);
-  backdrop-filter: blur(var(--card-blur, 0px)) saturate(150%);
+  opacity: 0.72;
 }
 
 html.theme-forced #theme-toggle {

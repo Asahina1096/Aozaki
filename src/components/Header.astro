@@ -4,8 +4,8 @@
 ---
 
 <header
-  class="sticky top-0 z-50 w-full border-b border-border/20 bg-background/95 backdrop-blur-md supports-backdrop-filter:bg-background/60"
-  style="will-change: transform; contain: layout style paint;"
+  class="sticky top-0 z-50 w-full border-b border-border/20 bg-background/95"
+  style="contain: layout style paint;"
 >
   <div class="container flex h-16 items-center justify-between">
     <div class="flex items-center gap-3">
@@ -203,21 +203,11 @@
     }
 
     try {
-      const response = await fetch("/api/rpc2", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          method: "common:getPublicInfo",
-          params: {},
-          id: 1,
-        }),
-      });
+      const response = await fetch("/api/public");
       if (!response.ok) return;
 
       const json = await response.json();
-      if (json?.error) return;
-      const sitename = json?.result?.sitename;
+      const sitename = json?.data?.sitename;
 
       if (typeof sitename === "string" && sitename.trim()) {
         siteTitleCache.set("sitename", { value: sitename.trim(), timestamp: Date.now() });
