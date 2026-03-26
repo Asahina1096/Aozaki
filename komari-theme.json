@@ -66,9 +66,9 @@
           "ja": "背景画像のURL（デスクトップ）"
         },
         "help": {
-          "en": "Set a custom background image for the homepage on desktop devices.",
-          "zh-CN": "为桌面端首页设置自定义背景图片。",
-          "ja": "デスクトップデバイスのホームページのカスタム背景画像を設定します。"
+          "en": "Set a custom background media URL for desktop (image or video: mp4/webm/ogg).",
+          "zh-CN": "为桌面端首页设置自定义背景媒体 URL（图片或视频：mp4/webm/ogg）。",
+          "ja": "デスクトップ向けの背景メディア URL を設定します（画像または動画: mp4/webm/ogg）。"
         }
       },
       {
@@ -81,9 +81,9 @@
           "ja": "背景画像のURL（モバイル）"
         },
         "help": {
-          "en": "Set a custom background image for the homepage on mobile devices. If empty, the desktop background will be used.",
-          "zh-CN": "为移动端首页设置自定义背景图片。如果为空，将使用桌面端背景。",
-          "ja": "モバイルデバイスのホームページのカスタム背景画像を設定します。空の場合、デスクトップの背景が使用されます。"
+          "en": "Set a custom background media URL for mobile (image or video: mp4/webm/ogg). If empty, desktop URL is used.",
+          "zh-CN": "为移动端首页设置自定义背景媒体 URL（图片或视频：mp4/webm/ogg）。如果为空，将使用桌面端背景。",
+          "ja": "モバイル向けの背景メディア URL を設定します（画像または動画: mp4/webm/ogg）。空の場合はデスクトップ URL を使用します。"
         }
       },
       {
@@ -205,6 +205,36 @@
           "en": "Blur intensity in pixels (0-20).",
           "zh-CN": "模糊强度，单位为像素（0-20）。",
           "ja": "ブラー強度（ピクセル、0-20）。"
+        }
+      },
+      {
+        "key": "cardOpacityEnabled",
+        "type": "switch",
+        "default": false,
+        "name": {
+          "en": "Enable Card Opacity",
+          "zh-CN": "启用卡片透明度",
+          "ja": "カード透明度を有効化"
+        },
+        "help": {
+          "en": "Enable custom card opacity for all major cards.",
+          "zh-CN": "为主要卡片启用自定义透明度。",
+          "ja": "主要カード全体にカスタム透明度を適用します。"
+        }
+      },
+      {
+        "key": "cardOpacity",
+        "type": "number",
+        "default": 95,
+        "name": {
+          "en": "Card Opacity",
+          "zh-CN": "卡片透明度",
+          "ja": "カード透明度"
+        },
+        "help": {
+          "en": "Card opacity percentage (0-100). Lower values are more transparent.",
+          "zh-CN": "卡片不透明度百分比（0-100），值越低越透明。",
+          "ja": "カード不透明度（0-100）。値が小さいほど透明になります。"
         }
       }
     ]

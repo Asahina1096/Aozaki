@@ -207,12 +207,12 @@ function ChartTooltipContent(props: ChartTooltipContentProps) {
   const nestLabel = payload.length === 1 && indicator !== "dot";
 
   return (
-    <div
-      className={cn(
-        "border-border/50 bg-background grid min-w-[8rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl",
-        className,
-      )}
-    >
+      <div
+        className={cn(
+          "chart-tooltip-surface-target card-opacity-target card-blur-target grid min-w-[8rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl",
+          className,
+        )}
+      >
       {!nestLabel ? tooltipLabel : null}
       <div className="grid gap-1.5">
         {payload.map((item, index: number) => {
@@ -224,7 +224,7 @@ function ChartTooltipContent(props: ChartTooltipContentProps) {
             <div
               key={String(item.dataKey ?? index)}
               className={cn(
-                "[&>svg]:text-zinc-500 dark:[&>svg]:text-zinc-400 flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5",
+                "[&>svg]:text-foreground flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5",
                 indicator === "dot" && "items-center",
               )}
             >
@@ -259,12 +259,12 @@ function ChartTooltipContent(props: ChartTooltipContentProps) {
               >
                 <div className="grid gap-1.5">
                   {nestLabel ? tooltipLabel : null}
-                  <span className="text-zinc-500 dark:text-zinc-400">
+                  <span className="text-foreground">
                     {itemConfig?.label || item.name}
                   </span>
                 </div>
                 {item.value !== undefined && item.value !== null && (
-                  <span className="ml-2 text-zinc-900 font-mono font-medium tabular-nums dark:text-zinc-100">
+                  <span className="ml-2 text-foreground font-mono font-medium tabular-nums">
                     {formatter
                       ? formatter(item.value, item.name ?? "", item, index, item.payload)
                       : item.value}

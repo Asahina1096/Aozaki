@@ -8,9 +8,11 @@ import {
   Monitor,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useLiveData } from "@/contexts/LiveDataContext";
 import { useNodeList } from "@/contexts/NodeListContext";
+import { CARD_CONTAINMENT_STYLE, INFO_CARD_CLASS } from "@/lib/constants";
 import { formatBytes } from "@/utils/unitHelper";
 
 type DetailsGridProps = {
@@ -105,15 +107,16 @@ export const DetailsGrid = ({ uuid }: DetailsGridProps) => {
       <div className="mt-4 space-y-4">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {statBars.map((item) => (
-            <div
+            <Card
               key={item.key}
-              className="card-blur-target rounded-lg border border-border/20 bg-muted/40 px-3 py-2"
+              className={INFO_CARD_CLASS}
+              style={CARD_CONTAINMENT_STYLE}
             >
               <div className="mb-1 flex items-center justify-between">
                 <span className="font-sans text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
                   {item.label}
                 </span>
-                <span className="font-mono text-sm font-semibold text-foreground">
+                <span className="font-mono text-sm font-medium text-foreground">
                   {item.value.toFixed(1)}%
                 </span>
               </div>
@@ -123,7 +126,7 @@ export const DetailsGrid = ({ uuid }: DetailsGridProps) => {
                 variant={isOnline ? "auto" : "muted"}
                 className="h-1.5"
               />
-            </div>
+            </Card>
           ))}
         </div>
 
@@ -131,16 +134,17 @@ export const DetailsGrid = ({ uuid }: DetailsGridProps) => {
           {details.map((item) => {
             const Icon = item.icon;
             return (
-              <div
+              <Card
                 key={item.key}
-                className="card-blur-target min-w-0 rounded-lg border border-border/20 bg-muted/30 px-3 py-2"
+                className={`${INFO_CARD_CLASS} min-w-0`}
+                style={CARD_CONTAINMENT_STYLE}
               >
                 <div className="mb-1 flex items-center gap-2 font-sans text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
                   <Icon className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
                   <span>{item.label}</span>
                 </div>
                 <div className="truncate text-sm font-medium text-foreground">{item.value}</div>
-              </div>
+              </Card>
             );
           })}
         </div>

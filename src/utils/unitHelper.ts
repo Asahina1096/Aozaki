@@ -1,3 +1,5 @@
+import { formatBytes as formatBytesValue } from "@/lib/format/bytes";
+
 export function stringToBytes(str: string): number {
   if (typeof str !== "string" || str.length === 0) {
     return 0;
@@ -46,38 +48,32 @@ export function stringToBytes(str: string): number {
     numericPart = "1";
   }
 
-  try {
-    const value = new Function(`return ${numericPart}`)();
-
-    if (isNaN(value)) {
-      return 0;
-    }
-
-    const multiplier = units[unit];
-    return Math.round(value * multiplier);
-  } catch (error) {
-    console.error(`Error parsing string "${str}":`, error);
+  const numericPattern = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i;
+  if (!numericPattern.test(numericPart)) {
     return 0;
   }
+
+  const value = Number(numericPart);
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+
+  const multiplier = units[unit];
+  return Math.round(value * multiplier);
 }
 
 export function formatBytes(bytes: number): string {
-  const units = ["B", "KB", "MB", "GB", "TB", "PB"];
-  let size = bytes;
-  let unitIndex = 0;
-
-  while (size >= 1024 && unitIndex < units.length - 1) {
-    size /= 1024;
-    unitIndex++;
+  if (!Number.isFinite(bytes) || bytes <= 0) {
+    return "0 B";
   }
 
-  if (unitIndex === 0) {
-    return `${Math.round(size)} ${units[unitIndex]}`;
-  } else if (unitIndex >= 2 && bytes >= 1024 ** 3) {
-    return `${size.toFixed(2)} ${units[unitIndex]}`;
-  } else if (size > 99.99) {
-    return `${size.toFixed(1)} ${units[unitIndex]}`;
-  } else {
-    return `${size.toFixed(2)} ${units[unitIndex]}`;
+  if (bytes < 1024) {
+    return formatBytesValue(bytes, { minDecimals: 0, maxDecimals: 0 });
   }
+
+  if (bytes >= 1024 ** 3) {
+    return formatBytesValue(bytes, { minDecimals: 2, maxDecimals: 2 });
+  }
+
+  return formatBytesValue(bytes, { minDecimals: 1, maxDecimals: 2 });
 }

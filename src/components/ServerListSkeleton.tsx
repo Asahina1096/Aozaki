@@ -6,7 +6,10 @@ export function ServerListSkeleton() {
     <div className="space-y-6">
       <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         {Array.from({ length: OVERVIEW_SKELETON_COUNT }, (_, i) => (
-          <div key={i} className="h-24 rounded-2xl border border-border/20 bg-muted/60 shadow-sm" />
+          <div
+            key={i}
+            className="card-opacity-target card-blur-target h-24 rounded-2xl border border-border/20 shadow-sm"
+          />
         ))}
       </div>
       <div className="flex items-center">
@@ -16,7 +19,7 @@ export function ServerListSkeleton() {
         {Array.from({ length: SERVER_SKELETON_COUNT }, (_, i) => (
           <div
             key={i}
-            className="h-[420px] rounded-2xl border border-border/20 bg-muted/60 shadow-sm"
+            className="card-opacity-target card-blur-target h-[420px] rounded-2xl border border-border/20 shadow-sm"
           />
         ))}
       </div>

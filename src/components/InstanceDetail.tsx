@@ -1,9 +1,12 @@
-import { Flex, Text } from "@radix-ui/themes";
+import { Flex, SegmentedControl, Text } from "@radix-ui/themes";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { DetailsGrid } from "@/components/DetailsGrid";
+import { Card } from "@/components/ui/card";
 import LoadChart from "@/components/instance/LoadChart";
 import PingChart from "@/components/instance/PingChart";
+import { normalizeRecentStatusRecord } from "@/lib/normalizers/liveData";
+import { CARD_CONTAINMENT_STYLE, INFO_CARD_COMPACT_CLASS } from "@/lib/constants";
 import { useRPC2Call } from "@/contexts/RPC2Context";
 import { liveDataToRecords } from "@/utils/RecordHelper";
 import { useLiveDataRefresh } from "../contexts/LiveDataContext";
@@ -45,12 +48,22 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
   const [pingView, setPingView] = useState("1h");
   const { nodeList } = useNodeList();
   const length = 30 * 5;
-  const sectionCardClass =
-    "card-blur-target rounded-2xl border border-border/20 bg-card/95 p-5 shadow-sm";
-  const controlBaseClass =
-    "rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-accent-foreground sm:px-4";
-  const controlActiveClass =
-    "border-transparent bg-primary text-primary-foreground hover:bg-primary/90";
+  const sectionCardClass = "card-blur-target p-5";
+  const rangeOptions =
+    chartView === "load"
+      ? [
+          { key: "real", label: t("common.real_time") },
+          { key: "4h", label: t("chart.hours", { count: 4 }) },
+          { key: "1d", label: t("chart.days", { count: 1 }) },
+          { key: "7d", label: t("chart.days", { count: 7 }) },
+          { key: "30d", label: t("chart.days", { count: 30 }) },
+        ]
+      : [
+          { key: "1h", label: t("chart.hours", { count: 1 }) },
+          { key: "6h", label: t("chart.hours", { count: 6 }) },
+          { key: "12h", label: t("chart.hours", { count: 12 }) },
+          { key: "1d", label: t("chart.days", { count: 1 }) },
+        ];
 
   const node = nodeList?.find((n) => n.uuid === uuid);
   const serverName = node?.name?.trim() || uuid;
@@ -72,31 +85,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
         if (currentSeq !== requestSeqRef.current) return;
 
         const raw = result?.records || [];
-        const mapped: LiveRecord[] = raw.map((r) => ({
-          cpu: { usage: r.cpu ?? 0 },
-          ram: { used: r.ram ?? 0 },
-          swap: { used: r.swap ?? 0 },
-          load: {
-            load1: r.load ?? 0,
-            load5: 0,
-            load15: 0,
-          },
-          disk: { used: r.disk ?? 0 },
-          network: {
-            up: r.net_out ?? 0,
-            down: r.net_in ?? 0,
-            totalUp: r.net_total_up ?? 0,
-            totalDown: r.net_total_down ?? 0,
-          },
-          connections: {
-            tcp: r.connections ?? 0,
-            udp: r.connections_udp ?? 0,
-          },
-          uptime: 0,
-          process: r.process ?? 0,
-          message: "",
-          updated_at: r.time ?? "",
-        }));
+        const mapped: LiveRecord[] = raw.map((record) => normalizeRecentStatusRecord(record));
         setRecent(mapped.slice(-length));
       })
       .catch((err) => console.error("Failed to fetch recent data:", err));
@@ -123,13 +112,16 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
   return (
     <Flex className="items-center px-2 pb-10 pt-2 md:px-4" direction="column" gap="4">
       <div className="flex w-full max-w-[1200px] flex-col gap-4">
-        <div className={sectionCardClass}>
+        <Card className={sectionCardClass} style={CARD_CONTAINMENT_STYLE}>
           <div className="flex items-start gap-3">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-3">
-                <span className="inline-flex rounded-full border border-border/30 bg-muted px-2.5 py-0.5 text-xs font-semibold tracking-wide text-muted-foreground">
+                <Card
+                  className={INFO_CARD_COMPACT_CLASS}
+                  style={CARD_CONTAINMENT_STYLE}
+                >
                   {region}
-                </span>
+                </Card>
                 <h1 className="text-xl font-bold tracking-tight text-foreground md:text-2xl">
                   <Text as="span" wrap="nowrap">
                     {serverName}
@@ -137,65 +129,55 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
                 </h1>
               </div>
 
-              <DetailsGrid uuid={uuid ?? ""} />
+              <DetailsGrid uuid={uuid} />
             </div>
           </div>
-        </div>
+        </Card>
 
-        <div
+        <Card
           className={`${sectionCardClass} mb-1 flex w-full flex-wrap items-center justify-between gap-3`}
+          style={CARD_CONTAINMENT_STYLE}
         >
-          <div className="inline-flex flex-wrap items-center gap-2">
-            {(chartView === "load"
-              ? [
-                  { key: "real", label: t("common.real_time") },
-                  { key: "4h", label: t("chart.hours", { count: 4 }) },
-                  { key: "1d", label: t("chart.days", { count: 1 }) },
-                  { key: "7d", label: t("chart.days", { count: 7 }) },
-                  { key: "30d", label: t("chart.days", { count: 30 }) },
-                ]
-              : [
-                  { key: "1h", label: t("chart.hours", { count: 1 }) },
-                  { key: "6h", label: t("chart.hours", { count: 6 }) },
-                  { key: "12h", label: t("chart.hours", { count: 12 }) },
-                  { key: "1d", label: t("chart.days", { count: 1 }) },
-                ]
-            ).map((item) => (
-              <button
-                type="button"
-                key={item.key}
-                onClick={() =>
-                  chartView === "load" ? setLoadView(item.key) : setPingView(item.key)
-                }
-                className={`${controlBaseClass} ${(chartView === "load" ? loadView : pingView) === item.key ? controlActiveClass : ""}`}
+          <div className="w-full max-w-full overflow-x-auto sm:w-auto sm:max-w-none sm:overflow-visible">
+            <div className="w-max min-w-full sm:min-w-0">
+              <SegmentedControl.Root
+                radius="full"
+                value={chartView === "load" ? loadView : pingView}
+                onValueChange={(value) => {
+                  if (chartView === "load") {
+                    setLoadView(value);
+                    return;
+                  }
+                  setPingView(value);
+                }}
+                className="instance-detail-segment control-surface-target"
               >
-                {item.label}
-              </button>
-            ))}
+                {rangeOptions.map((item) => (
+                  <SegmentedControl.Item key={item.key} value={item.key}>
+                    {item.label}
+                  </SegmentedControl.Item>
+                ))}
+              </SegmentedControl.Root>
+            </div>
           </div>
 
-          <div className="inline-flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setChartView("load")}
-              className={`${controlBaseClass} ${chartView === "load" ? controlActiveClass : ""}`}
+          <div className="inline-flex items-center">
+            <SegmentedControl.Root
+              radius="full"
+              value={chartView}
+              onValueChange={(value) => setChartView(value as "load" | "ping")}
+              className="instance-detail-segment control-surface-target"
             >
-              {t("nodeCard.load")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setChartView("ping")}
-              className={`${controlBaseClass} ${chartView === "ping" ? controlActiveClass : ""}`}
-            >
-              {t("nodeCard.ping")}
-            </button>
+              <SegmentedControl.Item value="load">{t("nodeCard.load")}</SegmentedControl.Item>
+              <SegmentedControl.Item value="ping">{t("nodeCard.ping")}</SegmentedControl.Item>
+            </SegmentedControl.Root>
           </div>
-        </div>
+        </Card>
       </div>
 
       {(() => {
         return chartView === "load" ? (
-          <LoadChart data={liveDataToRecords(uuid ?? "", recent)} view={loadView} />
+          <LoadChart data={liveDataToRecords(uuid, recent)} view={loadView} />
         ) : (
           <PingChart uuid={uuid} view={pingView} />
         );

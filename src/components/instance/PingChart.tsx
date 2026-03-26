@@ -10,6 +10,8 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { Card } from "@/components/ui/card";
+import { CARD_CONTAINMENT_STYLE } from "@/lib/constants";
 import { useRPC2Call } from "@/contexts/RPC2Context";
 import { cutPeakValues, interpolateNullsLinear } from "@/utils/RecordHelper";
 
@@ -282,8 +284,7 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
     setHiddenLines(next);
   }, [hiddenLines, tasks]);
 
-  const cardClass =
-    "card-blur-target w-full max-w-[1200px] rounded-2xl border border-border/20 bg-card/95 p-5 shadow-sm";
+  const cardClass = "card-blur-target w-full max-w-[1200px] p-5";
 
   return (
     <Flex direction="column" align="center" gap="4" className="w-full">
@@ -291,7 +292,7 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
       {error && <div className="w-full text-center text-destructive">{error}</div>}
 
       {latestValues.length > 0 ? (
-        <div className={`mb-3 ${cardClass}`}>
+        <Card className={`mb-3 ${cardClass}`} style={CARD_CONTAINMENT_STYLE}>
           <div
             className="mb-2 grid w-full gap-2"
             style={{
@@ -313,14 +314,14 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
               </div>
             ))}
           </div>
-        </div>
+        </Card>
       ) : (
         <div className="mb-3 w-full max-w-[980px] text-center text-muted-foreground">
           {t("common.none")}
         </div>
       )}
 
-      <div className={cardClass}>
+      <Card className={cardClass} style={CARD_CONTAINMENT_STYLE}>
         {chartData.length === 0 ? (
           <div className="flex h-40 w-full items-center justify-center text-muted-foreground">
             {t("common.none")}
@@ -418,7 +419,7 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
             )}
           </Button>
         </div>
-      </div>
+      </Card>
     </Flex>
   );
 };

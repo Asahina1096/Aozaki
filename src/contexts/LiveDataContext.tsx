@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { normalizeLatestStatusRecord, type LatestStatusRecord } from "@/lib/normalizers/liveData";
 import type { LiveDataResponse } from "../types/LiveData";
 import { useRPC2Call } from "./RPC2Context";
 
@@ -11,28 +12,9 @@ interface LiveDataRefreshContextType {
   onRefresh: (callback: (data: LiveDataResponse) => void) => () => void;
 }
 
-type LatestStatusRecord = {
+type LatestStatusResponseRecord = LatestStatusRecord & {
   online?: boolean;
   client?: string;
-  cpu?: number;
-  ram?: number;
-  swap?: number;
-  load?: number;
-  load5?: number;
-  load15?: number;
-  disk?: number;
-  net_out?: number;
-  net_in?: number;
-  net_total_out?: number;
-  net_total_up?: number;
-  net_total_in?: number;
-  net_total_down?: number;
-  connections?: number;
-  connections_udp?: number;
-  gpu?: number;
-  uptime?: number;
-  process?: number;
-  time?: string | number;
 };
 
 const LiveDataContext = createContext<LiveDataContextType>({
@@ -71,45 +53,18 @@ export const LiveDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (running) return;
       running = true;
       try {
-        const result = await call<undefined, Record<string, LatestStatusRecord>>(
+        const result = await call<undefined, Record<string, LatestStatusResponseRecord>>(
           "common:getNodesLatestStatus",
         );
         const online = Object.values(result)
-          .filter((v) => v?.online && typeof v.client === "string")
-          .map((v) => v.client as string);
+          .filter((v): v is LatestStatusResponseRecord & { online: true; client: string } =>
+            Boolean(v?.online && typeof v.client === "string"),
+          )
+          .map((v) => v.client);
 
         const dataMap: LiveDataResponse["data"]["data"] = {};
         for (const [uuid, v] of Object.entries(result)) {
-          const rec = v;
-          dataMap[uuid] = {
-            cpu: { usage: typeof rec.cpu === "number" ? rec.cpu : 0 },
-            ram: { used: rec.ram ?? 0 },
-            swap: { used: rec.swap ?? 0 },
-            load: {
-              load1: rec.load ?? 0,
-              load5: rec.load5 ?? 0,
-              load15: rec.load15 ?? 0,
-            },
-            disk: { used: rec.disk ?? 0 },
-            network: {
-              up: rec.net_out ?? 0,
-              down: rec.net_in ?? 0,
-              totalUp: rec.net_total_out ?? rec.net_total_up ?? 0,
-              totalDown: rec.net_total_in ?? rec.net_total_down ?? 0,
-            },
-            connections: {
-              tcp: rec.connections ?? 0,
-              udp: rec.connections_udp ?? 0,
-            },
-            gpu:
-              rec.gpu !== undefined
-                ? { count: 0, average_usage: rec.gpu, detailed_info: [] }
-                : undefined,
-            uptime: rec.uptime ?? 0,
-            process: rec.process ?? 0,
-            message: "",
-            updated_at: String(rec.time ?? ""),
-          };
+          dataMap[uuid] = normalizeLatestStatusRecord(v);
         }
 
         const live: LiveDataResponse = {

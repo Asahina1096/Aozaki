@@ -100,7 +100,7 @@ export default function ServerList({
           <button
             type="button"
             onClick={refresh}
-            className="mt-4 rounded-lg bg-primary px-4 py-2 text-primary-foreground shadow-sm hover:bg-primary/90"
+            className="control-surface-target mt-4 rounded-lg border border-primary/25 px-4 py-2 text-primary shadow-sm hover:bg-primary/10"
           >
             重试
           </button>
@@ -112,12 +112,12 @@ export default function ServerList({
   return (
     <div className="space-y-6">
       {error && (
-        <div className="rounded-2xl border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive shadow-sm">
+        <div className="card-opacity-target card-blur-target rounded-2xl border border-destructive/20 p-4 text-sm text-destructive shadow-sm">
           <p>数据刷新失败：{error || "请稍后再试。"}</p>
           <button
             type="button"
             onClick={refresh}
-            className="mt-3 inline-flex items-center rounded-lg border border-destructive/20 px-3 py-1.5 text-sm font-medium hover:bg-destructive/10"
+            className="control-surface-target mt-3 inline-flex items-center rounded-lg border border-destructive/25 px-3 py-1.5 text-sm font-medium text-destructive hover:bg-destructive/10"
           >
             重新获取数据
           </button>
@@ -136,7 +136,7 @@ export default function ServerList({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               aria-label="搜索节点"
-              className="h-8 w-40 md:w-48 rounded-md border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              className="control-surface-target h-8 w-40 rounded-md px-3 text-sm text-black placeholder:text-black/45 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 dark:text-foreground/75 dark:placeholder:text-foreground/45 md:w-48"
             />
           </div>
           {searchQuery && (

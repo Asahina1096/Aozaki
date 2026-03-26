@@ -114,7 +114,7 @@ export function VirtualizedServerGrid({ servers }: VirtualizedServerGridProps) {
                 {row.map((server) => (
                   <div
                     key={server.name}
-                    className="rounded-2xl border border-border/20 bg-card/95 p-4"
+                    className="card-opacity-target rounded-2xl border border-border/20 bg-card/95 p-4"
                   >
                     <div className="text-sm font-semibold">{server.name}</div>
                     <div className="mt-1 text-xs text-muted-foreground">

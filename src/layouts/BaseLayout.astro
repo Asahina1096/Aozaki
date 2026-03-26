@@ -38,17 +38,132 @@ const {
           return window.matchMedia("(max-width: 768px)").matches;
         }
 
-        function applyBackgroundImage(settings) {
+        let backgroundApplyToken = 0;
+        let backgroundViewportCleanup = null;
+
+        function stopBackgroundViewportSync() {
+          if (typeof backgroundViewportCleanup === "function") {
+            backgroundViewportCleanup();
+          }
+          backgroundViewportCleanup = null;
+          root.style.removeProperty("--bg-vv-width");
+          root.style.removeProperty("--bg-vv-height");
+          root.style.removeProperty("--bg-vv-offset-top");
+          root.style.removeProperty("--bg-vv-offset-left");
+        }
+
+        function startBackgroundViewportSync() {
+          stopBackgroundViewportSync();
+
+          const visualViewport = window.visualViewport;
+          if (!visualViewport) {
+            return;
+          }
+
+          const syncViewport = function () {
+            root.style.setProperty("--bg-vv-width", visualViewport.width + "px");
+            root.style.setProperty("--bg-vv-height", visualViewport.height + "px");
+            root.style.setProperty("--bg-vv-offset-top", visualViewport.offsetTop + "px");
+            root.style.setProperty("--bg-vv-offset-left", visualViewport.offsetLeft + "px");
+          };
+
+          syncViewport();
+          visualViewport.addEventListener("resize", syncViewport);
+          visualViewport.addEventListener("scroll", syncViewport);
+          window.addEventListener("orientationchange", syncViewport);
+
+          backgroundViewportCleanup = function () {
+            visualViewport.removeEventListener("resize", syncViewport);
+            visualViewport.removeEventListener("scroll", syncViewport);
+            window.removeEventListener("orientationchange", syncViewport);
+          };
+        }
+
+        function getBackgroundUrlTypeByExtension(url) {
+          if (typeof url !== "string" || !url.trim()) return "none";
+          const rawUrl = url.trim();
+
+          if (rawUrl.startsWith("data:video/")) {
+            return "video";
+          }
+
+          let pathname = rawUrl;
+
+          try {
+            pathname = new URL(rawUrl, window.location.href).pathname;
+          } catch (_error) {
+            pathname = rawUrl.split("?")[0].split("#")[0];
+          }
+
+          const ext = pathname.toLowerCase();
+          if (ext.endsWith(".mp4") || ext.endsWith(".webm") || ext.endsWith(".ogg")) {
+            return "video";
+          }
+          return "unknown";
+        }
+
+        async function getBackgroundUrlType(url) {
+          const extensionType = getBackgroundUrlTypeByExtension(url);
+          if (extensionType === "video" || extensionType === "none") {
+            return extensionType;
+          }
+
+          try {
+            const response = await fetch(url, { method: "HEAD" });
+            if (!response.ok) {
+              return "image";
+            }
+
+            const contentType = response.headers.get("content-type");
+            if (typeof contentType === "string" && contentType.toLowerCase().startsWith("video/")) {
+              return "video";
+            }
+          } catch (_error) {}
+
+          return "image";
+        }
+
+        function removeBackgroundVideo() {
+          const existing = document.getElementById("aozaki-bg-video");
+          if (existing) {
+            existing.remove();
+          }
+          stopBackgroundViewportSync();
+        }
+
+        function applyBackgroundVideo(url) {
+          removeBackgroundVideo();
+          startBackgroundViewportSync();
+          const video = document.createElement("video");
+          video.id = "aozaki-bg-video";
+          video.src = url;
+          video.autoplay = true;
+          video.muted = true;
+          video.loop = true;
+          video.playsInline = true;
+          video.preload = "metadata";
+          video.setAttribute("aria-hidden", "true");
+          document.body.prepend(video);
+        }
+
+        async function applyBackgroundImage(settings) {
           if (!settings) return;
+          const applyToken = ++backgroundApplyToken;
           const clampBlur = function (value) {
             const n = Number(value);
             if (!Number.isFinite(n)) return 0;
-            return Math.min(Math.max(n, 0), 8);
+            return Math.min(Math.max(n, 0), 20);
+          };
+          const clampPercentage = function (value, fallback) {
+            const n = Number(value);
+            if (!Number.isFinite(n)) return fallback;
+            return Math.min(Math.max(n, 0), 100);
           };
           const backgroundImageEnabled = settings.backgroundImageEnabled ?? false;
           const desktopUrl = settings.backgroundImageUrlDesktop;
           const mobileUrl = settings.backgroundImageUrlMobile;
-          const bgUrl = isMobile() ? (mobileUrl || desktopUrl) : desktopUrl;
+          const rawBgUrl = isMobile() ? (mobileUrl || desktopUrl) : desktopUrl;
+          const bgUrl = backgroundImageEnabled ? rawBgUrl : "";
 
           const overlayEnabled = settings.backgroundImageOverlayEnabled;
           const overlayBlur = clampBlur(settings.backgroundImageOverlayBlur ?? 0);
@@ -57,6 +172,9 @@ const {
 
           const cardBlurEnabled = settings.cardBlurEnabled ?? false;
           const cardBlurIntensity = clampBlur(settings.cardBlurIntensity ?? 0);
+          const cardOpacityEnabled = settings.cardOpacityEnabled ?? false;
+          const cardOpacity = clampPercentage(settings.cardOpacity ?? 95, 95);
+          const cardBlurOpacity = Math.min(cardOpacity, 72);
 
           const readabilityOverlayOpacity = settings.backgroundImageReadabilityOverlayOpacity ?? 50;
 
@@ -64,14 +182,18 @@ const {
 
           root.classList.remove("bg-overlay-enabled");
           root.classList.remove("card-blur-enabled");
+          root.classList.remove("card-opacity-enabled");
           root.classList.remove("blur-style-frosted");
           root.classList.remove("blur-style-acrylic");
+          root.classList.remove("bg-video-enabled");
           root.classList.remove("theme-forced");
           root.classList.remove("theme-forced-dark");
           root.classList.remove("theme-forced-light");
           root.style.removeProperty("--overlay-blur");
           root.style.removeProperty("--overlay-darkness");
           root.style.removeProperty("--card-blur");
+          root.style.removeProperty("--card-opacity");
+          root.style.removeProperty("--card-blur-opacity");
           root.style.removeProperty("--bg-image-url");
           root.style.removeProperty("--readability-overlay-opacity");
           root.style.removeProperty("background-image");
@@ -79,6 +201,7 @@ const {
           root.style.removeProperty("background-position");
           root.style.removeProperty("background-repeat");
           root.style.removeProperty("background-attachment");
+          removeBackgroundVideo();
 
           window.__aozakiForceThemeMode = forceThemeMode !== "none" ? forceThemeMode : null;
 
@@ -88,34 +211,50 @@ const {
             apply(forceThemeMode);
           }
 
-          if (bgUrl) {
-            root.style.setProperty("--bg-image-url", "url(" + bgUrl + ")");
-            root.style.setProperty("--readability-overlay-opacity", readabilityOverlayOpacity / 100);
+          if (cardOpacityEnabled) {
+            root.style.setProperty("--card-opacity", cardOpacity + "%");
+            root.style.setProperty("--card-blur-opacity", cardBlurOpacity + "%");
+            root.classList.add("card-opacity-enabled");
           }
 
-          const useOverlay = overlayEnabled && bgUrl;
+          const bgType = await getBackgroundUrlType(bgUrl);
+          if (applyToken !== backgroundApplyToken) {
+            return;
+          }
+          const isVideoBackground = bgType === "video";
+
+          if (bgUrl && !isVideoBackground) {
+            root.style.setProperty("--bg-image-url", "url(" + bgUrl + ")");
+            root.style.setProperty("--readability-overlay-opacity", readabilityOverlayOpacity / 100);
+          } else if (bgUrl && isVideoBackground) {
+            root.style.setProperty("--readability-overlay-opacity", readabilityOverlayOpacity / 100);
+            root.classList.add("bg-video-enabled");
+            applyBackgroundVideo(bgUrl);
+          }
+
+          const hasBackgroundMedia = Boolean(bgUrl);
+          const useOverlay = overlayEnabled && hasBackgroundMedia;
 
           if (useOverlay) {
             let effectiveDarkness = overlayDarkness;
             if (darknessOnlyDark) {
               effectiveDarkness = root.classList.contains("dark") ? overlayDarkness : 0;
             }
-            const effectiveOverlayBlur = overlayBlur === 0 ? cardBlurIntensity : overlayBlur;
-            root.style.setProperty("--overlay-blur", effectiveOverlayBlur + "px");
+            root.style.setProperty("--overlay-blur", overlayBlur + "px");
             root.style.setProperty("--overlay-darkness", effectiveDarkness / 100);
             root.classList.add("bg-overlay-enabled");
             root.classList.add("blur-style-frosted");
-            if (cardBlurEnabled) {
-              root.style.setProperty("--card-blur", cardBlurIntensity + "px");
-              root.classList.add("card-blur-enabled");
-              root.classList.add("blur-style-frosted");
-            }
-          } else if (bgUrl && backgroundImageEnabled) {
+          } else if (bgUrl && backgroundImageEnabled && !isVideoBackground) {
             root.style.backgroundImage = "url(" + bgUrl + ")";
             root.style.backgroundSize = "cover";
             root.style.backgroundPosition = "center top";
             root.style.backgroundRepeat = "no-repeat";
             root.style.backgroundAttachment = isMobile() ? "scroll" : "fixed";
+          }
+
+          if (cardBlurEnabled && hasBackgroundMedia) {
+            root.style.setProperty("--card-blur", cardBlurIntensity + "px");
+            root.classList.add("card-blur-enabled");
           }
         }
 
@@ -134,7 +273,7 @@ const {
               }
 
               if (resp.data.theme_settings) {
-                applyBackgroundImage(resp.data.theme_settings);
+                void applyBackgroundImage(resp.data.theme_settings);
               }
             })
             .catch(function () {});

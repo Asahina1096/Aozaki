@@ -4,7 +4,7 @@
 ---
 
 <header
-  class="sticky top-0 z-50 w-full border-b border-border/20 bg-background/95"
+  class="card-opacity-target card-blur-target sticky top-0 z-50 w-full border-b border-border/20 bg-background/95"
   style="contain: layout style paint;"
 >
   <div class="container flex h-16 items-center justify-between">
@@ -221,5 +221,32 @@
   initSiteTitle();
 
   document.addEventListener("astro:page-load", initSiteTitle);
+
+  function initSiteTitleNavigation() {
+    const titleEl = document.getElementById("site-title");
+    if (!(titleEl instanceof HTMLAnchorElement)) return;
+    if (titleEl.dataset.navBound === "true") return;
+
+    titleEl.addEventListener("click", (event: MouseEvent) => {
+      if (event.defaultPrevented) return;
+      if (event.button !== 0) return;
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      if (titleEl.target && titleEl.target !== "_self") return;
+
+      const href = titleEl.getAttribute("href");
+      if (!href) return;
+
+      const resolved = new URL(href, window.location.href);
+      if (resolved.origin !== window.location.origin) return;
+
+      event.preventDefault();
+      window.dispatchEvent(new CustomEvent("aozaki:navigate-home"));
+    });
+
+    titleEl.dataset.navBound = "true";
+  }
+
+  initSiteTitleNavigation();
+  document.addEventListener("astro:page-load", initSiteTitleNavigation);
 
 </script>

@@ -56,7 +56,7 @@ export const InstanceList: React.FC = () => {
           return (
             <Link
               key={node.uuid}
-              className="rounded-lg border bg-card text-card-foreground shadow-sm cursor-pointer hover:shadow-lg transition-shadow"
+              className="card-opacity-target rounded-lg border bg-card text-card-foreground shadow-sm cursor-pointer hover:shadow-lg transition-shadow"
               style={{ opacity: isOnline ? 1 : 0.7 }}
               to={`/instance/${node.uuid}`}
             >

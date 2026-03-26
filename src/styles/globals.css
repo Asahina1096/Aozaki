@@ -245,11 +245,11 @@
 */
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
+  --background: oklch(0.975 0.004 255);
   --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
+  --card: oklch(0.995 0.002 255);
   --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
+  --popover: oklch(0.995 0.002 255);
   --popover-foreground: oklch(0.145 0 0);
   --primary: oklch(0.205 0 0);
   --primary-foreground: oklch(0.985 0 0);
@@ -333,7 +333,7 @@
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background-color: rgba(255, 255, 255, var(--readability-overlay-opacity, 0.5));
+  background-color: rgba(255, 255, 255, calc(var(--readability-overlay-opacity, 0.5) * 0.72));
 }
 
 html.dark #readability-overlay {
@@ -352,6 +352,20 @@ html.bg-overlay-enabled::before {
   pointer-events: none;
 }
 
+html.bg-video-enabled #aozaki-bg-video {
+  position: fixed;
+  top: calc(var(--bg-vv-offset-top, 0px) * -1);
+  left: calc(var(--bg-vv-offset-left, 0px) * -1);
+  z-index: -2;
+  width: var(--bg-vv-width, 100vw);
+  height: var(--bg-vv-height, 100vh);
+  object-fit: cover;
+  object-position: center top;
+  pointer-events: none;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
 html.blur-style-frosted.bg-overlay-enabled::after {
   content: "";
   position: fixed;
@@ -359,8 +373,8 @@ html.blur-style-frosted.bg-overlay-enabled::after {
   z-index: -1;
   pointer-events: none;
   background-color: rgba(0, 0, 0, var(--overlay-darkness, 0));
-  -webkit-backdrop-filter: blur(clamp(0px, var(--overlay-blur, 0px), 8px));
-  backdrop-filter: blur(clamp(0px, var(--overlay-blur, 0px), 8px));
+  -webkit-backdrop-filter: blur(clamp(0px, var(--overlay-blur, 0px), 20px));
+  backdrop-filter: blur(clamp(0px, var(--overlay-blur, 0px), 20px));
 }
 
 html.blur-style-acrylic.bg-overlay-enabled::after {
@@ -370,24 +384,272 @@ html.blur-style-acrylic.bg-overlay-enabled::after {
   z-index: -1;
   pointer-events: none;
   background-color: rgba(0, 0, 0, var(--overlay-darkness, 0));
-  -webkit-backdrop-filter: blur(clamp(0px, var(--overlay-blur, 0px), 8px));
-  backdrop-filter: blur(clamp(0px, var(--overlay-blur, 0px), 8px));
+  -webkit-backdrop-filter: blur(clamp(0px, var(--overlay-blur, 0px), 20px));
+  backdrop-filter: blur(clamp(0px, var(--overlay-blur, 0px), 20px));
+}
+
+html.card-opacity-enabled .card-opacity-target,
+html.card-opacity-enabled .card-blur-target {
+  background-color: color-mix(
+    in oklab,
+    var(--color-card) var(--card-opacity, 95%),
+    transparent
+  ) !important;
+}
+
+html .control-surface-target {
+  background-color: hsl(var(--card) / 0.95);
+  box-shadow: inset 0 0 0 1px rgb(148 163 184 / 0.24);
+}
+
+html.dark .control-surface-target {
+  box-shadow: inset 0 0 0 1px rgb(148 163 184 / 0.32);
+}
+
+html.card-opacity-enabled .control-surface-target {
+  background-color: color-mix(
+    in oklab,
+    var(--color-card) var(--card-opacity, 95%),
+    transparent
+  );
+}
+
+html.card-opacity-enabled .card-opacity-target .control-surface-target,
+html.card-opacity-enabled .card-blur-target .control-surface-target {
+  background-color: color-mix(
+    in oklab,
+    var(--color-card) var(--card-opacity, 95%),
+    transparent
+  ) !important;
+}
+
+html.card-opacity-enabled.card-blur-enabled .card-blur-target .control-surface-target {
+  background-color: color-mix(
+    in oklab,
+    var(--color-card) var(--card-blur-opacity, 72%),
+    transparent
+  );
+  box-shadow: inset 0 0 0 1px rgb(148 163 184 / 0.16);
+}
+
+html.card-blur-enabled .control-surface-target {
+  box-shadow: inset 0 0 0 1px rgb(148 163 184 / 0.16);
+  -webkit-backdrop-filter: blur(clamp(0px, calc(var(--card-blur, 0px) * 0.65), 14px));
+  backdrop-filter: blur(clamp(0px, calc(var(--card-blur, 0px) * 0.65), 14px));
+}
+
+html.dark.card-blur-enabled .control-surface-target {
+  box-shadow: inset 0 0 0 1px rgb(148 163 184 / 0.22);
+}
+
+html .chip-surface-target {
+  background-color: color-mix(in oklab, var(--color-card) 78%, transparent);
+  box-shadow: inset 0 0 0 1px rgb(148 163 184 / 0.2);
+}
+
+html.card-opacity-enabled .chip-surface-target {
+  background-color: color-mix(
+    in oklab,
+    var(--color-card) calc(var(--card-opacity, 95%) * 0.82),
+    transparent
+  );
+}
+
+html.card-opacity-enabled.card-blur-enabled .card-blur-target .chip-surface-target {
+  background-color: color-mix(
+    in oklab,
+    var(--color-card) calc(var(--card-blur-opacity, 72%) * 0.88),
+    transparent
+  );
+}
+
+html.card-blur-enabled .chip-surface-target {
+  -webkit-backdrop-filter: blur(clamp(0px, calc(var(--card-blur, 0px) * 0.42), 10px));
+  backdrop-filter: blur(clamp(0px, calc(var(--card-blur, 0px) * 0.42), 10px));
+}
+
+html .separator-surface-target {
+  background-color: color-mix(in oklab, var(--color-foreground) 14%, transparent);
+}
+
+html.dark .separator-surface-target {
+  background-color: color-mix(in oklab, var(--color-foreground) 20%, transparent);
+}
+
+html .instance-detail-segment {
+  --segmented-control-transition-duration: 220ms;
+  --segmented-control-indicator-background-color: color-mix(
+    in oklab,
+    var(--color-accent) 84%,
+    var(--color-card)
+  );
+  color: color-mix(in oklab, var(--color-muted-foreground) 86%, var(--color-foreground));
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+html.dark .instance-detail-segment {
+  --segmented-control-indicator-background-color: color-mix(
+    in oklab,
+    var(--color-accent) 72%,
+    var(--color-foreground) 6%,
+    var(--color-card)
+  );
+  color: color-mix(in oklab, var(--color-muted-foreground) 90%, var(--color-foreground));
+}
+
+html.card-opacity-enabled .card-opacity-target .instance-detail-segment,
+html.card-opacity-enabled .card-blur-target .instance-detail-segment {
+  --segmented-control-indicator-background-color: color-mix(
+    in oklab,
+    var(--color-accent) var(--card-opacity, 95%),
+    transparent
+  );
+}
+
+html.card-opacity-enabled.card-blur-enabled .card-blur-target .instance-detail-segment {
+  --segmented-control-indicator-background-color: color-mix(
+    in oklab,
+    var(--color-accent) var(--card-blur-opacity, 72%),
+    transparent
+  );
+}
+
+html .instance-detail-segment :where(.rt-SegmentedControlIndicator)::before {
+  border-radius: 9999px;
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-foreground) 12%, transparent);
+}
+
+html.card-blur-enabled .card-blur-target .instance-detail-segment :where(.rt-SegmentedControlIndicator)::before {
+  -webkit-backdrop-filter: blur(clamp(0px, calc(var(--card-blur, 0px) * 0.65), 14px));
+  backdrop-filter: blur(clamp(0px, calc(var(--card-blur, 0px) * 0.65), 14px));
+}
+
+html.dark .instance-detail-segment :where(.rt-SegmentedControlIndicator)::before {
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-foreground) 20%, transparent);
+}
+
+html .instance-detail-segment :where(.rt-SegmentedControlIndicator) {
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+html .instance-detail-segment :where(.rt-SegmentedControlItem[data-state="on"]) {
+  color: var(--color-foreground);
+}
+
+html .instance-detail-segment :where(.rt-SegmentedControlItemLabel) {
+  padding-inline: 0.9rem;
+}
+
+html .instance-detail-segment :where(.rt-SegmentedControlItemSeparator) {
+  margin-top: 6px;
+  margin-bottom: 6px;
+  margin-left: -0.5px;
+  margin-right: -0.5px;
+  width: 1px;
+  background-color: color-mix(in oklab, var(--color-foreground) 12%, transparent);
+}
+
+html.dark .instance-detail-segment :where(.rt-SegmentedControlItemSeparator) {
+  background-color: color-mix(in oklab, var(--color-foreground) 18%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html .instance-detail-segment {
+    --segmented-control-transition-duration: 1ms;
+  }
+
+  html .instance-detail-segment :where(.rt-SegmentedControlIndicator) {
+    transition-timing-function: linear;
+  }
+}
+
+html .card-opacity-target,
+html .card-blur-target {
+  color: #000;
+}
+
+html .card-opacity-target .text-muted-foreground,
+html .card-blur-target .text-muted-foreground {
+  color: rgb(0 0 0 / 0.7);
+}
+
+html.dark .card-opacity-target,
+html.dark .card-blur-target {
+  color: #fff;
+}
+
+html.dark .card-opacity-target .text-muted-foreground,
+html.dark .card-blur-target .text-muted-foreground {
+  color: rgb(255 255 255 / 0.78);
+}
+
+html:not(.dark) .card-opacity-target,
+html:not(.dark) .card-blur-target {
+  box-shadow:
+    0 18px 38px -28px rgb(15 23 42 / 0.25),
+    0 4px 12px -8px rgb(15 23 42 / 0.14),
+    inset 0 0 0 1px rgb(148 163 184 / 0.24);
 }
 
 html.card-blur-enabled .card-blur-target {
   position: relative;
-  background-color: transparent !important;
+  background-color: color-mix(
+    in oklab,
+    var(--color-card) var(--card-blur-opacity, 72%),
+    transparent
+  ) !important;
   isolation: isolate;
+  -webkit-backdrop-filter: blur(clamp(0px, var(--card-blur, 0px), 20px));
+  backdrop-filter: blur(clamp(0px, var(--card-blur, 0px), 20px));
+  border-color: transparent !important;
+  contain: layout style !important;
 }
 
 html.card-blur-enabled .card-blur-target::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  z-index: -1;
-  background-color: var(--color-card);
-  opacity: 0.72;
+  content: none;
+}
+
+html.card-blur-enabled .card-blur-target .card-blur-target {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  isolation: auto;
+}
+
+html .chart-tooltip-surface-target {
+  background-color: color-mix(in oklab, var(--color-card) 94%, transparent);
+  border-color: color-mix(in oklab, var(--color-foreground) 14%, transparent) !important;
+  box-shadow:
+    0 18px 36px -24px rgb(15 23 42 / 0.42),
+    0 8px 16px -12px rgb(15 23 42 / 0.24);
+}
+
+html.dark .chart-tooltip-surface-target {
+  border-color: color-mix(in oklab, var(--color-foreground) 20%, transparent) !important;
+}
+
+html.card-opacity-enabled .chart-tooltip-surface-target {
+  background-color: color-mix(
+    in oklab,
+    var(--color-card) calc(var(--card-opacity, 95%) * 0.96),
+    transparent
+  ) !important;
+}
+
+html.card-blur-enabled .chart-tooltip-surface-target {
+  background-color: color-mix(
+    in oklab,
+    var(--color-card) calc(var(--card-blur-opacity, 72%) * 0.94),
+    transparent
+  ) !important;
+  -webkit-backdrop-filter: blur(clamp(0px, calc(var(--card-blur, 0px) * 0.45), 10px));
+  backdrop-filter: blur(clamp(0px, calc(var(--card-blur, 0px) * 0.45), 10px));
+  border-color: color-mix(in oklab, var(--color-foreground) 16%, transparent) !important;
+}
+
+html.dark.card-blur-enabled .chart-tooltip-surface-target {
+  border-color: color-mix(in oklab, var(--color-foreground) 24%, transparent) !important;
 }
 
 html.theme-forced #theme-toggle {

@@ -11,6 +11,8 @@ export interface ThemeSettings {
   backgroundImageReadabilityOverlayOpacity?: number;
   cardBlurEnabled?: boolean;
   cardBlurIntensity?: number;
+  cardOpacityEnabled?: boolean;
+  cardOpacity?: number;
   forceThemeMode?: "none" | "dark" | "light";
   [key: string]: unknown;
 }

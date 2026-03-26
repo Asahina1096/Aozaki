@@ -1,5 +1,9 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import {
+  formatBytes as formatBytesValue,
+  formatSpeed as formatSpeedValue,
+} from "@/lib/format/bytes";
 import type { ServerStats } from "./types/serverstatus";
 
 export function cn(...inputs: ClassValue[]) {
@@ -11,18 +15,10 @@ export function isServerOnline(server: ServerStats): boolean {
 }
 
 export function formatBytes(bytes: number, decimals: number = 2): string {
-  if (bytes === 0) return "0 B";
-  if (bytes < 0) return "0 B";
-
-  const k = 1024;
-  const dm = decimals < 0 ? 0 : decimals;
-  const sizes = ["B", "KB", "MB", "GB", "TB", "PB"];
-
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  const multiplier = Math.pow(10, dm);
-  const size = Math.round((bytes / Math.pow(k, i)) * multiplier) / multiplier;
-
-  return `${size} ${sizes[i]}`;
+  return formatBytesValue(bytes, {
+    minDecimals: 0,
+    maxDecimals: decimals,
+  });
 }
 
 export function formatPercent(value: number, total: number, decimals: number = 1): string {
@@ -34,26 +30,7 @@ export function formatPercent(value: number, total: number, decimals: number = 1
 }
 
 export function formatSpeed(bytesPerSecond: number, decimals?: number): string {
-  if (bytesPerSecond === 0) return "0 B/s";
-  if (bytesPerSecond < 0) return "0 B/s";
-
-  const k = 1024;
-  const sizes = ["B/s", "KB/s", "MB/s", "GB/s", "TB/s"];
-
-  const i = Math.floor(Math.log(bytesPerSecond) / Math.log(k));
-  const value = bytesPerSecond / Math.pow(k, i);
-
-  let dm: number;
-  if (decimals !== undefined) {
-    dm = decimals < 0 ? 0 : decimals;
-  } else {
-    dm = value < 10 ? 1 : 0;
-  }
-
-  const multiplier = Math.pow(10, dm);
-  const speed = Math.round(value * multiplier) / multiplier;
-
-  return `${speed} ${sizes[i]}`;
+  return formatSpeedValue(bytesPerSecond, decimals);
 }
 
 export function formatLoad(value: number): number {

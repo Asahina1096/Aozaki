@@ -1,4 +1,5 @@
 import type { Record as LiveRecord } from "@/types/LiveData";
+import { toFiniteNumber } from "@/lib/normalizers/primitives";
 
 export interface RecordFormat {
   client: string;
@@ -35,57 +36,126 @@ export interface RecordFormat {
   connections_udp: number | null;
 }
 
+export type LoadRecordAPI = {
+  client: string;
+  time: string;
+  cpu: number;
+  gpu: number;
+  ram: number;
+  ram_total: number;
+  swap: number;
+  swap_total: number;
+  load: number;
+  temp: number;
+  disk: number;
+  disk_total: number;
+  net_in: number;
+  net_out: number;
+  net_total_up: number;
+  net_total_down: number;
+  process: number;
+  connections: number;
+  connections_udp: number;
+};
+
+function usageToBytes(usage: unknown, total: unknown): number {
+  const usageValue = toFiniteNumber(usage);
+  const totalValue = toFiniteNumber(total);
+
+  if (usageValue <= 0) {
+    return 0;
+  }
+
+  if (totalValue > 0 && usageValue <= 100) {
+    return (usageValue / 100) * totalValue;
+  }
+
+  return usageValue;
+}
+
+export function normalizeLoadRecordFromAPI(record: LoadRecordAPI): RecordFormat {
+  const ramTotal = toFiniteNumber(record.ram_total);
+  const swapTotal = toFiniteNumber(record.swap_total);
+  const diskTotal = toFiniteNumber(record.disk_total);
+
+  return {
+    client: record.client,
+    time: record.time,
+    cpu: toFiniteNumber(record.cpu),
+    gpu: toFiniteNumber(record.gpu),
+    gpu_usage: toFiniteNumber(record.gpu),
+    gpu_memory: null,
+    ram: usageToBytes(record.ram, ramTotal),
+    ram_total: ramTotal,
+    swap: usageToBytes(record.swap, swapTotal),
+    swap_total: swapTotal,
+    load: toFiniteNumber(record.load),
+    temp: toFiniteNumber(record.temp),
+    disk: usageToBytes(record.disk, diskTotal),
+    disk_total: diskTotal,
+    net_in: toFiniteNumber(record.net_in),
+    net_out: toFiniteNumber(record.net_out),
+    net_total_up: toFiniteNumber(record.net_total_up),
+    net_total_down: toFiniteNumber(record.net_total_down),
+    process: toFiniteNumber(record.process),
+    connections: toFiniteNumber(record.connections),
+    connections_udp: toFiniteNumber(record.connections_udp),
+  };
+}
+
+export function normalizeLiveRecordToRecordFormat(client: string, data: LiveRecord): RecordFormat {
+  let gpuMemorySum = 0;
+  let gpuCount = 0;
+  const gpuDetailed: {
+    [index: number]: {
+      usage: number | null;
+      memory: number | null;
+      temperature: number | null;
+    };
+  } = {};
+
+  if (data.gpu?.detailed_info) {
+    for (const gpu of data.gpu.detailed_info) {
+      const memPercent = gpu.memory_total > 0 ? (gpu.memory_used / gpu.memory_total) * 100 : 0;
+      gpuMemorySum += memPercent;
+      gpuCount++;
+      gpuDetailed[gpuCount - 1] = {
+        usage: gpu.utilization ?? null,
+        memory: memPercent,
+        temperature: gpu.temperature ?? null,
+      };
+    }
+  }
+
+  return {
+    client,
+    time: data.updated_at || "",
+    cpu: toFiniteNumber(data.cpu.usage),
+    gpu: 0,
+    gpu_usage: toFiniteNumber(data.gpu?.average_usage),
+    gpu_memory: gpuCount > 0 ? gpuMemorySum / gpuCount : 0,
+    gpu_detailed: gpuCount > 0 ? gpuDetailed : undefined,
+    ram: toFiniteNumber(data.ram.used),
+    ram_total: 0,
+    swap: toFiniteNumber(data.swap.used),
+    swap_total: 0,
+    load: toFiniteNumber(data.load.load1),
+    temp: 0,
+    disk: toFiniteNumber(data.disk.used),
+    disk_total: 0,
+    net_in: toFiniteNumber(data.network?.down),
+    net_out: toFiniteNumber(data.network?.up),
+    net_total_up: toFiniteNumber(data.network?.totalUp),
+    net_total_down: toFiniteNumber(data.network?.totalDown),
+    process: toFiniteNumber(data.process),
+    connections: toFiniteNumber(data.connections.tcp),
+    connections_udp: toFiniteNumber(data.connections.udp),
+  };
+}
+
 export function liveDataToRecords(client: string, liveData: LiveRecord[]): RecordFormat[] {
   if (!liveData) return [];
-  return liveData.map((data) => {
-    let gpuMemorySum = 0;
-    let gpuCount = 0;
-    const gpuDetailed: {
-      [index: number]: {
-        usage: number | null;
-        memory: number | null;
-        temperature: number | null;
-      };
-    } = {};
-
-    if (data.gpu?.detailed_info) {
-      for (const gpu of data.gpu.detailed_info) {
-        const memPercent = (gpu.memory_used / gpu.memory_total) * 100;
-        gpuMemorySum += memPercent;
-        gpuCount++;
-        gpuDetailed[gpuCount - 1] = {
-          usage: gpu.utilization ?? null,
-          memory: memPercent,
-          temperature: gpu.temperature ?? null,
-        };
-      }
-    }
-
-    return {
-      client,
-      time: data.updated_at || "",
-      cpu: data.cpu.usage ?? 0,
-      gpu: 0,
-      gpu_usage: data.gpu?.average_usage ?? 0,
-      gpu_memory: gpuCount > 0 ? gpuMemorySum / gpuCount : 0,
-      gpu_detailed: gpuCount > 0 ? gpuDetailed : undefined,
-      ram: data.ram.used ?? 0,
-      ram_total: 0,
-      swap: data.swap.used ?? 0,
-      swap_total: 0,
-      load: data.load.load1 ?? 0,
-      temp: 0,
-      disk: data.disk.used ?? 0,
-      disk_total: 0,
-      net_in: data.network?.down ?? 0,
-      net_out: data.network?.up ?? 0,
-      net_total_up: data.network?.totalUp ?? 0,
-      net_total_down: data.network?.totalDown ?? 0,
-      process: data.process ?? 0,
-      connections: data.connections.tcp ?? 0,
-      connections_udp: data.connections.udp ?? 0,
-    };
-  });
+  return liveData.map((data) => normalizeLiveRecordToRecordFormat(client, data));
 }
 
 function createNullTemplate(obj: unknown): unknown {

@@ -3,36 +3,22 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { Card } from "@/components/ui/card";
+import { formatBytesCompact } from "@/lib/format/bytes";
+import { toFiniteNumber } from "@/lib/normalizers/primitives";
 import { useLiveData } from "@/contexts/LiveDataContext";
 import { useNodeList } from "@/contexts/NodeListContext";
-import fillMissingTimePoints, { type RecordFormat } from "@/utils/RecordHelper";
+import { CARD_CONTAINMENT_STYLE } from "@/lib/constants";
+import fillMissingTimePoints, {
+  normalizeLoadRecordFromAPI,
+  type LoadRecordAPI,
+  type RecordFormat,
+} from "@/utils/RecordHelper";
 import { formatBytes } from "@/utils/unitHelper";
 
 type LoadChartProps = {
   data: RecordFormat[];
   view: string;
-};
-
-type LoadRecordAPI = {
-  client: string;
-  time: string;
-  cpu: number;
-  gpu: number;
-  ram: number;
-  ram_total: number;
-  swap: number;
-  swap_total: number;
-  load: number;
-  temp: number;
-  disk: number;
-  disk_total: number;
-  net_in: number;
-  net_out: number;
-  net_total_up: number;
-  net_total_down: number;
-  process: number;
-  connections: number;
-  connections_udp: number;
 };
 
 type LoadRecordsAPIResponse = {
@@ -128,38 +114,9 @@ const gpuAxisTickStyle = {
 
 const formatPercentTick = (value: number) => `${Number(value).toFixed(1)}%`;
 
-const formatBytesCompactCore = (value: number, withPerSecond: boolean) => {
-  const bytes = Number(value);
+const formatBytesCompactTick = (value: number) => formatBytesCompact(value, false);
 
-  if (!Number.isFinite(bytes) || bytes <= 0) {
-    return withPerSecond ? "0B/s" : "0B";
-  }
-
-  const units = ["B", "K", "M", "G", "T", "P"];
-  let size = bytes;
-  let unitIndex = 0;
-
-  while (size >= 1024 && unitIndex < units.length - 1) {
-    size /= 1024;
-    unitIndex++;
-  }
-
-  const precision = size >= 100 ? 0 : size >= 10 ? 1 : 2;
-  if (unitIndex === 0) {
-    return withPerSecond
-      ? `${Math.round(size)}${units[unitIndex]}/s`
-      : `${Math.round(size)}${units[unitIndex]}`;
-  }
-  return withPerSecond
-    ? `${size.toFixed(precision)}${units[unitIndex]}/s`
-    : `${size.toFixed(precision)}${units[unitIndex]}`;
-};
-
-const formatBytesCompact = (value: number) => formatBytesCompactCore(value, false);
-
-const formatNetworkSpeed = (value: number) => {
-  return formatBytesCompactCore(value, true);
-};
+const formatNetworkSpeed = (value: number) => formatBytesCompact(value, true);
 
 const formatCountCompact = (value: number) => {
   const num = Number(value);
@@ -183,61 +140,45 @@ const formatCountCompact = (value: number) => {
   return `${Math.round(num)}`;
 };
 
-const toNumeric = (value: unknown): number => {
+const toTooltipNumber = (value: unknown): number => {
   if (Array.isArray(value)) {
-    return Number(value[0]);
+    return toFiniteNumber(value[0]);
   }
-  return Number(value);
+  return toFiniteNumber(value);
 };
 
-const toFiniteNumber = (value: unknown): number => {
-  const numeric = Number(value);
-  return Number.isFinite(numeric) ? numeric : 0;
+const getTooltipPayload = <T extends object>(props: unknown): Partial<T> | undefined => {
+  if (
+    typeof props !== "object" ||
+    props === null ||
+    !("payload" in props) ||
+    typeof props.payload !== "object" ||
+    props.payload === null
+  ) {
+    return undefined;
+  }
+
+  return props.payload as Partial<T>;
 };
 
-const usageToBytes = (usage: unknown, total: unknown) => {
-  const usageValue = toFiniteNumber(usage);
-  const totalValue = toFiniteNumber(total);
+const resolveUsagePercent = (
+  used: number | null | undefined,
+  total: number | null | undefined,
+  fallbackTotal: number,
+): number => {
+  const normalizedUsed = toFiniteNumber(used);
+  const normalizedTotal = toFiniteNumber(total);
+  const baseTotal =
+    normalizedTotal > 0 ? normalizedTotal : Math.max(toFiniteNumber(fallbackTotal), 1);
 
-  if (usageValue <= 0) {
+  return (normalizedUsed / baseTotal) * 100;
+};
+
+const resolveGpuMemoryPercent = (used: number, total: number): number => {
+  if (!Number.isFinite(used) || !Number.isFinite(total) || total <= 0) {
     return 0;
   }
-
-  if (totalValue > 0 && usageValue <= 100) {
-    return (usageValue / 100) * totalValue;
-  }
-
-  return usageValue;
-};
-
-const mapLoadRecordFromAPI = (record: LoadRecordAPI): RecordFormat => {
-  const ramTotal = toFiniteNumber(record.ram_total);
-  const swapTotal = toFiniteNumber(record.swap_total);
-  const diskTotal = toFiniteNumber(record.disk_total);
-
-  return {
-    client: record.client,
-    time: record.time,
-    cpu: toFiniteNumber(record.cpu),
-    gpu: toFiniteNumber(record.gpu),
-    gpu_usage: toFiniteNumber(record.gpu),
-    gpu_memory: null,
-    ram: usageToBytes(record.ram, ramTotal),
-    ram_total: ramTotal,
-    swap: usageToBytes(record.swap, swapTotal),
-    swap_total: swapTotal,
-    load: toFiniteNumber(record.load),
-    temp: toFiniteNumber(record.temp),
-    disk: usageToBytes(record.disk, diskTotal),
-    disk_total: diskTotal,
-    net_in: toFiniteNumber(record.net_in),
-    net_out: toFiniteNumber(record.net_out),
-    net_total_up: toFiniteNumber(record.net_total_up),
-    net_total_down: toFiniteNumber(record.net_total_down),
-    process: toFiniteNumber(record.process),
-    connections: toFiniteNumber(record.connections),
-    connections_udp: toFiniteNumber(record.connections_udp),
-  };
+  return (used / total) * 100;
 };
 
 const LoadChart = ({ data = [], view }: LoadChartProps) => {
@@ -256,6 +197,20 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
 
   const node = nodeList?.find((n) => n.uuid === uuid);
   const current = live_data?.data?.data?.[uuid];
+  const currentMetrics = useMemo(
+    () => ({
+      cpu: toFiniteNumber(current?.cpu?.usage),
+      ram: toFiniteNumber(current?.ram?.used),
+      swap: toFiniteNumber(current?.swap?.used),
+      networkUp: toFiniteNumber(current?.network?.up),
+      networkDown: toFiniteNumber(current?.network?.down),
+      disk: toFiniteNumber(current?.disk?.used),
+      connectionsTcp: toFiniteNumber(current?.connections?.tcp),
+      connectionsUdp: toFiniteNumber(current?.connections?.udp),
+      process: toFiniteNumber(current?.process),
+    }),
+    [current],
+  );
 
   const selected = useMemo(() => presetViews.find((v) => v.key === view), [view]);
 
@@ -295,7 +250,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
       .then((payload) => {
         if (currentSeq !== requestSeqRef.current) return;
 
-        const records = (payload.data?.records || []).map(mapLoadRecordFromAPI);
+        const records = (payload.data?.records || []).map(normalizeLoadRecordFromAPI);
         records.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
         setRemoteData(records);
       })
@@ -327,15 +282,9 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
   const ramSwapChartData = useMemo(() => {
     return chartData.map((item) => ({
       time: item.time,
-      ram:
-        ((item.ram ?? 0) /
-          ((item.ram_total ?? 0) > 0 ? (item.ram_total ?? 1) : (node?.mem_total ?? 1))) *
-        100,
+      ram: resolveUsagePercent(item.ram, item.ram_total, node?.mem_total ?? 0),
       ram_raw: item.ram,
-      swap:
-        ((item.swap ?? 0) /
-          ((item.swap_total ?? 0) > 0 ? (item.swap_total ?? 1) : (node?.swap_total ?? 1))) *
-        100,
+      swap: resolveUsagePercent(item.swap, item.swap_total, node?.swap_total ?? 0),
       swap_raw: item.swap,
     }));
   }, [chartData, node?.mem_total, node?.swap_total]);
@@ -386,9 +335,8 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
     });
   };
 
-  const percentageFormatter = (value: unknown) => `${toNumeric(value).toFixed(2)}%`;
-  const cardClass =
-    "card-blur-target flex h-full w-full flex-col rounded-2xl border border-border/20 bg-card/95 p-5 shadow-sm";
+  const percentageFormatter = (value: unknown) => `${toTooltipNumber(value).toFixed(2)}%`;
+  const cardClass = "card-blur-target flex h-full w-full flex-col p-5";
   const chartBodyClass = "h-40 w-full aspect-auto";
 
   const chartTitle = (text: string, right: React.ReactNode) => (
@@ -406,8 +354,8 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
       {error && <div className="w-full text-center text-destructive">{error}</div>}
 
       <div className="mx-auto mt-2 grid w-full max-w-[1200px] grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <div className={cardClass}>
-          {chartTitle("CPU", current?.cpu?.usage ? `${current.cpu.usage.toFixed(2)}%` : "-")}
+        <Card className={cardClass} style={CARD_CONTAINMENT_STYLE}>
+          {chartTitle("CPU", currentMetrics.cpu > 0 ? `${currentMetrics.cpu.toFixed(2)}%` : "-")}
           <ChartContainer
             config={{ cpu: { label: "CPU", color: colors[0] } }}
             className={chartBodyClass}
@@ -451,12 +399,12 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
               />
             </AreaChart>
           </ChartContainer>
-        </div>
+        </Card>
 
-        <div className={cardClass}>
+        <Card className={cardClass} style={CARD_CONTAINMENT_STYLE}>
           {chartTitle(
             "内存",
-            `RAM ${formatBytesCompact(current?.ram?.used || 0)} | SWP ${formatBytesCompact(current?.swap?.used || 0)}`,
+            `RAM ${formatBytesCompact(currentMetrics.ram)} | SWP ${formatBytesCompact(currentMetrics.swap)}`,
           )}
           <ChartContainer
             config={{
@@ -491,20 +439,12 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
               <ChartTooltip
                 cursor={false}
                 formatter={(value: unknown, name: unknown, props: unknown) => {
-                  const payload =
-                    typeof props === "object" &&
-                    props !== null &&
-                    "payload" in props &&
-                    typeof props.payload === "object" &&
-                    props.payload !== null
-                      ? (props.payload as {
-                          ram_raw?: number;
-                          swap_raw?: number;
-                        })
-                      : undefined;
+                  const payload = getTooltipPayload<{ ram_raw?: number; swap_raw?: number }>(props);
                   const raw =
-                    String(name) === "ram" ? (payload?.ram_raw ?? 0) : (payload?.swap_raw ?? 0);
-                  const percent = toNumeric(value) || 0;
+                    String(name) === "ram"
+                      ? toFiniteNumber(payload?.ram_raw)
+                      : toFiniteNumber(payload?.swap_raw);
+                  const percent = toTooltipNumber(value);
                   return `${formatBytes(raw)} (${percent.toFixed(0)}%)`;
                 }}
                 content={<ChartTooltipContent labelFormatter={labelFormatter} indicator="dot" />}
@@ -529,12 +469,12 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
               />
             </AreaChart>
           </ChartContainer>
-        </div>
+        </Card>
 
-        <div className={cardClass}>
+        <Card className={cardClass} style={CARD_CONTAINMENT_STYLE}>
           {chartTitle(
             t("nodeCard.networkSpeed"),
-            `↑ ${formatNetworkSpeed(current?.network?.up || 0)} | ↓ ${formatNetworkSpeed(current?.network?.down || 0)}`,
+            `↑ ${formatNetworkSpeed(currentMetrics.networkUp)} | ↓ ${formatNetworkSpeed(currentMetrics.networkDown)}`,
           )}
           <ChartContainer
             config={{
@@ -567,7 +507,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
               />
               <ChartTooltip
                 cursor={false}
-                formatter={(value) => `${formatBytes(Number(value))}/s`}
+                formatter={(value) => `${formatBytes(toFiniteNumber(value))}/s`}
                 content={<ChartTooltipContent labelFormatter={labelFormatter} indicator="dot" />}
               />
               <Area
@@ -590,10 +530,13 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
               />
             </AreaChart>
           </ChartContainer>
-        </div>
+        </Card>
 
-        <div className={cardClass}>
-          {chartTitle("磁盘", current?.disk?.used ? formatBytesCompact(current.disk.used) : "-")}
+        <Card className={cardClass} style={CARD_CONTAINMENT_STYLE}>
+          {chartTitle(
+            "磁盘",
+            currentMetrics.disk > 0 ? formatBytesCompact(currentMetrics.disk) : "-",
+          )}
           <ChartContainer
             config={{ disk: { label: "磁盘", color: colors[0] } }}
             className={chartBodyClass}
@@ -616,14 +559,14 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                 axisLine={false}
                 domain={[0, diskYAxisMax]}
                 tickCount={yAxisTickCount}
-                tickFormatter={formatBytesCompact}
+                tickFormatter={formatBytesCompactTick}
                 tick={axisTickStyle}
                 orientation="left"
                 type="number"
               />
               <ChartTooltip
                 cursor={false}
-                formatter={(value) => formatBytes(Number(value))}
+                formatter={(value) => formatBytes(toFiniteNumber(value))}
                 content={<ChartTooltipContent labelFormatter={labelFormatter} indicator="dot" />}
               />
               <Area
@@ -637,12 +580,12 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
               />
             </AreaChart>
           </ChartContainer>
-        </div>
+        </Card>
 
-        <div className={cardClass}>
+        <Card className={cardClass} style={CARD_CONTAINMENT_STYLE}>
           {chartTitle(
             t("chart.connections"),
-            `TCP ${formatCountCompact(current?.connections?.tcp ?? 0)} | UDP ${formatCountCompact(current?.connections?.udp ?? 0)}`,
+            `TCP ${formatCountCompact(currentMetrics.connectionsTcp)} | UDP ${formatCountCompact(currentMetrics.connectionsUdp)}`,
           )}
           <ChartContainer
             config={{
@@ -697,10 +640,10 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
               />
             </AreaChart>
           </ChartContainer>
-        </div>
+        </Card>
 
-        <div className={cardClass}>
-          {chartTitle(t("chart.process"), formatCountCompact(current?.process ?? 0))}
+        <Card className={cardClass} style={CARD_CONTAINMENT_STYLE}>
+          {chartTitle(t("chart.process"), formatCountCompact(currentMetrics.process))}
           <ChartContainer
             config={{
               process: { label: t("chart.process"), color: colors[0] },
@@ -745,12 +688,16 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
               />
             </AreaChart>
           </ChartContainer>
-        </div>
+        </Card>
 
         {current?.gpu &&
           current.gpu.count > 0 &&
           current.gpu.detailed_info?.map((gpu, index) => (
-            <div key={`gpu-${index}`} className={cardClass}>
+            <Card
+              key={`gpu-${index}`}
+              className={cardClass}
+              style={CARD_CONTAINMENT_STYLE}
+            >
               <Flex direction="column" gap="2" className="mb-2">
                 <div className="flex items-center justify-between">
                   <label className="font-sans text-sm font-semibold uppercase tracking-[0.08em] text-muted-foreground">{`GPU ${index + 1}: ${gpu.name}`}</label>
@@ -768,7 +715,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                   <div className="text-center">
                     <div className="font-medium">{t("chart.gpu_memory")}</div>
                     <div className="text-lg font-mono font-bold text-foreground">
-                      {((gpu.memory_used / gpu.memory_total) * 100).toFixed(1)}%
+                      {resolveGpuMemoryPercent(gpu.memory_used, gpu.memory_total).toFixed(1)}%
                     </div>
                   </div>
                   <div className="text-center">
@@ -796,12 +743,14 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                 <AreaChart
                   data={chartData.map((item) => ({
                     time: item.time,
-                    gpu_usage: item.gpu_detailed?.[index]?.usage ?? item.gpu_usage ?? 0,
-                    gpu_memory: item.gpu_detailed?.[index]?.memory ?? item.gpu_memory ?? 0,
+                    gpu_usage: toFiniteNumber(item.gpu_detailed?.[index]?.usage ?? item.gpu_usage),
+                    gpu_memory: toFiniteNumber(
+                      item.gpu_detailed?.[index]?.memory ?? item.gpu_memory,
+                    ),
                     gpu_memory_raw:
-                      item.gpu_detailed?.[index]?.mem_used ??
-                      (gpu.memory_total * (item.gpu_detailed?.[index]?.memory || 0)) / 100,
-                    gpu_temp: item.gpu_detailed?.[index]?.temperature ?? 0,
+                      toFiniteNumber(item.gpu_detailed?.[index]?.mem_used) ||
+                      (gpu.memory_total * toFiniteNumber(item.gpu_detailed?.[index]?.memory)) / 100,
+                    gpu_temp: toFiniteNumber(item.gpu_detailed?.[index]?.temperature),
                   }))}
                   accessibilityLayer
                   margin={gpuChartMargin}
@@ -827,22 +776,16 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                   <ChartTooltip
                     cursor={false}
                     formatter={(value: unknown, name: unknown, props: unknown) => {
-                      const payload =
-                        typeof props === "object" &&
-                        props !== null &&
-                        "payload" in props &&
-                        typeof props.payload === "object" &&
-                        props.payload !== null
-                          ? (props.payload as { gpu_memory_raw?: number })
-                          : undefined;
+                      const payload = getTooltipPayload<{ gpu_memory_raw?: number }>(props);
                       if (String(name) === "gpu_temp") return `${value}°C`;
-                      if (String(name) === "gpu_usage") return `${toNumeric(value).toFixed(1)}%`;
+                      if (String(name) === "gpu_usage")
+                        return `${toTooltipNumber(value).toFixed(1)}%`;
                       if (String(name) === "gpu_memory") {
-                        const percentage = toNumeric(value).toFixed(1);
-                        const raw = payload?.gpu_memory_raw || 0;
+                        const percentage = toTooltipNumber(value).toFixed(1);
+                        const raw = toFiniteNumber(payload?.gpu_memory_raw);
                         return `${formatBytes(raw)}(${percentage}%)`;
                       }
-                      return `${toNumeric(value).toFixed(1)}`;
+                      return `${toTooltipNumber(value).toFixed(1)}`;
                     }}
                     content={
                       <ChartTooltipContent labelFormatter={labelFormatter} indicator="dot" />
@@ -877,7 +820,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                   />
                 </AreaChart>
               </ChartContainer>
-            </div>
+            </Card>
           ))}
       </div>
     </Flex>
