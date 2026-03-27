@@ -35,9 +35,9 @@ function formatUptime(seconds: number, t: (key: string, opts?: Record<string, un
 
 export const DetailsGrid = ({ uuid }: DetailsGridProps) => {
   const { t } = useTranslation();
-  const { nodeList } = useNodeList();
+  const { nodeByUuid } = useNodeList();
   const { live_data } = useLiveData();
-  const node = nodeList?.find((n) => n.uuid === uuid);
+  const node = nodeByUuid.get(uuid);
   const base = live_data?.data.data[uuid];
   const cpuModel = node?.cpu_name ? `${node.cpu_name} (x${node.cpu_cores || 0})` : "Unknown";
   const cpuUsage = Math.min(Math.max(base?.cpu?.usage ?? 0, 0), 100);
@@ -107,11 +107,7 @@ export const DetailsGrid = ({ uuid }: DetailsGridProps) => {
       <div className="mt-4 space-y-4">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {statBars.map((item) => (
-            <Card
-              key={item.key}
-              className={INFO_CARD_CLASS}
-              style={CARD_CONTAINMENT_STYLE}
-            >
+            <Card key={item.key} className={INFO_CARD_CLASS} style={CARD_CONTAINMENT_STYLE}>
               <div className="mb-1 flex items-center justify-between">
                 <span className="font-sans text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
                   {item.label}

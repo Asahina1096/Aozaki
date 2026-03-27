@@ -21,7 +21,7 @@ const {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light dark" />
     <!-- Favicon -->
-    <link id="site-favicon" rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link id="site-favicon" rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="manifest" href="/site.webmanifest" />
     <title>{title}</title>
     <!--
@@ -38,8 +38,11 @@ const {
           return window.matchMedia("(max-width: 768px)").matches;
         }
 
+        const mobileMediaQuery = window.matchMedia("(max-width: 768px)");
+
         let backgroundApplyToken = 0;
         let backgroundViewportCleanup = null;
+        let currentThemeSettings = null;
 
         function stopBackgroundViewportSync() {
           if (typeof backgroundViewportCleanup === "function") {
@@ -108,8 +111,19 @@ const {
             return extensionType;
           }
 
+          let resolvedUrl;
           try {
-            const response = await fetch(url, { method: "HEAD" });
+            resolvedUrl = new URL(url, window.location.href);
+          } catch (_error) {
+            return "image";
+          }
+
+          if (resolvedUrl.origin !== window.location.origin) {
+            return "image";
+          }
+
+          try {
+            const response = await fetch(resolvedUrl.href, { method: "HEAD" });
             if (!response.ok) {
               return "image";
             }
@@ -164,13 +178,24 @@ const {
           const mobileUrl = settings.backgroundImageUrlMobile;
           const rawBgUrl = isMobile() ? (mobileUrl || desktopUrl) : desktopUrl;
           const bgUrl = backgroundImageEnabled ? rawBgUrl : "";
+          const backgroundPosition = "center top";
 
           const overlayEnabled = settings.backgroundImageOverlayEnabled;
+          const blurStrategy =
+            settings.backgroundImageBlurStrategy === "backdrop" ||
+            settings.backgroundImageBlurStrategy === "preblur"
+              ? settings.backgroundImageBlurStrategy
+              : "backdrop";
           const overlayBlur = clampBlur(settings.backgroundImageOverlayBlur ?? 0);
           const overlayDarkness = settings.backgroundImageOverlayDarkness ?? 50;
           const darknessOnlyDark = settings.backgroundImageOverlayDarknessOnlyDark ?? false;
 
           const cardBlurEnabled = settings.cardBlurEnabled ?? false;
+          const cardEffectStrategy =
+            settings.cardEffectStrategy === "backdrop" ||
+            settings.cardEffectStrategy === "tint"
+              ? settings.cardEffectStrategy
+              : "backdrop";
           const cardBlurIntensity = clampBlur(settings.cardBlurIntensity ?? 0);
           const cardOpacityEnabled = settings.cardOpacityEnabled ?? false;
           const cardOpacity = clampPercentage(settings.cardOpacity ?? 95, 95);
@@ -181,10 +206,17 @@ const {
           const forceThemeMode = settings.forceThemeMode ?? "none";
 
           root.classList.remove("bg-overlay-enabled");
+          root.classList.remove("bg-image-enabled");
           root.classList.remove("card-blur-enabled");
+          root.classList.remove("card-blur-active");
           root.classList.remove("card-opacity-enabled");
           root.classList.remove("blur-style-frosted");
           root.classList.remove("blur-style-acrylic");
+          root.classList.remove("overlay-blur-active");
+          root.classList.remove("bg-blur-strategy-backdrop");
+          root.classList.remove("bg-blur-strategy-preblur");
+          root.classList.remove("card-effect-backdrop");
+          root.classList.remove("card-effect-tint");
           root.classList.remove("bg-video-enabled");
           root.classList.remove("theme-forced");
           root.classList.remove("theme-forced-dark");
@@ -194,7 +226,9 @@ const {
           root.style.removeProperty("--card-blur");
           root.style.removeProperty("--card-opacity");
           root.style.removeProperty("--card-blur-opacity");
+          root.style.removeProperty("--card-tint-opacity");
           root.style.removeProperty("--bg-image-url");
+          root.style.removeProperty("--bg-image-position");
           root.style.removeProperty("--readability-overlay-opacity");
           root.style.removeProperty("background-image");
           root.style.removeProperty("background-size");
@@ -225,7 +259,9 @@ const {
 
           if (bgUrl && !isVideoBackground) {
             root.style.setProperty("--bg-image-url", "url(" + bgUrl + ")");
+            root.style.setProperty("--bg-image-position", backgroundPosition);
             root.style.setProperty("--readability-overlay-opacity", readabilityOverlayOpacity / 100);
+            root.classList.add("bg-image-enabled");
           } else if (bgUrl && isVideoBackground) {
             root.style.setProperty("--readability-overlay-opacity", readabilityOverlayOpacity / 100);
             root.classList.add("bg-video-enabled");
@@ -234,6 +270,9 @@ const {
 
           const hasBackgroundMedia = Boolean(bgUrl);
           const useOverlay = overlayEnabled && hasBackgroundMedia;
+          const effectiveBlurStrategy =
+            blurStrategy === "preblur" && isVideoBackground ? "backdrop" : blurStrategy;
+          const usePreblurForStaticImage = !isVideoBackground && effectiveBlurStrategy === "preblur";
 
           if (useOverlay) {
             let effectiveDarkness = overlayDarkness;
@@ -244,17 +283,25 @@ const {
             root.style.setProperty("--overlay-darkness", effectiveDarkness / 100);
             root.classList.add("bg-overlay-enabled");
             root.classList.add("blur-style-frosted");
-          } else if (bgUrl && backgroundImageEnabled && !isVideoBackground) {
-            root.style.backgroundImage = "url(" + bgUrl + ")";
-            root.style.backgroundSize = "cover";
-            root.style.backgroundPosition = "center top";
-            root.style.backgroundRepeat = "no-repeat";
-            root.style.backgroundAttachment = isMobile() ? "scroll" : "fixed";
+            root.classList.add(
+              usePreblurForStaticImage ? "bg-blur-strategy-preblur" : "bg-blur-strategy-backdrop",
+            );
+            if (overlayBlur > 0) {
+              root.classList.add("overlay-blur-active");
+            }
           }
 
           if (cardBlurEnabled && hasBackgroundMedia) {
             root.style.setProperty("--card-blur", cardBlurIntensity + "px");
             root.classList.add("card-blur-enabled");
+            root.classList.add(cardEffectStrategy === "tint" ? "card-effect-tint" : "card-effect-backdrop");
+            if (cardEffectStrategy === "tint") {
+              const cardTintOpacity = Math.min(Math.max(cardBlurOpacity + 8, cardBlurOpacity), 90);
+              root.style.setProperty("--card-tint-opacity", cardTintOpacity + "%");
+            }
+            if (cardBlurIntensity > 0) {
+              root.classList.add("card-blur-active");
+            }
           }
         }
 
@@ -273,27 +320,23 @@ const {
               }
 
               if (resp.data.theme_settings) {
+                currentThemeSettings = resp.data.theme_settings;
                 void applyBackgroundImage(resp.data.theme_settings);
               }
             })
             .catch(function () {});
         }
 
-        function applyFavicon() {
-          const faviconEl = document.getElementById("site-favicon");
-          if (!(faviconEl instanceof HTMLLinkElement)) return;
+        function handleMobileBreakpointChange() {
+          if (!currentThemeSettings) {
+            return;
+          }
 
-          fetch("/favicon.ico", {
-            method: "HEAD",
-            cache: "no-store",
-          })
-            .then(function (response) {
-              if (!response.ok) return;
-              faviconEl.href = "/favicon.ico";
-              faviconEl.type = "image/x-icon";
-            })
-            .catch(function () {});
+          void applyBackgroundImage(currentThemeSettings);
         }
+
+        mobileMediaQuery.addEventListener("change", handleMobileBreakpointChange);
+
 
         const isValid = (value) =>
           value === "light" || value === "dark" || value === "system";
@@ -369,8 +412,7 @@ const {
         // 应用背景图片
         fetchAndApplyBackground();
 
-        // 应用后台自定义 favicon
-        applyFavicon();
+        // 使用后端提供的 favicon
       })();
     </script>
   </head>

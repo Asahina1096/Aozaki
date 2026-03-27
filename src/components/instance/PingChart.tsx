@@ -93,18 +93,16 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
   const { t } = useTranslation();
   const { call } = useRPC2Call();
 
-  const [hours, setHours] = useState(1);
+  const hours = useMemo(() => {
+    const selected = presetViews.find((item) => item.key === view);
+    return selected?.hours || 1;
+  }, [view]);
   const [remoteData, setRemoteData] = useState<PingRecord[] | null>(null);
   const [tasks, setTasks] = useState<TaskInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cutPeak, setCutPeak] = useState(false);
   const [hiddenLines, setHiddenLines] = useState<Record<string, boolean>>({});
-
-  useEffect(() => {
-    const selected = presetViews.find((v) => v.key === view);
-    setHours(selected?.hours || 1);
-  }, [view]);
 
   useEffect(() => {
     if (!uuid || !hours) {
@@ -206,39 +204,45 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
     return output;
   }, [cutPeak, midData, tasks]);
 
-  const timeFormatter = (value: string, index: number) => {
-    if (!chartData.length) return "";
-    if (index === 0 || index === chartData.length - 1) {
-      if (hours < 24) {
-        return new Date(value).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
+  const timeFormatter = useCallback(
+    (value: string, index: number) => {
+      if (!chartData.length) return "";
+      if (index === 0 || index === chartData.length - 1) {
+        if (hours < 24) {
+          return new Date(value).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        }
+        return new Date(value).toLocaleDateString([], {
+          month: "2-digit",
+          day: "2-digit",
         });
       }
-      return new Date(value).toLocaleDateString([], {
+      return "";
+    },
+    [chartData.length, hours],
+  );
+
+  const labelFormatter = useCallback(
+    (value: React.ReactNode) => {
+      const date = new Date(String(value));
+      if (hours < 24) {
+        return date.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        });
+      }
+      return date.toLocaleString([], {
         month: "2-digit",
         day: "2-digit",
-      });
-    }
-    return "";
-  };
-
-  const labelFormatter = (value: React.ReactNode) => {
-    const date = new Date(String(value));
-    if (hours < 24) {
-      return date.toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
-        second: "2-digit",
       });
-    }
-    return date.toLocaleString([], {
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+    },
+    [hours],
+  );
 
   const chartConfig = useMemo(() => {
     const config: ChartConfig = {};
@@ -250,6 +254,11 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
     });
     return config;
   }, [tasks]);
+
+  const pingTooltipFormatter = useCallback((value: unknown) => {
+    const numericValue = Array.isArray(value) ? Number(value[0]) : Number(value);
+    return `${Math.round(numericValue)} ms`;
+  }, []);
 
   const latestValues = useMemo(() => {
     if (!remoteData || !tasks.length) return [];
@@ -283,6 +292,11 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
     });
     setHiddenLines(next);
   }, [hiddenLines, tasks]);
+
+  const allLinesHidden = useMemo(
+    () => tasks.length > 0 && tasks.every((task) => hiddenLines[String(task.id)]),
+    [hiddenLines, tasks],
+  );
 
   const cardClass = "card-blur-target w-full max-w-[1200px] p-5";
 
@@ -355,7 +369,7 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
               />
               <ChartTooltip
                 cursor={false}
-                formatter={(v) => `${Math.round(Number(v))} ms`}
+                formatter={pingTooltipFormatter}
                 content={<ChartTooltipContent labelFormatter={labelFormatter} indicator="dot" />}
               />
               <ChartLegend onClick={handleLegendClick} />
@@ -406,7 +420,7 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
             onClick={toggleAllLines}
             className="flex items-center gap-2"
           >
-            {tasks.every((task) => hiddenLines[String(task.id)]) ? (
+            {allLinesHidden ? (
               <>
                 <Eye size={16} />
                 {t("chart.showAll")}

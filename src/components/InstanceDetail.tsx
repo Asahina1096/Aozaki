@@ -1,10 +1,8 @@
 import { Flex, SegmentedControl, Text } from "@radix-ui/themes";
-import { useEffect, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { DetailsGrid } from "@/components/DetailsGrid";
 import { Card } from "@/components/ui/card";
-import LoadChart from "@/components/instance/LoadChart";
-import PingChart from "@/components/instance/PingChart";
 import { normalizeRecentStatusRecord } from "@/lib/normalizers/liveData";
 import { CARD_CONTAINMENT_STYLE, INFO_CARD_COMPACT_CLASS } from "@/lib/constants";
 import { useRPC2Call } from "@/contexts/RPC2Context";
@@ -12,6 +10,9 @@ import { liveDataToRecords } from "@/utils/RecordHelper";
 import { useLiveDataRefresh } from "../contexts/LiveDataContext";
 import { useNodeList } from "../contexts/NodeListContext";
 import type { Record as LiveRecord } from "../types/LiveData";
+
+const LoadChart = lazy(() => import("@/components/instance/LoadChart"));
+const PingChart = lazy(() => import("@/components/instance/PingChart"));
 
 type StatusRecordRPC = {
   client: string;
@@ -46,26 +47,29 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
   const [chartView, setChartView] = useState<"load" | "ping">("load");
   const [loadView, setLoadView] = useState("real");
   const [pingView, setPingView] = useState("1h");
-  const { nodeList } = useNodeList();
+  const { nodeByUuid } = useNodeList();
   const length = 30 * 5;
   const sectionCardClass = "card-blur-target p-5";
-  const rangeOptions =
-    chartView === "load"
-      ? [
-          { key: "real", label: t("common.real_time") },
-          { key: "4h", label: t("chart.hours", { count: 4 }) },
-          { key: "1d", label: t("chart.days", { count: 1 }) },
-          { key: "7d", label: t("chart.days", { count: 7 }) },
-          { key: "30d", label: t("chart.days", { count: 30 }) },
-        ]
-      : [
-          { key: "1h", label: t("chart.hours", { count: 1 }) },
-          { key: "6h", label: t("chart.hours", { count: 6 }) },
-          { key: "12h", label: t("chart.hours", { count: 12 }) },
-          { key: "1d", label: t("chart.days", { count: 1 }) },
-        ];
+  const rangeOptions = useMemo(
+    () =>
+      chartView === "load"
+        ? [
+            { key: "real", label: t("common.real_time") },
+            { key: "4h", label: t("chart.hours", { count: 4 }) },
+            { key: "1d", label: t("chart.days", { count: 1 }) },
+            { key: "7d", label: t("chart.days", { count: 7 }) },
+            { key: "30d", label: t("chart.days", { count: 30 }) },
+          ]
+        : [
+            { key: "1h", label: t("chart.hours", { count: 1 }) },
+            { key: "6h", label: t("chart.hours", { count: 6 }) },
+            { key: "12h", label: t("chart.hours", { count: 12 }) },
+            { key: "1d", label: t("chart.days", { count: 1 }) },
+          ],
+    [chartView, t],
+  );
 
-  const node = nodeList?.find((n) => n.uuid === uuid);
+  const node = nodeByUuid.get(uuid);
   const serverName = node?.name?.trim() || uuid;
   const region = (node?.region || "Unknown").toUpperCase();
   const { call } = useRPC2Call();
@@ -109,6 +113,8 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
     return () => unsubscribe();
   }, [onRefresh, uuid]);
 
+  const loadRecords = useMemo(() => liveDataToRecords(uuid, recent), [uuid, recent]);
+
   return (
     <Flex className="items-center px-2 pb-10 pt-2 md:px-4" direction="column" gap="4">
       <div className="flex w-full max-w-[1200px] flex-col gap-4">
@@ -116,10 +122,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
           <div className="flex items-start gap-3">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-3">
-                <Card
-                  className={INFO_CARD_COMPACT_CLASS}
-                  style={CARD_CONTAINMENT_STYLE}
-                >
+                <Card className={INFO_CARD_COMPACT_CLASS} style={CARD_CONTAINMENT_STYLE}>
                   {region}
                 </Card>
                 <h1 className="text-xl font-bold tracking-tight text-foreground md:text-2xl">
@@ -142,6 +145,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
             <div className="w-max min-w-full sm:min-w-0">
               <SegmentedControl.Root
                 radius="full"
+                size="2"
                 value={chartView === "load" ? loadView : pingView}
                 onValueChange={(value) => {
                   if (chartView === "load") {
@@ -164,6 +168,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
           <div className="inline-flex items-center">
             <SegmentedControl.Root
               radius="full"
+              size="2"
               value={chartView}
               onValueChange={(value) => setChartView(value as "load" | "ping")}
               className="instance-detail-segment control-surface-target"
@@ -175,13 +180,13 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
         </Card>
       </div>
 
-      {(() => {
-        return chartView === "load" ? (
-          <LoadChart data={liveDataToRecords(uuid, recent)} view={loadView} />
+      <Suspense fallback={null}>
+        {chartView === "load" ? (
+          <LoadChart data={loadRecords} view={loadView} />
         ) : (
           <PingChart uuid={uuid} view={pingView} />
-        );
-      })()}
+        )}
+      </Suspense>
     </Flex>
   );
 };

@@ -1,5 +1,5 @@
 import { Flex } from "@radix-ui/themes";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
@@ -183,7 +183,7 @@ const resolveGpuMemoryPercent = (used: number, total: number): number => {
 
 const LoadChart = ({ data = [], view }: LoadChartProps) => {
   const { t } = useTranslation();
-  const { nodeList } = useNodeList();
+  const { nodeByUuid } = useNodeList();
   const { live_data } = useLiveData();
   const [remoteData, setRemoteData] = useState<RecordFormat[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -195,7 +195,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
       ? ""
       : window.location.pathname.split("/").filter(Boolean).pop() || "";
 
-  const node = nodeList?.find((n) => n.uuid === uuid);
+  const node = nodeByUuid.get(uuid);
   const current = live_data?.data?.data?.[uuid];
   const currentMetrics = useMemo(
     () => ({
@@ -266,7 +266,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
   const minute = 60;
   const hour = minute * 60;
   const isRealtime = view === "real";
-  const realtimeData = Array.isArray(data) ? data.slice(-150) : [];
+  const realtimeData = useMemo(() => (Array.isArray(data) ? data.slice(-150) : []), [data]);
 
   const chartData = useMemo(() => {
     if (isRealtime) return realtimeData;
@@ -302,42 +302,145 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
     return toFiniteNumber(node?.disk_total) || 100;
   }, [chartData, node?.disk_total]);
 
-  const timeFormatter = (value: string, index: number) => {
-    if (index === 0 || index === chartData.length - 1) {
-      if (isRealtime || view === "4h") {
-        return new Date(value).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
+  const timeFormatter = useCallback(
+    (value: string, index: number) => {
+      if (index === 0 || index === chartData.length - 1) {
+        if (isRealtime || view === "4h") {
+          return new Date(value).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        }
+        return new Date(value).toLocaleDateString([], {
+          month: "2-digit",
+          day: "2-digit",
         });
       }
-      return new Date(value).toLocaleDateString([], {
+      return "";
+    },
+    [chartData.length, isRealtime, view],
+  );
+
+  const labelFormatter = useCallback(
+    (value: React.ReactNode) => {
+      const date = new Date(String(value));
+      if (isRealtime || view === "4h") {
+        return date.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        });
+      }
+      return date.toLocaleString([], {
         month: "2-digit",
         day: "2-digit",
-      });
-    }
-    return "";
-  };
-
-  const labelFormatter = (value: React.ReactNode) => {
-    const date = new Date(String(value));
-    if (isRealtime || view === "4h") {
-      return date.toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
-        second: "2-digit",
       });
-    }
-    return date.toLocaleString([], {
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+    },
+    [isRealtime, view],
+  );
 
-  const percentageFormatter = (value: unknown) => `${toTooltipNumber(value).toFixed(2)}%`;
+  const gpuSeriesData = useMemo(() => {
+    const gpuCount = current?.gpu?.detailed_info?.length ?? 0;
+    if (gpuCount === 0) {
+      return [];
+    }
+
+    return Array.from({ length: gpuCount }, (_, index) =>
+      chartData.map((item) => ({
+        time: item.time,
+        gpu_usage: toFiniteNumber(item.gpu_detailed?.[index]?.usage ?? item.gpu_usage),
+        gpu_memory: toFiniteNumber(item.gpu_detailed?.[index]?.memory ?? item.gpu_memory),
+        gpu_memory_raw:
+          toFiniteNumber(item.gpu_detailed?.[index]?.mem_used) ||
+          (toFiniteNumber(current?.gpu?.detailed_info?.[index]?.memory_total) *
+            toFiniteNumber(item.gpu_detailed?.[index]?.memory)) /
+            100,
+        gpu_temp: toFiniteNumber(item.gpu_detailed?.[index]?.temperature),
+      })),
+    );
+  }, [chartData, current?.gpu?.detailed_info]);
+
+  const percentageFormatter = useCallback(
+    (value: unknown) => `${toTooltipNumber(value).toFixed(2)}%`,
+    [],
+  );
+  const ramSwapTooltipFormatter = useCallback((value: unknown, name: unknown, props: unknown) => {
+    const payload = getTooltipPayload<{ ram_raw?: number; swap_raw?: number }>(props);
+    const raw =
+      String(name) === "ram" ? toFiniteNumber(payload?.ram_raw) : toFiniteNumber(payload?.swap_raw);
+    const percent = toTooltipNumber(value);
+    return `${formatBytes(raw)} (${percent.toFixed(0)}%)`;
+  }, []);
+  const networkTooltipFormatter = useCallback(
+    (value: unknown) => `${formatBytes(toFiniteNumber(value))}/s`,
+    [],
+  );
+  const diskTooltipFormatter = useCallback(
+    (value: unknown) => formatBytes(toFiniteNumber(value)),
+    [],
+  );
+  const gpuTooltipFormatter = useCallback((value: unknown, name: unknown, props: unknown) => {
+    const payload = getTooltipPayload<{ gpu_memory_raw?: number }>(props);
+    if (String(name) === "gpu_temp") return `${value}°C`;
+    if (String(name) === "gpu_usage") return `${toTooltipNumber(value).toFixed(1)}%`;
+    if (String(name) === "gpu_memory") {
+      const percentage = toTooltipNumber(value).toFixed(1);
+      const raw = toFiniteNumber(payload?.gpu_memory_raw);
+      return `${formatBytes(raw)}(${percentage}%)`;
+    }
+    return `${toTooltipNumber(value).toFixed(1)}`;
+  }, []);
+  const gpuAxisTickFormatter = useCallback(
+    (value: number, index: number) => (index !== 0 ? `${value}%` : ""),
+    [],
+  );
   const cardClass = "card-blur-target flex h-full w-full flex-col p-5";
   const chartBodyClass = "h-40 w-full aspect-auto";
+  const cpuChartConfig = useMemo(() => ({ cpu: { label: "CPU", color: colors[0] } }), []);
+  const ramSwapChartConfig = useMemo(
+    () => ({
+      ram: { label: "内存", color: colors[0] },
+      swap: { label: "Swap", color: colors[1] },
+    }),
+    [],
+  );
+  const networkChartConfig = useMemo(
+    () => ({
+      net_in: { label: t("chart.network_down"), color: colors[0] },
+      net_out: { label: t("chart.network_up"), color: colors[3] },
+    }),
+    [t],
+  );
+  const diskChartConfig = useMemo(() => ({ disk: { label: "磁盘", color: colors[0] } }), []);
+  const connectionsChartConfig = useMemo(
+    () => ({
+      connections: { label: "TCP", color: colors[0] },
+      connections_udp: { label: "UDP", color: colors[3] },
+    }),
+    [],
+  );
+  const processChartConfig = useMemo(
+    () => ({
+      process: { label: t("chart.process"), color: colors[0] },
+    }),
+    [t],
+  );
+  const gpuChartConfig = useMemo(
+    () => ({
+      gpu_usage: { label: "GPU", color: colors[0] },
+      gpu_memory: {
+        label: t("chart.gpu_memory"),
+        color: colors[1],
+      },
+      gpu_temp: {
+        label: t("nodeCard.temperature"),
+        color: colors[2],
+      },
+    }),
+    [t],
+  );
 
   const chartTitle = (text: string, right: React.ReactNode) => (
     <div className="mb-2 flex items-center justify-between gap-4">
@@ -356,10 +459,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
       <div className="mx-auto mt-2 grid w-full max-w-[1200px] grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card className={cardClass} style={CARD_CONTAINMENT_STYLE}>
           {chartTitle("CPU", currentMetrics.cpu > 0 ? `${currentMetrics.cpu.toFixed(2)}%` : "-")}
-          <ChartContainer
-            config={{ cpu: { label: "CPU", color: colors[0] } }}
-            className={chartBodyClass}
-          >
+          <ChartContainer config={cpuChartConfig} className={chartBodyClass}>
             <AreaChart data={chartData} accessibilityLayer margin={sixChartMargin}>
               {softFillDef}
               <CartesianGrid vertical={false} stroke={SOFT_GRID_STROKE} strokeDasharray="3 6" />
@@ -406,13 +506,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
             "内存",
             `RAM ${formatBytesCompact(currentMetrics.ram)} | SWP ${formatBytesCompact(currentMetrics.swap)}`,
           )}
-          <ChartContainer
-            config={{
-              ram: { label: "内存", color: colors[0] },
-              swap: { label: "Swap", color: colors[1] },
-            }}
-            className={chartBodyClass}
-          >
+          <ChartContainer config={ramSwapChartConfig} className={chartBodyClass}>
             <AreaChart data={ramSwapChartData} accessibilityLayer margin={sixChartMargin}>
               {softFillDef}
               <CartesianGrid vertical={false} stroke={SOFT_GRID_STROKE} strokeDasharray="3 6" />
@@ -438,15 +532,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
               />
               <ChartTooltip
                 cursor={false}
-                formatter={(value: unknown, name: unknown, props: unknown) => {
-                  const payload = getTooltipPayload<{ ram_raw?: number; swap_raw?: number }>(props);
-                  const raw =
-                    String(name) === "ram"
-                      ? toFiniteNumber(payload?.ram_raw)
-                      : toFiniteNumber(payload?.swap_raw);
-                  const percent = toTooltipNumber(value);
-                  return `${formatBytes(raw)} (${percent.toFixed(0)}%)`;
-                }}
+                formatter={ramSwapTooltipFormatter}
                 content={<ChartTooltipContent labelFormatter={labelFormatter} indicator="dot" />}
               />
               <Area
@@ -476,13 +562,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
             t("nodeCard.networkSpeed"),
             `↑ ${formatNetworkSpeed(currentMetrics.networkUp)} | ↓ ${formatNetworkSpeed(currentMetrics.networkDown)}`,
           )}
-          <ChartContainer
-            config={{
-              net_in: { label: t("chart.network_down"), color: colors[0] },
-              net_out: { label: t("chart.network_up"), color: colors[3] },
-            }}
-            className={chartBodyClass}
-          >
+          <ChartContainer config={networkChartConfig} className={chartBodyClass}>
             <AreaChart data={chartData} accessibilityLayer margin={sixChartMargin}>
               {softFillDef}
               <CartesianGrid vertical={false} stroke={SOFT_GRID_STROKE} strokeDasharray="3 6" />
@@ -507,7 +587,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
               />
               <ChartTooltip
                 cursor={false}
-                formatter={(value) => `${formatBytes(toFiniteNumber(value))}/s`}
+                formatter={networkTooltipFormatter}
                 content={<ChartTooltipContent labelFormatter={labelFormatter} indicator="dot" />}
               />
               <Area
@@ -537,10 +617,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
             "磁盘",
             currentMetrics.disk > 0 ? formatBytesCompact(currentMetrics.disk) : "-",
           )}
-          <ChartContainer
-            config={{ disk: { label: "磁盘", color: colors[0] } }}
-            className={chartBodyClass}
-          >
+          <ChartContainer config={diskChartConfig} className={chartBodyClass}>
             <AreaChart data={chartData} accessibilityLayer margin={sixChartMargin}>
               {softFillDef}
               <CartesianGrid vertical={false} stroke={SOFT_GRID_STROKE} strokeDasharray="3 6" />
@@ -566,7 +643,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
               />
               <ChartTooltip
                 cursor={false}
-                formatter={(value) => formatBytes(toFiniteNumber(value))}
+                formatter={diskTooltipFormatter}
                 content={<ChartTooltipContent labelFormatter={labelFormatter} indicator="dot" />}
               />
               <Area
@@ -587,13 +664,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
             t("chart.connections"),
             `TCP ${formatCountCompact(currentMetrics.connectionsTcp)} | UDP ${formatCountCompact(currentMetrics.connectionsUdp)}`,
           )}
-          <ChartContainer
-            config={{
-              connections: { label: "TCP", color: colors[0] },
-              connections_udp: { label: "UDP", color: colors[3] },
-            }}
-            className={chartBodyClass}
-          >
+          <ChartContainer config={connectionsChartConfig} className={chartBodyClass}>
             <AreaChart data={chartData} accessibilityLayer margin={sixChartMargin}>
               {softFillDef}
               <CartesianGrid vertical={false} stroke={SOFT_GRID_STROKE} strokeDasharray="3 6" />
@@ -644,12 +715,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
 
         <Card className={cardClass} style={CARD_CONTAINMENT_STYLE}>
           {chartTitle(t("chart.process"), formatCountCompact(currentMetrics.process))}
-          <ChartContainer
-            config={{
-              process: { label: t("chart.process"), color: colors[0] },
-            }}
-            className={chartBodyClass}
-          >
+          <ChartContainer config={processChartConfig} className={chartBodyClass}>
             <AreaChart data={chartData} accessibilityLayer margin={sixChartMargin}>
               {softFillDef}
               <CartesianGrid vertical={false} stroke={SOFT_GRID_STROKE} strokeDasharray="3 6" />
@@ -693,11 +759,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
         {current?.gpu &&
           current.gpu.count > 0 &&
           current.gpu.detailed_info?.map((gpu, index) => (
-            <Card
-              key={`gpu-${index}`}
-              className={cardClass}
-              style={CARD_CONTAINMENT_STYLE}
-            >
+            <Card key={`gpu-${index}`} className={cardClass} style={CARD_CONTAINMENT_STYLE}>
               <Flex direction="column" gap="2" className="mb-2">
                 <div className="flex items-center justify-between">
                   <label className="font-sans text-sm font-semibold uppercase tracking-[0.08em] text-muted-foreground">{`GPU ${index + 1}: ${gpu.name}`}</label>
@@ -726,32 +788,9 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                   </div>
                 </div>
               </Flex>
-              <ChartContainer
-                config={{
-                  gpu_usage: { label: "GPU", color: colors[0] },
-                  gpu_memory: {
-                    label: t("chart.gpu_memory"),
-                    color: colors[1],
-                  },
-                  gpu_temp: {
-                    label: t("nodeCard.temperature"),
-                    color: colors[2],
-                  },
-                }}
-                className={chartBodyClass}
-              >
+              <ChartContainer config={gpuChartConfig} className={chartBodyClass}>
                 <AreaChart
-                  data={chartData.map((item) => ({
-                    time: item.time,
-                    gpu_usage: toFiniteNumber(item.gpu_detailed?.[index]?.usage ?? item.gpu_usage),
-                    gpu_memory: toFiniteNumber(
-                      item.gpu_detailed?.[index]?.memory ?? item.gpu_memory,
-                    ),
-                    gpu_memory_raw:
-                      toFiniteNumber(item.gpu_detailed?.[index]?.mem_used) ||
-                      (gpu.memory_total * toFiniteNumber(item.gpu_detailed?.[index]?.memory)) / 100,
-                    gpu_temp: toFiniteNumber(item.gpu_detailed?.[index]?.temperature),
-                  }))}
+                  data={gpuSeriesData[index] ?? []}
                   accessibilityLayer
                   margin={gpuChartMargin}
                 >
@@ -768,25 +807,14 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
                     tickLine={false}
                     axisLine={false}
                     domain={[0, 100]}
-                    tickFormatter={(value: number, i: number) => (i !== 0 ? `${value}%` : "")}
+                    tickFormatter={gpuAxisTickFormatter}
                     tick={gpuAxisTickStyle}
                     orientation="left"
                     type="number"
                   />
                   <ChartTooltip
                     cursor={false}
-                    formatter={(value: unknown, name: unknown, props: unknown) => {
-                      const payload = getTooltipPayload<{ gpu_memory_raw?: number }>(props);
-                      if (String(name) === "gpu_temp") return `${value}°C`;
-                      if (String(name) === "gpu_usage")
-                        return `${toTooltipNumber(value).toFixed(1)}%`;
-                      if (String(name) === "gpu_memory") {
-                        const percentage = toTooltipNumber(value).toFixed(1);
-                        const raw = toFiniteNumber(payload?.gpu_memory_raw);
-                        return `${formatBytes(raw)}(${percentage}%)`;
-                      }
-                      return `${toTooltipNumber(value).toFixed(1)}`;
-                    }}
+                    formatter={gpuTooltipFormatter}
                     content={
                       <ChartTooltipContent labelFormatter={labelFormatter} indicator="dot" />
                     }

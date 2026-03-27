@@ -12,6 +12,7 @@ interface ServerCardProps {
   node: NodeBasicInfo;
   liveData?: Record;
   isOnline: boolean;
+  isBlurViewportActive?: boolean;
 }
 
 function formatUptimeSeconds(seconds: number): string {
@@ -25,7 +26,12 @@ function formatUptimeSeconds(seconds: number): string {
   return "1分钟";
 }
 
-function ServerCardComponent({ node, liveData, isOnline }: ServerCardProps) {
+function ServerCardComponent({
+  node,
+  liveData,
+  isOnline,
+  isBlurViewportActive = true,
+}: ServerCardProps) {
   const cpuUsage = liveData?.cpu?.usage ?? 0;
   const ramUsed = liveData?.ram?.used ?? 0;
   const memTotal = node.mem_total;
@@ -44,7 +50,10 @@ function ServerCardComponent({ node, liveData, isOnline }: ServerCardProps) {
   const totalDown = liveData?.network?.totalDown ?? 0;
 
   return (
-    <Card className="card-blur-target overflow-hidden" style={CARD_CONTAINMENT_STYLE}>
+    <Card
+      className={`card-blur-target overflow-hidden ${isBlurViewportActive ? "card-blur-viewport-active" : ""}`}
+      style={CARD_CONTAINMENT_STYLE}
+    >
       <CardHeader className="p-5 pb-3 md:p-4 md:pb-2 space-y-0.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 ml-1">
@@ -161,4 +170,43 @@ function ServerCardComponent({ node, liveData, isOnline }: ServerCardProps) {
   );
 }
 
-export const ServerCard = memo(ServerCardComponent);
+function isSameLiveRecord(prev?: Record, next?: Record): boolean {
+  if (!prev && !next) {
+    return true;
+  }
+
+  if (!prev || !next) {
+    return false;
+  }
+
+  return (
+    prev.uptime === next.uptime &&
+    prev.cpu.usage === next.cpu.usage &&
+    prev.ram.used === next.ram.used &&
+    prev.disk.used === next.disk.used &&
+    prev.load.load1 === next.load.load1 &&
+    prev.load.load5 === next.load.load5 &&
+    prev.load.load15 === next.load.load15 &&
+    prev.network.up === next.network.up &&
+    prev.network.down === next.network.down &&
+    prev.network.totalUp === next.network.totalUp &&
+    prev.network.totalDown === next.network.totalDown
+  );
+}
+
+export const ServerCard = memo(ServerCardComponent, (prevProps, nextProps) => {
+  const prevNode = prevProps.node;
+  const nextNode = nextProps.node;
+
+  return (
+    prevProps.isBlurViewportActive === nextProps.isBlurViewportActive &&
+    prevProps.isOnline === nextProps.isOnline &&
+    prevNode.uuid === nextNode.uuid &&
+    prevNode.name === nextNode.name &&
+    prevNode.region === nextNode.region &&
+    prevNode.group === nextNode.group &&
+    prevNode.mem_total === nextNode.mem_total &&
+    prevNode.disk_total === nextNode.disk_total &&
+    isSameLiveRecord(prevProps.liveData, nextProps.liveData)
+  );
+});

@@ -1,14 +1,16 @@
-import React, { useEffect } from "react";
-import {
-  BrowserRouter,
-  Navigate,
-  Route,
-  Routes,
-  useNavigate,
-  useParams,
-} from "react-router-dom";
-import InstanceDetail from "@/components/InstanceDetail";
-import ServerList from "@/components/ServerList";
+import React, { Suspense, lazy, useEffect } from "react";
+import { BrowserRouter, Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
+
+const ServerList = lazy(() => import("@/components/ServerList"));
+
+const InstanceDetail = lazy(async () => {
+  const [, instanceDetailModule] = await Promise.all([
+    import("@/i18n/config"),
+    import("@/components/InstanceDetail"),
+  ]);
+
+  return instanceDetailModule;
+});
 
 interface AppRouterProps {
   refreshInterval?: number;
@@ -19,11 +21,19 @@ export const AppRouter: React.FC<AppRouterProps> = ({ refreshInterval = 2000 }) 
     <BrowserRouter>
       <HeaderNavigationBridge />
       <Routes>
-        <Route path="/" element={<ServerList refreshInterval={refreshInterval} />} />
+        <Route path="/" element={<HomeRoute refreshInterval={refreshInterval} />} />
         <Route path="/instance/:uuid" element={<InstanceDetailRoute />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
+  );
+};
+
+const HomeRoute: React.FC<AppRouterProps> = ({ refreshInterval = 2000 }) => {
+  return (
+    <Suspense fallback={null}>
+      <ServerList refreshInterval={refreshInterval} />
+    </Suspense>
   );
 };
 
@@ -51,7 +61,11 @@ const InstanceDetailRoute: React.FC = () => {
     return <Navigate to="/" replace />;
   }
 
-  return <InstanceDetail uuid={uuid} />;
+  return (
+    <Suspense fallback={null}>
+      <InstanceDetail uuid={uuid} />
+    </Suspense>
+  );
 };
 
 export default AppRouter;

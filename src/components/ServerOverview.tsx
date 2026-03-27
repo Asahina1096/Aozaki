@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { ArrowUpDown, Cpu, Network, Server } from "lucide-react";
 import { CARD_CONTAINMENT_STYLE, PILL_STYLES } from "@/lib/constants";
 import type { ServerStats } from "@/lib/types/serverstatus";
@@ -8,7 +9,7 @@ interface ServerOverviewProps {
   servers: ServerStats[];
 }
 
-export function ServerOverview({ servers }: ServerOverviewProps) {
+function ServerOverviewComponent({ servers }: ServerOverviewProps) {
   const stats = servers.reduce(
     (acc, s) => {
       if (isServerOnline(s)) {
@@ -106,3 +107,5 @@ export function ServerOverview({ servers }: ServerOverviewProps) {
     </div>
   );
 }
+
+export const ServerOverview = memo(ServerOverviewComponent);

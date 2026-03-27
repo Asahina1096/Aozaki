@@ -5,11 +5,13 @@ export interface ThemeSettings {
   backgroundImageUrlDesktop?: string;
   backgroundImageUrlMobile?: string;
   backgroundImageOverlayEnabled?: boolean;
+  backgroundImageBlurStrategy?: "backdrop" | "preblur";
   backgroundImageOverlayBlur?: number;
   backgroundImageOverlayDarkness?: number;
   backgroundImageOverlayDarknessOnlyDark?: boolean;
   backgroundImageReadabilityOverlayOpacity?: number;
   cardBlurEnabled?: boolean;
+  cardEffectStrategy?: "backdrop" | "tint";
   cardBlurIntensity?: number;
   cardOpacityEnabled?: boolean;
   cardOpacity?: number;

@@ -95,6 +95,22 @@
         "type": "title"
       },
       {
+        "key": "backgroundImageBlurStrategy",
+        "type": "select",
+        "default": "backdrop",
+        "options": "backdrop,preblur",
+        "name": {
+          "en": "Static Background Blur Strategy",
+          "zh-CN": "静态背景模糊策略",
+          "ja": "静的背景ブラー戦略"
+        },
+        "help": {
+          "en": "Choose blur rendering strategy for background media. preblur falls back to backdrop automatically for video backgrounds.",
+          "zh-CN": "选择背景媒体的模糊渲染策略。preblur 在视频背景下会自动回退为 backdrop。",
+          "ja": "背景メディアのブラー描画戦略を選択します。preblur は動画背景時に自動で backdrop にフォールバックします。"
+        }
+      },
+      {
         "key": "backgroundImageOverlayEnabled",
         "type": "switch",
         "default": false,
@@ -176,6 +192,22 @@
           "ja": "カード外観"
         },
         "type": "title"
+      },
+      {
+        "key": "cardEffectStrategy",
+        "type": "select",
+        "default": "backdrop",
+        "options": "backdrop,tint",
+        "name": {
+          "en": "Card Effect Strategy",
+          "zh-CN": "卡片效果策略",
+          "ja": "カード効果戦略"
+        },
+        "help": {
+          "en": "Choose card rendering strategy. tint avoids realtime blur for better performance.",
+          "zh-CN": "选择卡片渲染策略。tint 会避免实时模糊以提升性能。",
+          "ja": "カードの描画戦略を選択します。tint はリアルタイムブラーを避けて性能を向上します。"
+        }
       },
       {
         "key": "cardBlurEnabled",

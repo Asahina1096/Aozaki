@@ -4,7 +4,6 @@ import { LiveDataProvider } from "@/contexts/LiveDataContext";
 import { NodeListProvider } from "@/contexts/NodeListContext";
 import { PublicInfoProvider } from "@/contexts/PublicInfoContext";
 import { RPC2Provider } from "@/contexts/RPC2Context";
-import "@/i18n/config";
 
 interface AppProvidersProps {
   refreshInterval?: number;

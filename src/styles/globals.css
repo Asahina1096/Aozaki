@@ -340,16 +340,22 @@ html.dark #readability-overlay {
   background-color: rgba(0, 0, 0, var(--readability-overlay-opacity, 0.5));
 }
 
-html.bg-overlay-enabled::before {
+html.bg-image-enabled::before {
   content: "";
   position: fixed;
   inset: 0;
   z-index: -2;
   background-image: var(--bg-image-url);
   background-size: cover;
-  background-position: center top;
+  background-position: var(--bg-image-position, center top);
   background-repeat: no-repeat;
   pointer-events: none;
+}
+
+html.bg-image-enabled.bg-overlay-enabled.bg-blur-strategy-preblur.overlay-blur-active::before {
+  filter: blur(clamp(0px, var(--overlay-blur, 0px), 20px));
+  transform: scale(1.06);
+  transform-origin: var(--bg-image-position, center top);
 }
 
 html.bg-video-enabled #aozaki-bg-video {
@@ -373,6 +379,9 @@ html.blur-style-frosted.bg-overlay-enabled::after {
   z-index: -1;
   pointer-events: none;
   background-color: rgba(0, 0, 0, var(--overlay-darkness, 0));
+}
+
+html.blur-style-frosted.bg-overlay-enabled.bg-blur-strategy-backdrop.overlay-blur-active::after {
   -webkit-backdrop-filter: blur(clamp(0px, var(--overlay-blur, 0px), 20px));
   backdrop-filter: blur(clamp(0px, var(--overlay-blur, 0px), 20px));
 }
@@ -384,6 +393,15 @@ html.blur-style-acrylic.bg-overlay-enabled::after {
   z-index: -1;
   pointer-events: none;
   background-color: rgba(0, 0, 0, var(--overlay-darkness, 0));
+}
+
+@media (max-width: 768px) {
+  html.bg-image-enabled.bg-overlay-enabled.bg-blur-strategy-preblur.overlay-blur-active::before {
+    transform: scale(1.02);
+  }
+}
+
+html.blur-style-acrylic.bg-overlay-enabled.bg-blur-strategy-backdrop.overlay-blur-active::after {
   -webkit-backdrop-filter: blur(clamp(0px, var(--overlay-blur, 0px), 20px));
   backdrop-filter: blur(clamp(0px, var(--overlay-blur, 0px), 20px));
 }
@@ -397,6 +415,12 @@ html.card-opacity-enabled .card-blur-target {
   ) !important;
 }
 
+html.card-opacity-enabled.card-effect-tint .card-opacity-target,
+html.card-opacity-enabled.card-effect-tint .card-blur-target {
+  contain: layout style paint !important;
+  isolation: isolate;
+}
+
 html .control-surface-target {
   background-color: hsl(var(--card) / 0.95);
   box-shadow: inset 0 0 0 1px rgb(148 163 184 / 0.24);
@@ -407,11 +431,7 @@ html.dark .control-surface-target {
 }
 
 html.card-opacity-enabled .control-surface-target {
-  background-color: color-mix(
-    in oklab,
-    var(--color-card) var(--card-opacity, 95%),
-    transparent
-  );
+  background-color: color-mix(in oklab, var(--color-card) var(--card-opacity, 95%), transparent);
 }
 
 html.card-opacity-enabled .card-opacity-target .control-surface-target,
@@ -434,6 +454,9 @@ html.card-opacity-enabled.card-blur-enabled .card-blur-target .control-surface-t
 
 html.card-blur-enabled .control-surface-target {
   box-shadow: inset 0 0 0 1px rgb(148 163 184 / 0.16);
+}
+
+html.card-blur-enabled.card-blur-active .control-surface-target {
   -webkit-backdrop-filter: blur(clamp(0px, calc(var(--card-blur, 0px) * 0.65), 14px));
   backdrop-filter: blur(clamp(0px, calc(var(--card-blur, 0px) * 0.65), 14px));
 }
@@ -444,7 +467,7 @@ html.dark.card-blur-enabled .control-surface-target {
 
 html .chip-surface-target {
   background-color: color-mix(in oklab, var(--color-card) 78%, transparent);
-  box-shadow: inset 0 0 0 1px rgb(148 163 184 / 0.2);
+  box-shadow: inset 0 0 0 1px rgb(148 163 184 / 0.1);
 }
 
 html.card-opacity-enabled .chip-surface-target {
@@ -463,7 +486,7 @@ html.card-opacity-enabled.card-blur-enabled .card-blur-target .chip-surface-targ
   );
 }
 
-html.card-blur-enabled .chip-surface-target {
+html.card-blur-enabled.card-blur-active .chip-surface-target {
   -webkit-backdrop-filter: blur(clamp(0px, calc(var(--card-blur, 0px) * 0.42), 10px));
   backdrop-filter: blur(clamp(0px, calc(var(--card-blur, 0px) * 0.42), 10px));
 }
@@ -520,7 +543,10 @@ html .instance-detail-segment :where(.rt-SegmentedControlIndicator)::before {
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-foreground) 12%, transparent);
 }
 
-html.card-blur-enabled .card-blur-target .instance-detail-segment :where(.rt-SegmentedControlIndicator)::before {
+html.card-blur-enabled.card-blur-active
+  .card-blur-target
+  .instance-detail-segment
+  :where(.rt-SegmentedControlIndicator)::before {
   -webkit-backdrop-filter: blur(clamp(0px, calc(var(--card-blur, 0px) * 0.65), 14px));
   backdrop-filter: blur(clamp(0px, calc(var(--card-blur, 0px) * 0.65), 14px));
 }
@@ -601,20 +627,49 @@ html.card-blur-enabled .card-blur-target {
     transparent
   ) !important;
   isolation: isolate;
-  -webkit-backdrop-filter: blur(clamp(0px, var(--card-blur, 0px), 20px));
-  backdrop-filter: blur(clamp(0px, var(--card-blur, 0px), 20px));
   border-color: transparent !important;
   contain: layout style !important;
+}
+
+html.card-blur-enabled.card-effect-tint .card-blur-target {
+  background-color: color-mix(
+    in oklab,
+    var(--color-card) var(--card-tint-opacity, 80%),
+    transparent
+  ) !important;
+}
+
+html.card-blur-enabled.card-effect-backdrop.card-blur-active
+  .card-blur-target.card-blur-viewport-active {
+  -webkit-backdrop-filter: blur(clamp(0px, var(--card-blur, 0px), 20px));
+  backdrop-filter: blur(clamp(0px, var(--card-blur, 0px), 20px));
+}
+
+html.card-blur-enabled.card-effect-tint.card-blur-active
+  .card-blur-target.card-blur-viewport-active {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 html.card-blur-enabled .card-blur-target::before {
   content: none;
 }
 
-html.card-blur-enabled .card-blur-target .card-blur-target {
+html.card-blur-enabled.card-blur-active .card-blur-target .card-blur-target {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
   isolation: auto;
+}
+
+html.card-blur-enabled.card-blur-active .card-blur-target .control-surface-target,
+html.card-blur-enabled.card-blur-active .card-blur-target .chip-surface-target,
+html.card-blur-enabled.card-blur-active .card-blur-target .chart-tooltip-surface-target,
+html.card-blur-enabled.card-blur-active
+  .card-blur-target
+  .instance-detail-segment
+  :where(.rt-SegmentedControlIndicator)::before {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 html .chart-tooltip-surface-target {
@@ -643,9 +698,17 @@ html.card-blur-enabled .chart-tooltip-surface-target {
     var(--color-card) calc(var(--card-blur-opacity, 72%) * 0.94),
     transparent
   ) !important;
+  border-color: color-mix(in oklab, var(--color-foreground) 16%, transparent) !important;
+}
+
+html.card-blur-enabled.card-effect-backdrop.card-blur-active .chart-tooltip-surface-target {
   -webkit-backdrop-filter: blur(clamp(0px, calc(var(--card-blur, 0px) * 0.45), 10px));
   backdrop-filter: blur(clamp(0px, calc(var(--card-blur, 0px) * 0.45), 10px));
-  border-color: color-mix(in oklab, var(--color-foreground) 16%, transparent) !important;
+}
+
+html.card-blur-enabled.card-effect-tint.card-blur-active .chart-tooltip-surface-target {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 html.dark.card-blur-enabled .chart-tooltip-surface-target {
