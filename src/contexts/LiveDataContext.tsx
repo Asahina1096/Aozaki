@@ -84,26 +84,25 @@ function isSameGpuDetails(prev?: LiveRecord["gpu"], next?: LiveRecord["gpu"]): b
 }
 
 function isSameStatusRecord(prev: LiveRecord, next: LiveRecord): boolean {
-  return (
-    prev.updated_at === next.updated_at &&
-    prev.message === next.message &&
-    prev.uptime === next.uptime &&
-    prev.process === next.process &&
-    prev.cpu.usage === next.cpu.usage &&
-    prev.ram.used === next.ram.used &&
-    prev.swap.used === next.swap.used &&
-    prev.load.load1 === next.load.load1 &&
-    prev.load.load5 === next.load.load5 &&
-    prev.load.load15 === next.load.load15 &&
-    prev.disk.used === next.disk.used &&
-    prev.network.up === next.network.up &&
-    prev.network.down === next.network.down &&
-    prev.network.totalUp === next.network.totalUp &&
-    prev.network.totalDown === next.network.totalDown &&
-    prev.connections.tcp === next.connections.tcp &&
-    prev.connections.udp === next.connections.udp &&
-    isSameGpuDetails(prev.gpu, next.gpu)
-  );
+  if (prev.updated_at !== next.updated_at) return false;
+  if (prev.message !== next.message) return false;
+  if (prev.uptime !== next.uptime) return false;
+  if (prev.process !== next.process) return false;
+  if (prev.cpu.usage !== next.cpu.usage) return false;
+  if (prev.ram.used !== next.ram.used) return false;
+  if (prev.swap.used !== next.swap.used) return false;
+  if (prev.load.load1 !== next.load.load1) return false;
+  if (prev.load.load5 !== next.load.load5) return false;
+  if (prev.load.load15 !== next.load.load15) return false;
+  if (prev.disk.used !== next.disk.used) return false;
+  if (prev.network.up !== next.network.up) return false;
+  if (prev.network.down !== next.network.down) return false;
+  if (prev.network.totalUp !== next.network.totalUp) return false;
+  if (prev.network.totalDown !== next.network.totalDown) return false;
+  if (prev.connections.tcp !== next.connections.tcp) return false;
+  if (prev.connections.udp !== next.connections.udp) return false;
+  if (!isSameGpuDetails(prev.gpu, next.gpu)) return false;
+  return true;
 }
 
 function mergeLiveData(prev: LiveDataResponse, next: LiveDataResponse): LiveDataResponse {
@@ -176,15 +175,18 @@ export const LiveDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     let timer: number | undefined;
     let stopped = false;
     let running = false;
+    let aborted = false;
     const intervalMs = 2000;
 
     const fetchLatest = async () => {
-      if (running) return;
+      if (running || stopped || aborted) return;
       running = true;
       try {
         const result = await call<undefined, Record<string, LatestStatusResponseRecord>>(
           "common:getNodesLatestStatus",
         );
+        if (aborted) return;
+
         const online = Object.values(result)
           .filter((v): v is LatestStatusResponseRecord & { online: true; client: string } =>
             Boolean(v?.online && typeof v.client === "string"),
@@ -215,20 +217,37 @@ export const LiveDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
         setShowCallout((prev) => (prev ? prev : true));
       } catch (e) {
+        if (aborted) return;
         console.error("RPC2 获取最新状态失败:", e);
         setShowCallout(false);
       } finally {
         running = false;
-        if (!stopped) {
+        if (!stopped && !aborted) {
           timer = window.setTimeout(fetchLatest, intervalMs);
         }
       }
     };
 
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        if (timer) {
+          window.clearTimeout(timer);
+          timer = undefined;
+        }
+      } else {
+        if (!stopped && !running) {
+          fetchLatest();
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     fetchLatest();
 
     return () => {
       stopped = true;
+      aborted = true;
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       if (timer) window.clearTimeout(timer);
     };
   }, [call, notifyRefreshCallbacks]);

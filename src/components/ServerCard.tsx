@@ -181,8 +181,11 @@ function isSameLiveRecord(prev?: Record, next?: Record): boolean {
 
   return (
     prev.uptime === next.uptime &&
+    prev.process === next.process &&
+    prev.message === next.message &&
     prev.cpu.usage === next.cpu.usage &&
     prev.ram.used === next.ram.used &&
+    prev.swap.used === next.swap.used &&
     prev.disk.used === next.disk.used &&
     prev.load.load1 === next.load.load1 &&
     prev.load.load5 === next.load.load5 &&
@@ -190,7 +193,9 @@ function isSameLiveRecord(prev?: Record, next?: Record): boolean {
     prev.network.up === next.network.up &&
     prev.network.down === next.network.down &&
     prev.network.totalUp === next.network.totalUp &&
-    prev.network.totalDown === next.network.totalDown
+    prev.network.totalDown === next.network.totalDown &&
+    prev.connections.tcp === next.connections.tcp &&
+    prev.connections.udp === next.connections.udp
   );
 }
 

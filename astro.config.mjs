@@ -62,10 +62,15 @@ export default defineConfig({
   },
   prefetch: {
     prefetchAll: false,
-    defaultStrategy: "viewport",
+    defaultStrategy: "hover",
   },
   vite: {
     plugins: [tailwindcss()],
+    resolve: {
+      alias: {
+        "@": path.resolve("./src"),
+      },
+    },
     server: {
       proxy: {
         "/api": {

@@ -1,4 +1,4 @@
-import { Flex, SegmentedControl, Text } from "@radix-ui/themes";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { DetailsGrid } from "@/components/DetailsGrid";
@@ -116,7 +116,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
   const loadRecords = useMemo(() => liveDataToRecords(uuid, recent), [uuid, recent]);
 
   return (
-    <Flex className="items-center px-2 pb-10 pt-2 md:px-4" direction="column" gap="4">
+    <div className="flex flex-col items-center gap-4 px-2 pb-10 pt-2 md:px-4">
       <div className="flex w-full max-w-[1200px] flex-col gap-4">
         <Card className={sectionCardClass} style={CARD_CONTAINMENT_STYLE}>
           <div className="flex items-start gap-3">
@@ -126,9 +126,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
                   {region}
                 </Card>
                 <h1 className="text-xl font-bold tracking-tight text-foreground md:text-2xl">
-                  <Text as="span" wrap="nowrap">
-                    {serverName}
-                  </Text>
+                  <span className="whitespace-nowrap">{serverName}</span>
                 </h1>
               </div>
 
@@ -144,8 +142,6 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
           <div className="w-full max-w-full overflow-x-auto sm:w-auto sm:max-w-none sm:overflow-visible">
             <div className="w-max min-w-full sm:min-w-0">
               <SegmentedControl.Root
-                radius="full"
-                size="2"
                 value={chartView === "load" ? loadView : pingView}
                 onValueChange={(value) => {
                   if (chartView === "load") {
@@ -167,8 +163,6 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
 
           <div className="inline-flex items-center">
             <SegmentedControl.Root
-              radius="full"
-              size="2"
               value={chartView}
               onValueChange={(value) => setChartView(value as "load" | "ping")}
               className="instance-detail-segment control-surface-target"
@@ -187,7 +181,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
           <PingChart uuid={uuid} view={pingView} />
         )}
       </Suspense>
-    </Flex>
+    </div>
   );
 };
 

@@ -325,6 +325,15 @@
   }
   body {
     @apply bg-transparent text-foreground;
+    /* 字体渲染优化，减少 CLS */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* 防止字体大小调整导致的布局偏移 */
+    text-size-adjust: 100%;
+    /* Fallback 字体 metrics 标准化 - 减少字体切换时的 CLS */
+    size-adjust: 104%;
+    ascent-override: 90%;
+    descent-override: 25%;
   }
 }
 
@@ -364,7 +373,7 @@ html.bg-video-enabled #aozaki-bg-video {
   left: calc(var(--bg-vv-offset-left, 0px) * -1);
   z-index: -2;
   width: var(--bg-vv-width, 100vw);
-  height: var(--bg-vv-height, 100vh);
+  height: var(--bg-vv-height, 100dvh);
   object-fit: cover;
   object-position: center top;
   pointer-events: none;

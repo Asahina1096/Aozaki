@@ -1,5 +1,5 @@
 import * as React from "react";
-import * as RechartsPrimitive from "recharts";
+import { Legend, ResponsiveContainer, Tooltip } from "recharts";
 import { cn } from "@/lib/utils";
 
 const THEMES = { light: "", dark: ".dark" } as const;
@@ -34,7 +34,7 @@ function ChartContainer({
   ...props
 }: React.ComponentProps<"div"> & {
   config: ChartConfig;
-  children: React.ComponentProps<typeof RechartsPrimitive.ResponsiveContainer>["children"];
+  children: React.ComponentProps<typeof ResponsiveContainer>["children"];
 }) {
   const uniqueId = React.useId();
   const chartId = `chart-${id || uniqueId.replace(/:/g, "")}`;
@@ -84,13 +84,13 @@ function ChartContainer({
       >
         <ChartStyle id={chartId} config={config} />
         {size.width > 0 && size.height > 0 ? (
-          <RechartsPrimitive.ResponsiveContainer
+          <ResponsiveContainer
             width={Math.max(1, size.width)}
             height={Math.max(1, size.height)}
             minWidth={0}
           >
             {children}
-          </RechartsPrimitive.ResponsiveContainer>
+          </ResponsiveContainer>
         ) : null}
       </div>
     </ChartContext.Provider>
@@ -136,7 +136,7 @@ ${colorConfig
   );
 };
 
-const ChartTooltip = RechartsPrimitive.Tooltip;
+const ChartTooltip = Tooltip;
 
 type TooltipPayloadItem = {
   name?: string;
@@ -289,7 +289,7 @@ function ChartTooltipContent(props: ChartTooltipContentProps) {
   );
 }
 
-const ChartLegend = RechartsPrimitive.Legend;
+const ChartLegend = Legend;
 
 function getPayloadConfigFromPayload(config: ChartConfig, payload: unknown, key: string) {
   if (typeof payload !== "object" || payload === null) {

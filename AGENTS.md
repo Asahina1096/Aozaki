@@ -1,150 +1,404 @@
+<!-- From: /home/mihari/Aozaki/AGENTS.md -->
 # AGENTS.md
 
 Guidance for coding agents operating in `/home/mihari/Aozaki`.
 
-## 1) Repository Snapshot
-- Project: Aozaki theme for Komari Monitor.
-- Stack: Astro 6, React 19, TypeScript strict, TailwindCSS 4.
-- Package manager/runtime: Bun (`bun@1.3.11`).
-- Output: static assets in `dist/`, plus packaged zip via script.
-- TS alias: `@/*` -> `src/*` (`tsconfig.json`).
+## 1) Project Overview
 
-Important paths:
-- `src/pages/*.astro`: page entry points.
-- `src/components/**/*.tsx`: React UI components.
-- `src/contexts/**/*.tsx`: app state/providers.
-- `src/lib/**`: RPC client, normalizers, helpers.
-- `scripts/package.sh`: packaging pipeline.
+**Aozaki** is a modern frontend theme for [Komari Monitor](https://github.com/Asahina1096/Komari), a server monitoring and management platform. This is a static frontend application that communicates with a Komari backend via JSON-RPC 2.0 over WebSocket and HTTP.
 
-## 2) Setup and Environment
-Run from repo root:
+### Purpose
+- Display real-time server/node status (CPU, memory, disk, network)
+- Provide a beautiful, customizable dashboard for monitoring infrastructure
+- Support theme customization via Komari's theme management system
 
+### Technology Stack
+- **Framework**: Astro 6 (static site generation)
+- **UI Library**: React 19 (interactive components)
+- **Language**: TypeScript (strict mode)
+- **Styling**: TailwindCSS 4 with CSS variables for theming
+- **UI Components**: Radix UI + shadcn/ui patterns
+- **Charts**: Recharts
+- **Build Tool**: Vite (via Astro)
+- **Package Manager**: Bun (`bun@1.3.11`)
+- **Formatter**: oxfmt
+
+### Runtime Architecture
+```
+┌─────────────────┐     WebSocket/HTTP      ┌─────────────────┐
+│   Aozaki Theme  │ ◄──────────────────────► │  Komari Backend │
+│  (Static Build) │       JSON-RPC 2.0       │   (API Server)  │
+└─────────────────┘                          └─────────────────┘
+```
+
+The application:
+1. Builds as static files (`dist/`)
+2. Runs client-side as a SPA within Astro
+3. Connects to Komari backend via `/api/rpc2` endpoint
+4. Polls live data every 2 seconds
+5. Supports real-time updates via WebSocket with HTTP fallback
+
+## 2) Project Structure
+
+```
+.
+├── src/
+│   ├── pages/              # Astro entry pages (SSG)
+│   │   └── index.astro     # Main page shell
+│   ├── components/         # React UI components
+│   │   ├── AppProviders.tsx      # Provider composition root
+│   │   ├── AppRouter.tsx         # React Router setup
+│   │   ├── ServerList.tsx        # Main server grid with virtualization
+│   │   ├── ServerCard.tsx        # Individual server card
+│   │   ├── ServerOverview.tsx    # Summary statistics
+│   │   ├── InstanceDetail.tsx    # Detailed node view with charts
+│   │   ├── instance/             # Chart components
+│   │   │   ├── LoadChart.tsx
+│   │   │   └── PingChart.tsx
+│   │   └── ui/                   # shadcn/ui components
+│   │       ├── card.tsx
+│   │       ├── chart.tsx
+│   │       ├── progress.tsx
+│   │       └── ...
+│   ├── contexts/           # React state management
+│   │   ├── RPC2Context.tsx       # JSON-RPC client & connection state
+│   │   ├── PublicInfoContext.tsx # Site configuration & theme settings
+│   │   ├── NodeListContext.tsx   # Server/node list data
+│   │   └── LiveDataContext.tsx   # Real-time metrics polling
+│   ├── lib/                # Utilities & business logic
+│   │   ├── rpc2.ts               # JSON-RPC 2.0 client implementation
+│   │   ├── constants.ts          # UI styling constants
+│   │   ├── utils.ts              # Formatting utilities
+│   │   ├── format/               # Byte/speed formatting
+│   │   ├── normalizers/          # Data transformation
+│   │   └── types/                # Type definitions
+│   ├── types/              # Core TypeScript types
+│   │   ├── LiveData.ts           # Real-time data structures
+│   │   └── rpc2.ts               # JSON-RPC type definitions
+│   ├── i18n/               # Internationalization
+│   │   ├── config.ts             # i18next configuration
+│   │   └── locales/              # Translation files
+│   │       ├── en.json
+│   │       ├── zh_CN.json
+│   │       ├── zh_TW.json
+│   │       ├── ja_JP.json
+│   │       └── id_ID.json
+│   ├── layouts/            # Astro layouts
+│   │   └── BaseLayout.astro      # Root HTML shell with theme script
+│   └── styles/             # Global styles
+│       └── globals.css           # Tailwind + custom CSS variables
+├── public/                 # Static assets
+├── scripts/
+│   └── package.sh          # Theme packaging script
+├── dist/                   # Build output (gitignored)
+├── komari-theme.json       # Theme metadata for Komari
+├── preview.png             # Theme preview image
+├── astro.config.mjs        # Astro configuration
+├── tsconfig.json           # TypeScript configuration
+├── components.json         # shadcn/ui configuration
+└── .oxfmtrc.json           # Formatter configuration
+```
+
+## 3) Setup and Environment
+
+### Prerequisites
+- Bun 1.3.11+ (`https://bun.sh`)
+- A running Komari backend (for development)
+
+### Initial Setup
 ```bash
+# Install dependencies
 bun install
+
+# Configure environment
 cp .env.example .env
 ```
 
-Environment:
-- `PUBLIC_API_URL` is required at runtime.
-- Use full URL including protocol (`http://` or `https://`).
-- Prefer no trailing slash for production API URL.
-- Optional local proxy override: `VITE_API_TARGET`.
-- Default proxy target in `astro.config.mjs`: `http://127.0.0.1:25774`.
+### Environment Variables
 
-## 3) Build, Lint, Check, and Test Commands
-Primary scripts from `package.json`:
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `PUBLIC_API_URL` | Yes | Full Komari backend URL (e.g., `https://komari.example.com`) |
+| `VITE_API_TARGET` | No | Development proxy target (default: `http://127.0.0.1:25774`) |
 
+**Important**: 
+- Do NOT add trailing slash to `PUBLIC_API_URL`
+- The app will fail to start without `PUBLIC_API_URL`
+
+## 4) Build, Development and Quality Commands
+
+### Development
 ```bash
-bun run dev
-bun run build
-bun run preview
-bun run package
+bun run dev          # Start dev server (http://localhost:4321)
 ```
 
-Quality scripts:
-
+### Build and Package
 ```bash
-bun run format
-bun run format:check
-bun run check
+bun run build        # Build static assets to dist/
+bun run preview      # Preview production build locally
+bun run package      # Build and create theme zip package
+```
+
+The `package` script:
+1. Runs `bun run build`
+2. Verifies required files exist
+3. Creates `aozaki-vYY.MM.DD-<commit>.zip` in repo root
+4. Zip contains: `dist/`, `preview.png`, `komari-theme.json`
+
+### Quality Checks
+```bash
+bun run format          # Format all files with oxfmt
+bun run format:check    # Check formatting without changes
+bun run check           # Clean artifacts + type check with astro check
+bun run check:all       # Run check + format:check
+```
+
+### Cleanup
+```bash
+bun run clean           # Remove build artifacts
+bun run clean:all       # Remove build artifacts + node_modules
+```
+
+### Quality Gate
+Always run before committing:
+```bash
 bun run check:all
 ```
 
-What each quality command does:
-- `format`: runs `oxfmt --write .`.
-- `format:check`: runs `oxfmt --check .`.
-- `check`: removes generated artifacts, then runs `astro check`.
-- `check:all`: runs `check` and then `format:check`.
+## 5) Code Style and Conventions
 
-Linting status right now:
-- No dedicated `lint` script in `package.json`.
-- No ESLint/Biome config discovered in repository.
-- Treat `bun run check:all` as the quality gate.
+### Formatting (enforced by `.editorconfig` and `oxfmt`)
+- UTF-8 encoding
+- LF line endings
+- 2-space indentation
+- Final newline required
+- Trim trailing whitespace (except Markdown)
+- Line width: 80 characters
 
-Testing status right now:
-- No `test` script exists in `package.json`.
-- No `*.test.*` or `*.spec.*` files found under `src/`.
+### TypeScript Conventions
+- **Strict mode enabled** - no `any` without justification
+- Use `unknown` + type guards for boundary data
+- Prefer `interface` over `type` for object shapes
+- Use `as const` for literal constants
+- Backend API field names preserved (snake_case valid at boundaries)
 
-Single test commands to use once tests exist:
+### Import Style
+```typescript
+// Use @/ alias for src/ imports
+import { cn } from "@/lib/utils";
+import { useRPC2 } from "@/contexts/RPC2Context";
 
+// Use relative imports only for nearby modules
+import type { LiveData } from "../types/LiveData";
+
+// Type-only imports
+import type { ClassValue } from "clsx";
+```
+
+### Naming Conventions
+| Category | Convention | Example |
+|----------|------------|---------|
+| Components/Interfaces/Types | PascalCase | `ServerCard`, `LiveData` |
+| Variables/Functions/Hooks | camelCase | `useLiveData`, `formatBytes` |
+| Constants | UPPER_SNAKE_CASE | `PILL_STYLES`, `DEFAULT_REFRESH_INTERVAL` |
+| RPC Methods | snake_case | `common:getNodesLatestStatus` |
+
+### React Patterns
+- Keep page shell in `.astro` files
+- Keep interactive logic in React components
+- Use `useMemo`/`useCallback` for stable identities
+- Clean up timers/listeners in `useEffect` cleanup
+- Use stable IDs (not index) for list keys
+- Prefer composition over prop drilling
+
+### Context Pattern
+Contexts are composed in `AppProviders.tsx`:
+```typescript
+<PublicInfoProvider>   // Site config, theme settings
+  <RPC2Provider>       // JSON-RPC connection
+    <NodeListProvider> // Server list data
+      <LiveDataProvider> // Real-time metrics
+        <AppRouter />
+      </LiveDataProvider>
+    </NodeListProvider>
+  </RPC2Provider>
+</PublicInfoProvider>
+```
+
+### Data Flow
+1. **PublicInfoContext**: Fetches `/api/public` for site config
+2. **RPC2Context**: Manages WebSocket connection, provides `call` method
+3. **NodeListContext**: Fetches server list via `common:getNodes`
+4. **LiveDataContext**: Polls `common:getNodesLatestStatus` every 2s
+
+## 6) API and Data Types
+
+### JSON-RPC 2.0 Endpoints
+The client communicates via `/api/rpc2`:
+
+| Method | Purpose |
+|--------|---------|
+| `common:getNodes` | Get all registered servers/nodes |
+| `common:getNodesLatestStatus` | Get current metrics for all nodes |
+| `common:getNodeStatusHistory` | Get historical metrics (for charts) |
+| `common:getNodePingHistory` | Get ping history |
+
+### Core Data Types
+
+**LiveData** (`src/types/LiveData.ts`):
+```typescript
+export type Record = {
+  cpu: { usage: number };
+  ram: { used: number };
+  swap: { used: number };
+  load: { load1: number; load5: number; load15: number };
+  disk: { used: number };
+  network: { up: number; down: number; totalUp: number; totalDown: number };
+  connections: { tcp: number; udp: number };
+  gpu?: { count: number; average_usage: number; detailed_info: [...] };
+  uptime: number;
+  process: number;
+  updated_at: string;
+};
+```
+
+**NodeBasicInfo** (`src/contexts/NodeListContext.tsx`):
+```typescript
+export type NodeBasicInfo = {
+  uuid: string;
+  name: string;
+  cpu_name: string;
+  virtualization: string;
+  arch: string;
+  cpu_cores: number;
+  os: string;
+  mem_total: number;
+  swap_total: number;
+  disk_total: number;
+  region: string;
+  group: string;
+  // ... more fields
+};
+```
+
+## 7) Theme System
+
+Aozaki supports extensive theme customization via Komari's theme settings:
+
+### Theme Settings (defined in `komari-theme.json`)
+| Setting | Type | Description |
+|---------|------|-------------|
+| `forceThemeMode` | select | Force dark/light mode, hide toggle |
+| `backgroundImageEnabled` | switch | Enable custom background |
+| `backgroundImageUrlDesktop` | string | Desktop background URL (image or video) |
+| `backgroundImageUrlMobile` | string | Mobile background URL |
+| `backgroundImageBlurStrategy` | select | `backdrop` or `preblur` |
+| `backgroundImageOverlayEnabled` | switch | Enable blur/darken overlay |
+| `backgroundImageOverlayBlur` | number | Blur intensity (0-20px) |
+| `backgroundImageOverlayDarkness` | number | Darken level (0-100%) |
+| `cardEffectStrategy` | select | `backdrop` or `tint` |
+| `cardBlurEnabled` | switch | Enable card blur effect |
+| `cardBlurIntensity` | number | Card blur intensity (0-20px) |
+| `cardOpacityEnabled` | switch | Enable custom card opacity |
+| `cardOpacity` | number | Card opacity (0-100%) |
+
+### CSS Variable System
+Theme settings are applied via CSS custom properties in `BaseLayout.astro`:
+- `--bg-image-url`: Background image
+- `--overlay-blur`, `--overlay-darkness`: Background effects
+- `--card-blur`, `--card-opacity`: Card styling
+- `--readability-overlay-opacity`: Content readability layer
+
+### CSS Classes for Theming
+| Class | Purpose |
+|-------|---------|
+| `.card-blur-target` | Elements receiving blur effects |
+| `.card-opacity-target` | Elements with custom opacity |
+| `.control-surface-target` | Interactive control surfaces |
+| `.chip-surface-target` | Badge/chip elements |
+
+## 8) Testing Status
+
+**Current state**: No automated tests
+
+- No `test` script in `package.json`
+- No `*.test.*` or `*.spec.*` files under `src/`
+
+When tests are added, run with:
 ```bash
 bun test path/to/file.test.ts
 bunx vitest run path/to/file.test.ts
-bunx jest path/to/file.test.ts
 bunx playwright test path/to/file.spec.ts
 ```
 
-Suggested execution order for agents:
-1. Run smallest relevant test file first (if tests exist).
-2. Run `bun run check` when touching runtime/types/API surfaces.
-3. Run `bun run check:all` before final handoff.
+## 9) Performance Considerations
 
-## 4) Code Style and Conventions
-Formatting baseline (`.editorconfig` + formatter):
-- UTF-8, LF, 2-space indentation.
-- Always keep final newline.
-- Trim trailing whitespace except in Markdown.
-- Let `oxfmt` control spacing and wrapping.
+### Virtualization
+- Server list uses `@tanstack/react-virtual` for >48 items
+- Intersection Observer for viewport-based blur optimization
+- `content-visibility: auto` for off-screen cards
 
-Imports and module structure:
-- Prefer `@/` alias for imports from `src`.
-- Keep relative imports for nearby modules only.
-- Use `import type` for type-only imports.
-- Use ESM syntax only (`import`/`export`).
-- Match existing local import grouping/order in edited files.
+### Data Optimization
+- Immutable updates with reference equality checks
+- Memoized selectors in contexts
+- Request deduplication and sequencing
 
-TypeScript expectations:
-- Preserve compatibility with `astro/tsconfigs/strict`.
-- Avoid `any`; prefer `unknown` + narrowing, generics, and exact types.
-- Keep boundary payloads validated/normalized before app use.
-- Preserve backend field names at API boundaries (snake_case is valid there).
-- Use `as const` for fixed maps/constants when useful.
+### Rendering
+- `React.memo` for card components
+- `useDeferredValue` for search filtering
+- CSS containment for isolated repaints
 
-React/Astro architecture patterns in this repo:
-- Keep page shell/layout in `.astro` files.
-- Keep interactive logic in React components and contexts.
-- Compose providers through `AppProviders` chain.
-- Use `useMemo`/`useCallback` where identity stability matters.
-- Clean up timers/listeners/subscriptions in `useEffect` cleanup.
-- Avoid index keys for dynamic lists; prefer stable ids.
+## 10) Security Considerations
 
-Naming conventions observed:
-- Components/interfaces/types: `PascalCase`.
-- Variables/functions/hooks: `camelCase`.
-- Hooks should start with `use`.
-- Constants: `UPPER_SNAKE_CASE` for true constants.
+1. **API URL**: Always use HTTPS in production
+2. **CORS**: Backend must allow the theme's origin
+3. **XSS**: All user content rendered via React's XSS protection
+4. **Environment**: `PUBLIC_API_URL` is exposed to client (intentional)
 
-Error handling conventions:
-- Wrap async RPC/fetch operations in `try/catch` when caller needs recovery.
-- Check `response.ok` before parsing success payloads.
-- Throw/propagate `Error` objects with clear operation context.
-- Re-throw when upper layers own UX/retry decisions.
-- Handle timeout/cancellation paths safely (e.g. `AbortSignal`).
+## 11) Deployment
 
-State/data handling conventions:
-- Normalize transport data in `src/lib/normalizers/*` before UI consumption.
-- Favor immutable updates and stable object reuse where possible.
-- Guard against duplicate concurrent polling/request loops.
+### Vercel (configured)
+- Build: `bun run build`
+- Output: `dist/`
+- Framework: Astro
 
-## 5) Editing and Review Expectations
-- Read nearby files before changing patterns.
-- Prefer minimal, focused edits over broad refactors.
-- Do not revert unrelated user changes.
-- Do not add dependencies unless task requires them.
-- Keep comments minimal and only for non-obvious intent.
-- Preserve existing language/content style in user-facing strings.
+### Manual Deployment
+1. Build: `bun run package`
+2. Upload resulting zip to Komari's theme management
+3. Activate theme in Komari settings
 
-## 6) Cursor and Copilot Rules
-Searched locations:
-- `.cursor/rules/`
-- `.cursorrules`
-- `.github/copilot-instructions.md`
+## 12) Key Files Reference
 
-Current status in this repository:
-- No Cursor rule files found.
-- No Copilot instructions file found.
+| File | Purpose |
+|------|---------|
+| `astro.config.mjs` | Build config, proxy settings, cleanup hooks |
+| `src/layouts/BaseLayout.astro` | HTML shell, inline theme script |
+| `src/lib/rpc2.ts` | JSON-RPC 2.0 client with WebSocket |
+| `src/contexts/LiveDataContext.tsx` | Real-time data polling logic |
+| `komari-theme.json` | Theme metadata and settings schema |
+| `scripts/package.sh` | Theme packaging pipeline |
 
-If rule files are added later:
-- Treat those files as high-priority repository instructions.
-- Update this `AGENTS.md` to reflect newly added constraints.
-- Resolve conflicts in favor of explicit repo rule files.
+## 13) Troubleshooting
+
+### Common Issues
+
+**WebSocket connection fails**
+- Check `VITE_API_TARGET` in dev environment
+- Verify Komari backend is running
+- Check browser console for CORS errors
+
+**Theme settings not applying**
+- Verify `/api/public` returns correct `theme_settings`
+- Check browser devtools for CSS variable values
+- Ensure `backgroundImageEnabled` is `true`
+
+**Build fails**
+- Run `bun run clean` and retry
+- Verify `PUBLIC_API_URL` is set (can be dummy for build)
+- Check `bun --version` is 1.3.11+
+
+---
+
+**Last Updated**: 2026-04-09  
+**Version**: Aozaki v1.0.0  
+**License**: GPL-3.0

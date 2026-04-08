@@ -1,4 +1,4 @@
-import { Button, Flex, Switch } from "@radix-ui/themes";
+import { Switch } from "@/components/ui/switch";
 import { Eye, EyeOff } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -301,7 +301,7 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
   const cardClass = "card-blur-target w-full max-w-[1200px] p-5";
 
   return (
-    <Flex direction="column" align="center" gap="4" className="w-full">
+    <div className="flex flex-col items-center gap-4 w-full">
       {loading && <div className="text-center text-muted-foreground">Loading...</div>}
       {error && <div className="w-full text-center text-destructive">{error}</div>}
 
@@ -414,11 +414,10 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
               {t("chart.cutPeak")}
             </label>
           </div>
-          <Button
-            variant="soft"
-            size="2"
+          <button
+            type="button"
             onClick={toggleAllLines}
-            className="flex items-center gap-2"
+            className="inline-flex items-center gap-2 rounded-full bg-accent/10 px-3 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/20 active:bg-accent/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
           >
             {allLinesHidden ? (
               <>
@@ -431,10 +430,10 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
                 {t("chart.hideAll")}
               </>
             )}
-          </Button>
+          </button>
         </div>
       </Card>
-    </Flex>
+    </div>
   );
 };
 
