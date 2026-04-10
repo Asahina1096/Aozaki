@@ -1,5 +1,7 @@
 import { formatBytes as formatBytesValue } from "@/lib/format/bytes";
 
+export { formatBytesValue as formatBytes };
+
 export function stringToBytes(str: string): number {
   if (typeof str !== "string" || str.length === 0) {
     return 0;
@@ -60,20 +62,4 @@ export function stringToBytes(str: string): number {
 
   const multiplier = units[unit];
   return Math.round(value * multiplier);
-}
-
-export function formatBytes(bytes: number): string {
-  if (!Number.isFinite(bytes) || bytes <= 0) {
-    return "0 B";
-  }
-
-  if (bytes < 1024) {
-    return formatBytesValue(bytes, { minDecimals: 0, maxDecimals: 0 });
-  }
-
-  if (bytes >= 1024 ** 3) {
-    return formatBytesValue(bytes, { minDecimals: 2, maxDecimals: 2 });
-  }
-
-  return formatBytesValue(bytes, { minDecimals: 1, maxDecimals: 2 });
 }

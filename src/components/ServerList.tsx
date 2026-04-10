@@ -1,5 +1,5 @@
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
-import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import type { NodeBasicInfo } from "@/contexts/NodeListContext";
 import { useLiveData } from "../contexts/LiveDataContext";
@@ -24,7 +24,7 @@ let cardVisibilityObserver: IntersectionObserver | null = null;
 const cardVisibilityListeners = new WeakMap<Element, (visible: boolean) => void>();
 
 function getCardVisibilityObserver() {
-  if (cardVisibilityObserver || typeof window === "undefined") {
+  if (cardVisibilityObserver) {
     return cardVisibilityObserver;
   }
 
@@ -135,21 +135,12 @@ function getColumnCountByWidth(width: number): number {
 }
 
 function useResponsiveColumnCount() {
-  const [columnCount, setColumnCount] = useState(() => {
-    if (typeof window === "undefined") {
-      return 1;
-    }
-    return getColumnCountByWidth(window.innerWidth);
-  });
+  const [columnCount, setColumnCount] = useState(() => getColumnCountByWidth(window.innerWidth));
 
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
     const updateColumnCount = () => {
       const next = getColumnCountByWidth(window.innerWidth);
-      setColumnCount((prev) => (prev === next ? prev : next));
+      setColumnCount(next);
     };
 
     updateColumnCount();
@@ -181,16 +172,7 @@ const VirtualizedServerCardGrid = memo(function VirtualizedServerCardGrid({
   }, [nodes, columnCount]);
 
   useEffect(() => {
-    const syncOffset = () => {
-      listOffsetRef.current = listRef.current?.offsetTop ?? 0;
-    };
-
-    syncOffset();
-    window.addEventListener("resize", syncOffset);
-
-    return () => {
-      window.removeEventListener("resize", syncOffset);
-    };
+    listOffsetRef.current = listRef.current?.offsetTop ?? 0;
   }, [columnCount]);
 
   const rowVirtualizer = useWindowVirtualizer({
@@ -321,9 +303,9 @@ export default function ServerList({
   const [searchQuery, setSearchQuery] = useState("");
   const columnCount = useResponsiveColumnCount();
   const deferredSearchQuery = useDeferredValue(searchQuery);
-  const handleSearchChange = useCallback((value: string) => {
+  const handleSearchChange = (value: string) => {
     setSearchQuery(value);
-  }, []);
+  };
 
   const onlineSet = useMemo(() => {
     return new Set(onlineUuids);

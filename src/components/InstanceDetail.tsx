@@ -48,7 +48,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
   const [loadView, setLoadView] = useState("real");
   const [pingView, setPingView] = useState("1h");
   const { nodeByUuid } = useNodeList();
-  const length = 30 * 5;
+  const MAX_RECORDS = 30 * 5;
   const sectionCardClass = "card-blur-target p-5";
   const rangeOptions = useMemo(
     () =>
@@ -90,7 +90,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
 
         const raw = result?.records || [];
         const mapped: LiveRecord[] = raw.map((record) => normalizeRecentStatusRecord(record));
-        setRecent(mapped.slice(-length));
+        setRecent(mapped.slice(-MAX_RECORDS));
       })
       .catch((err) => console.error("Failed to fetch recent data:", err));
   }, [uuid, call]);
@@ -102,12 +102,8 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({ uuid }) => {
       if (!data) return;
 
       setRecent((prev) => {
-        const newRecord = data;
-        const exists = prev.some((item) => item.updated_at === newRecord.updated_at);
-        if (exists) return prev;
-
-        const updated = [...prev, newRecord].slice(-length);
-        return updated;
+        if (prev.some((item) => item.updated_at === data.updated_at)) return prev;
+        return [...prev, data].slice(-MAX_RECORDS);
       });
     });
     return () => unsubscribe();

@@ -209,10 +209,7 @@ export class RPC2Client {
 
       return jsonResponse.result;
     } catch (error) {
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error(`请求失败: ${method}`);
+      throw error instanceof Error ? error : new Error(`请求失败: ${method}`);
     }
   }
 
@@ -250,10 +247,7 @@ export class RPC2Client {
         return res.result;
       });
     } catch (error) {
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error("批量请求失败");
+      throw error instanceof Error ? error : new Error("批量请求失败");
     }
   }
 

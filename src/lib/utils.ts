@@ -3,12 +3,15 @@ import { twMerge } from "tailwind-merge";
 import {
   formatBytes as formatBytesValue,
   formatSpeed as formatSpeedValue,
+  roundTo,
 } from "@/lib/format/bytes";
 import type { ServerStats } from "./types/serverstatus";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+export { roundTo } from "@/lib/format/bytes";
 
 export function isServerOnline(server: ServerStats): boolean {
   return server.online4 || server.online6;
@@ -34,7 +37,7 @@ export function formatSpeed(bytesPerSecond: number, decimals?: number): string {
 }
 
 export function formatLoad(value: number): number {
-  return Math.round(value * 100) / 100;
+  return roundTo(value, 2);
 }
 
 export function formatUptime(uptime: string): string {

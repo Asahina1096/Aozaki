@@ -22,7 +22,7 @@ function resolveUnitIndex(value: number, unitsLength: number): number {
   return Math.min(Math.floor(Math.log(value) / Math.log(1024)), unitsLength - 1);
 }
 
-function roundTo(value: number, decimals: number): number {
+export function roundTo(value: number, decimals: number): number {
   const precision = Math.max(0, decimals);
   const factor = 10 ** precision;
   return Math.round(value * factor) / factor;

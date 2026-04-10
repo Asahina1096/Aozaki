@@ -7,6 +7,7 @@ import {
   MemoryStick,
   Monitor,
 } from "lucide-react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -40,67 +41,70 @@ export const DetailsGrid = ({ uuid }: DetailsGridProps) => {
   const node = nodeByUuid.get(uuid);
   const base = live_data?.data.data[uuid];
   const cpuModel = node?.cpu_name ? `${node.cpu_name} (x${node.cpu_cores || 0})` : "Unknown";
-  const cpuUsage = Math.min(Math.max(base?.cpu?.usage ?? 0, 0), 100);
-  const memoryUsage = Math.min(
-    Math.max(
-      node?.mem_total && node.mem_total > 0 ? ((base?.ram?.used ?? 0) / node.mem_total) * 100 : 0,
-      0,
-    ),
-    100,
+  const cpuUsage = base?.cpu?.usage ?? 0;
+  const memoryUsage =
+    node?.mem_total && node.mem_total > 0
+      ? ((base?.ram?.used ?? 0) / node.mem_total) * 100
+      : 0;
+  const isOnline = live_data?.data?.online?.includes(uuid) ?? false;
+
+  const details = useMemo(
+    (): Array<{
+      key: string;
+      label: string;
+      value: string;
+      icon: LucideIcon;
+    }> => [
+      { key: "cpu", label: "CPU", value: cpuModel, icon: Cpu },
+      {
+        key: "os",
+        label: t("nodeCard.os"),
+        value: node?.os ? `${node.os} / ${node.arch ?? "-"}` : "Unknown",
+        icon: Monitor,
+      },
+      {
+        key: "kernel",
+        label: t("nodeCard.kernelVersion"),
+        value: node?.kernel_version ?? "Unknown",
+        icon: Binary,
+      },
+      {
+        key: "ram",
+        label: t("nodeCard.ram"),
+        value: formatBytes(node?.mem_total || 0),
+        icon: MemoryStick,
+      },
+      {
+        key: "disk",
+        label: t("nodeCard.disk"),
+        value: formatBytes(node?.disk_total || 0),
+        icon: HardDrive,
+      },
+      {
+        key: "uptime",
+        label: t("nodeCard.uptime"),
+        value: base?.uptime ? formatUptime(base.uptime, t) : "-",
+        icon: Clock3,
+      },
+    ],
+    [t, node, base, cpuModel],
   );
-  const isOnline = Boolean(live_data?.data?.online?.includes(uuid));
 
-  const details: Array<{
-    key: string;
-    label: string;
-    value: string;
-    icon: LucideIcon;
-  }> = [
-    { key: "cpu", label: "CPU", value: cpuModel, icon: Cpu },
-    {
-      key: "os",
-      label: t("nodeCard.os"),
-      value: node?.os ? `${node.os} / ${node.arch ?? "-"}` : "Unknown",
-      icon: Monitor,
-    },
-    {
-      key: "kernel",
-      label: t("nodeCard.kernelVersion"),
-      value: node?.kernel_version ?? "Unknown",
-      icon: Binary,
-    },
-    {
-      key: "ram",
-      label: t("nodeCard.ram"),
-      value: formatBytes(node?.mem_total || 0),
-      icon: MemoryStick,
-    },
-    {
-      key: "disk",
-      label: t("nodeCard.disk"),
-      value: formatBytes(node?.disk_total || 0),
-      icon: HardDrive,
-    },
-    {
-      key: "uptime",
-      label: t("nodeCard.uptime"),
-      value: base?.uptime ? formatUptime(base.uptime, t) : "-",
-      icon: Clock3,
-    },
-  ];
-
-  const statBars = [
-    {
-      key: "cpu",
-      label: "CPU",
-      value: cpuUsage,
-    },
-    {
-      key: "memory",
-      label: t("nodeCard.ram"),
-      value: memoryUsage,
-    },
-  ];
+  const statBars = useMemo(
+    () => [
+      {
+        key: "cpu",
+        label: "CPU",
+        value: cpuUsage,
+      },
+      {
+        key: "memory",
+        label: t("nodeCard.ram"),
+        value: memoryUsage,
+      },
+    ],
+    [cpuUsage, memoryUsage, t],
+  );
 
   return (
     <div className="DetailsGrid w-full">

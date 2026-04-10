@@ -60,10 +60,7 @@ const LoadChart = ({ data = [], view }: LoadChartProps) => {
   const [error, setError] = useState<string | null>(null);
   const requestSeqRef = useRef(0);
 
-  const uuid =
-    typeof window === "undefined"
-      ? ""
-      : window.location.pathname.split("/").filter(Boolean).pop() || "";
+  const uuid = window.location.pathname.split("/").filter(Boolean).pop() || "";
 
   const node = nodeByUuid.get(uuid);
   const current = live_data?.data?.data?.[uuid];

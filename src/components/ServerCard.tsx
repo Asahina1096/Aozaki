@@ -174,15 +174,14 @@ function isSameLiveRecord(prev?: Record, next?: Record): boolean {
   if (!prev && !next) {
     return true;
   }
-
   if (!prev || !next) {
     return false;
   }
 
+  // Only compare fields that affect card display
   return (
     prev.uptime === next.uptime &&
     prev.process === next.process &&
-    prev.message === next.message &&
     prev.cpu.usage === next.cpu.usage &&
     prev.ram.used === next.ram.used &&
     prev.swap.used === next.swap.used &&
@@ -195,7 +194,9 @@ function isSameLiveRecord(prev?: Record, next?: Record): boolean {
     prev.network.totalUp === next.network.totalUp &&
     prev.network.totalDown === next.network.totalDown &&
     prev.connections.tcp === next.connections.tcp &&
-    prev.connections.udp === next.connections.udp
+    prev.connections.udp === next.connections.udp &&
+    prev.gpu?.count === next.gpu?.count &&
+    prev.gpu?.average_usage === next.gpu?.average_usage
   );
 }
 

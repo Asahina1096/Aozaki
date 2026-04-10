@@ -2,7 +2,7 @@ import { memo } from "react";
 import { ArrowUpDown, Cpu, Network, Server } from "lucide-react";
 import { CARD_CONTAINMENT_STYLE, PILL_STYLES } from "@/lib/constants";
 import type { ServerStats } from "@/lib/types/serverstatus";
-import { formatBytes, formatSpeed, isServerOnline } from "@/lib/utils";
+import { formatBytes, formatSpeed, isServerOnline, roundTo } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 
 interface ServerOverviewProps {
@@ -37,7 +37,7 @@ function ServerOverviewComponent({ servers }: ServerOverviewProps) {
   const offlineServers = totalServers - onlineServers;
 
   const avgCpu =
-    stats.onlineCount > 0 ? Math.round((stats.totalCpu / stats.onlineCount) * 10) / 10 : 0;
+    stats.onlineCount > 0 ? roundTo(stats.totalCpu / stats.onlineCount, 1) : 0;
 
   return (
     <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">

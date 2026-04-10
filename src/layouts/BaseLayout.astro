@@ -81,6 +81,9 @@ const {
           };
         }
 
+        const IMAGE_EXTS = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".avif", ".bmp", ".ico"];
+        const VIDEO_EXTS = [".mp4", ".webm", ".ogg", ".mov", ".avi", ".mkv"];
+
         function getBackgroundUrlTypeByExtension(url) {
           if (typeof url !== "string" || !url.trim()) return "none";
           const rawUrl = url.trim();
@@ -98,8 +101,15 @@ const {
           }
 
           const ext = pathname.toLowerCase();
-          if (ext.endsWith(".mp4") || ext.endsWith(".webm") || ext.endsWith(".ogg")) {
-            return "video";
+          for (const videoExt of VIDEO_EXTS) {
+            if (ext.endsWith(videoExt)) {
+              return "video";
+            }
+          }
+          for (const imgExt of IMAGE_EXTS) {
+            if (ext.endsWith(imgExt)) {
+              return "image";
+            }
           }
           return "unknown";
         }
@@ -144,6 +154,36 @@ const {
           stopBackgroundViewportSync();
         }
 
+        const IMAGE_PREFETCH_ID = "aozaki-bg-image-prefetch";
+
+        function getOrCreateImagePrefetchLink() {
+          let link = document.querySelector(`link[id="${IMAGE_PREFETCH_ID}"]`);
+          if (!link) {
+            link = document.createElement("link");
+            link.id = IMAGE_PREFETCH_ID;
+            link.rel = "preload";
+            link.as = "image";
+            document.head.appendChild(link);
+          }
+          return link;
+        }
+
+        function removeImagePrefetch() {
+          const existing = document.querySelector(`link[id="${IMAGE_PREFETCH_ID}"]`);
+          if (existing) {
+            existing.remove();
+          }
+        }
+
+        function setImagePrefetch(url) {
+          if (!url) {
+            removeImagePrefetch();
+            return;
+          }
+          const link = getOrCreateImagePrefetchLink();
+          link.href = url;
+        }
+
         function applyBackgroundVideo(url) {
           removeBackgroundVideo();
           startBackgroundViewportSync();
@@ -154,7 +194,7 @@ const {
           video.muted = true;
           video.loop = true;
           video.playsInline = true;
-          video.preload = "metadata";
+          video.preload = "auto";
           video.setAttribute("aria-hidden", "true");
           document.body.prepend(video);
         }
@@ -235,6 +275,7 @@ const {
           root.style.removeProperty("background-repeat");
           root.style.removeProperty("background-attachment");
           removeBackgroundVideo();
+          removeImagePrefetch();
 
           window.__aozakiForceThemeMode = forceThemeMode !== "none" ? forceThemeMode : null;
 
@@ -261,13 +302,14 @@ const {
             root.style.setProperty("--bg-image-position", backgroundPosition);
             root.style.setProperty("--readability-overlay-opacity", readabilityOverlayOpacity / 100);
             root.classList.add("bg-image-enabled");
+            setImagePrefetch(bgUrl);
           } else if (bgUrl && isVideoBackground) {
             root.style.setProperty("--readability-overlay-opacity", readabilityOverlayOpacity / 100);
             root.classList.add("bg-video-enabled");
             applyBackgroundVideo(bgUrl);
           }
 
-          const hasBackgroundMedia = Boolean(bgUrl);
+          const hasBackgroundMedia = !!bgUrl;
           const useOverlay = overlayEnabled && hasBackgroundMedia;
           const effectiveBlurStrategy =
             blurStrategy === "preblur" && isVideoBackground ? "backdrop" : blurStrategy;

@@ -14,6 +14,7 @@ import { Card } from "@/components/ui/card";
 import { CARD_CONTAINMENT_STYLE } from "@/lib/constants";
 import { useRPC2Call } from "@/contexts/RPC2Context";
 import { cutPeakValues, interpolateNullsLinear } from "@/utils/RecordHelper";
+import { CHART_COLORS, SOFT_GRID_STROKE, SOFT_FILL_END } from "./charts/shared";
 
 interface PingRecord {
   client: string;
@@ -42,18 +43,7 @@ type PingRow = {
   time: string;
 } & Record<string, number | string | null | undefined>;
 
-const colors = [
-  "#FF8A98",
-  "#8FD6FF",
-  "#9DE8C9",
-  "#B7C4FF",
-  "#79D9F8",
-  "#C5B4FF",
-  "#FFB28F",
-  "#FBD89A",
-];
-const SOFT_GRID_STROKE = "hsl(var(--border) / 0.55)";
-const SOFT_FILL_END = "#ffffff";
+const colors = CHART_COLORS;
 const AREA_GRADIENT_IDS = colors.map((_, idx) => `soft-ping-fill-${idx}`);
 const softFillDef = (
   <defs>
@@ -156,12 +146,12 @@ const PingChart = ({ uuid, view }: { uuid: string; view: string }) => {
     for (const rec of source) {
       const ts = new Date(rec.time).getTime();
       const bucketKey = Math.floor(ts / bucketMs) * bucketMs;
-      const use = bucketKey;
 
-      if (!buckets.has(use)) {
-        buckets.set(use, { time: new Date(use).toISOString() });
+      if (!buckets.has(bucketKey)) {
+        buckets.set(bucketKey, { time: new Date(bucketKey).toISOString() });
       }
-      buckets.get(use)![rec.task_id] = rec.value < 0 ? null : rec.value;
+      const bucket = buckets.get(bucketKey)!;
+      bucket[rec.task_id] = rec.value < 0 ? null : rec.value;
     }
 
     const merged = Array.from(buckets.values()).sort(

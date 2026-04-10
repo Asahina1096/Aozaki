@@ -239,7 +239,7 @@ export function interpolateNullsLinear<
         maxCapMs?: number;
       },
 ): T[] {
-  if (!rows || rows.length === 0 || !keys.length) return rows;
+  if (rows.length === 0 || !keys.length) return rows;
 
   const times = rows.map((r) => new Date(r.time ?? r.updated_at ?? "").getTime());
   const out = rows.map((r) => ({ ...r }));
@@ -309,7 +309,7 @@ export function cutPeakValues<T extends Record<string, unknown>>(
   windowSize: number = 15,
   spikeThreshold: number = 0.3,
 ): T[] {
-  if (!data || data.length === 0) return data;
+  if (data.length === 0) return data;
 
   const result = [...data];
   const halfWindow = Math.floor(windowSize / 2);
